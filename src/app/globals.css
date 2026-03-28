@@ -128,3 +128,25 @@
     @apply font-sans;
   }
 }
+
+@media print {
+  nav,
+  aside,
+  header,
+  button,
+  .no-print {
+    display: none !important;
+  }
+  .prose {
+    max-width: 100% !important;
+  }
+  body {
+    font-size: 12pt;
+  }
+  h2 {
+    page-break-before: always;
+  }
+  h2:first-of-type {
+    page-break-before: auto;
+  }
+}

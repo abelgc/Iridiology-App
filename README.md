@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Iridology Analysis App
 
-## Getting Started
+A Next.js 14 application for iridological iris analysis using Claude AI.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Upload iris images for AI-powered iridological analysis
+- Three analysis modes: Standard, Comparison (temporal), Technical Review
+- 11-section structured reports in Spanish
+- Report editing, corrections, and chat interface
+- Patient management with session history
+- Supabase authentication and database
+
+## Tech Stack
+
+- **Framework**: Next.js 14 (App Router)
+- **Language**: TypeScript
+- **UI**: Tailwind CSS + shadcn/ui
+- **Database & Auth**: Supabase (PostgreSQL)
+- **AI**: Claude API (claude-opus-4-6) via Anthropic SDK
+- **Deployment**: Railway
+
+## Setup
+
+### Prerequisites
+- Node.js 18+
+- Supabase project
+- Anthropic API key
+
+### Environment Variables
+
+Copy `.env.example` to `.env.local` and fill in:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+ANTHROPIC_API_KEY=your_anthropic_api_key
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Database Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Run the SQL in `docs/schema.sql` in your Supabase SQL editor to create the required tables and RLS policies.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Local Development
 
-## Learn More
+```bash
+npm install
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Open [http://localhost:3000](http://localhost:3000).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Testing
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run test          # Unit and integration tests (Vitest)
+npm run test:e2e      # End-to-end tests (Playwright)
+```
 
-## Deploy on Vercel
+## Deployment (Railway)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Push code to GitHub
+2. Connect repository to Railway
+3. Set environment variables in Railway dashboard
+4. Railway auto-deploys on push
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Database Schema
+
+See `docs/schema.sql` for the full schema including:
+- `patients` — patient records
+- `sessions` — analysis sessions per patient
+- `reports` — generated iridology reports (JSONB)
+- `report_corrections` — practitioner corrections per section
