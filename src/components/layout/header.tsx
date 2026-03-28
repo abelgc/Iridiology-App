@@ -39,16 +39,16 @@ export function Header() {
   }
 
   return (
-    <header className="fixed top-0 left-64 right-0 border-b bg-white h-16 flex items-center justify-between px-6">
-      <h1 className="text-lg font-bold">Iridology Analysis</h1>
+    <header className="fixed top-0 left-64 right-0 border-b border-[oklch(0.88_0.02_80)] bg-[oklch(0.98_0.008_80)] h-16 flex items-center justify-between px-6">
+      <h1 className="text-lg font-semibold text-[oklch(0.38_0.08_175)]">Narasimha Clay</h1>
       <div className="flex items-center gap-4">
-        {userEmail && <span className="text-sm text-zinc-600">{userEmail}</span>}
+        {userEmail && <span className="text-sm text-[oklch(0.50_0.03_60)]">{userEmail}</span>}
         <Button
           variant="ghost"
           size="sm"
           onClick={handleLogout}
           disabled={isLoading}
-          className="gap-2"
+          className="gap-2 text-[oklch(0.50_0.03_60)] hover:text-[oklch(0.22_0.04_50)]"
         >
           <LogOut className="size-4" />
           Logout

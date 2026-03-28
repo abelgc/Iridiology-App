@@ -46,6 +46,7 @@ function Button({
   className,
   variant = "default",
   size = "default",
+  asChild: _asChild,
   ...props
 }: ButtonPrimitive.Props & VariantProps<typeof buttonVariants> & { asChild?: boolean }) {
   return (

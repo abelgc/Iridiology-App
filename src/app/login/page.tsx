@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
@@ -55,9 +56,13 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-zinc-50">
-      <Card className="w-full max-w-sm p-8">
-        <h1 className="text-2xl font-bold mb-6 text-center">Iridology Analysis</h1>
+    <div className="flex items-center justify-center min-h-screen bg-[oklch(0.25_0.06_175)]">
+      <Card className="w-full max-w-sm p-8 bg-[oklch(0.98_0.008_80)] border-[oklch(0.88_0.02_80)]">
+        <div className="flex flex-col items-center mb-6">
+          <Image src="/logo.jpeg" alt="Narasimha Clay" width={72} height={72} className="rounded-full object-cover mb-3" />
+          <h1 className="text-xl font-bold text-[oklch(0.22_0.04_50)]">Narasimha Clay</h1>
+          <p className="text-sm text-[oklch(0.50_0.03_60)]">Iridology Analysis</p>
+        </div>
 
         {globalError && (
           <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded text-destructive text-sm">
