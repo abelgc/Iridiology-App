@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { analyzeIris } from '@/lib/claude/analyze'
 import { AnalysisRequest } from '@/types/claude'
 import { NextRequest, NextResponse } from 'next/server'
@@ -32,8 +32,9 @@ export async function POST(request: NextRequest) {
     const sessionId = sessionData.id
 
     // Fire analysis in background — survives page refresh/navigation
+    // Uses admin client (no cookies) since request context is gone after response
     const runAnalysis = async () => {
-      const bg = await createClient()
+      const bg = createAdminClient()
       try {
         const result = await analyzeIris({ sessionId, patientId, rightIrisBase64, leftIrisBase64, patientData })
 
@@ -42,11 +43,9 @@ export async function POST(request: NextRequest) {
           return
         }
 
-        const { data: reportData, error: reportError } = await bg
+        const { error: reportError } = await bg
           .from('reports')
           .insert({ session_id: sessionId, report_content: result, report_version: 1, is_edited: false })
-          .select()
-          .single()
 
         if (reportError) {
           await bg.from('sessions').update({ status: 'error' }).eq('id', sessionId)
@@ -55,8 +54,7 @@ export async function POST(request: NextRequest) {
 
         await bg.from('sessions').update({ status: 'completed' }).eq('id', sessionId)
       } catch {
-        const bg2 = await createClient()
-        await bg2.from('sessions').update({ status: 'error' }).eq('id', sessionId)
+        createAdminClient().from('sessions').update({ status: 'error' }).eq('id', sessionId)
       }
     }
 

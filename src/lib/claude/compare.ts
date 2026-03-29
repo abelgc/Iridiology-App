@@ -76,7 +76,7 @@ export async function compareIris(request: ComparisonRequest): Promise<ReportCon
 
     // Call Claude API with vision (4 images)
     const response = await anthropic.messages.create({
-      model: 'claude-opus-4-6',
+      model: 'claude-sonnet-4-6',
       max_tokens: 4096,
       system: COMPARISON_ANALYSIS_SYSTEM_PROMPT,
       messages: [
@@ -128,7 +128,7 @@ export async function compareIris(request: ComparisonRequest): Promise<ReportCon
     if (response.stop_reason === 'max_tokens') {
       // Retry with 50% more tokens
       const retryResponse = await anthropic.messages.create({
-        model: 'claude-opus-4-6',
+        model: 'claude-sonnet-4-6',
         max_tokens: 6144,
         system: COMPARISON_ANALYSIS_SYSTEM_PROMPT,
         messages: [
@@ -197,7 +197,7 @@ export async function compareIris(request: ComparisonRequest): Promise<ReportCon
         const strongerPrompt = `${userPrompt}\n\nIMPORTANT: Respond ONLY with valid JSON. No additional text.`
 
         const finalResponse = await anthropic.messages.create({
-          model: 'claude-opus-4-6',
+          model: 'claude-sonnet-4-6',
           max_tokens: 6144,
           system: COMPARISON_ANALYSIS_SYSTEM_PROMPT,
           messages: [
@@ -274,7 +274,7 @@ export async function compareIris(request: ComparisonRequest): Promise<ReportCon
       const strongerPrompt = `${userPrompt}\n\nIMPORTANTE: Responde ÚNICAMENTE con JSON válido. Sin texto adicional.`
 
       const retryResponse = await anthropic.messages.create({
-        model: 'claude-opus-4-6',
+        model: 'claude-sonnet-4-6',
         max_tokens: 4096,
         system: COMPARISON_ANALYSIS_SYSTEM_PROMPT,
         messages: [
@@ -350,7 +350,7 @@ export async function compareIris(request: ComparisonRequest): Promise<ReportCon
           )
 
           const retryResponse = await anthropic.messages.create({
-            model: 'claude-opus-4-6',
+            model: 'claude-sonnet-4-6',
             max_tokens: 4096,
             system: COMPARISON_ANALYSIS_SYSTEM_PROMPT,
             messages: [

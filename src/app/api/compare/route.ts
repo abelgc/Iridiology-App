@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { compareIris } from '@/lib/claude/compare'
 import { ComparisonRequest } from '@/types/claude'
 import { NextRequest, NextResponse } from 'next/server'
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     const sessionId = sessionData.id
 
     const runAnalysis = async () => {
-      const bg = await createClient()
+      const bg = createAdminClient()
       try {
         const result = await compareIris({
           sessionId, patientId,
@@ -64,8 +64,7 @@ export async function POST(request: NextRequest) {
 
         await bg.from('sessions').update({ status: 'completed' }).eq('id', sessionId)
       } catch {
-        const bg2 = await createClient()
-        await bg2.from('sessions').update({ status: 'error' }).eq('id', sessionId)
+        createAdminClient().from('sessions').update({ status: 'error' }).eq('id', sessionId)
       }
     }
 

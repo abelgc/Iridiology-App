@@ -249,13 +249,28 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
         <Card className="p-6 bg-blue-50 border-blue-200 mb-6">
           <div className="flex items-start gap-4">
             <div className="flex-shrink-0">
-              <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
+              <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent mt-1"></div>
             </div>
-            <div>
+            <div className="flex-1">
               <p className="font-medium text-blue-900">Analysis in Progress</p>
               <p className="text-sm text-blue-800 mt-1">
-                The AI is analyzing the iris images. This may take a moment...
+                The AI is analysing the iris images. You can safely leave this page — the analysis continues in the background.
               </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3 border-blue-300 text-blue-800 hover:bg-blue-100"
+                onClick={async () => {
+                  await fetch(`/api/sessions/${session.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'error' }),
+                  })
+                  router.push('/sessions/new')
+                }}
+              >
+                Cancel &amp; Start Again
+              </Button>
             </div>
           </div>
         </Card>

@@ -74,7 +74,7 @@ export async function reviewIris(request: TechnicalReviewRequest): Promise<Repor
 
     // Call Claude API with vision
     const response = await anthropic.messages.create({
-      model: 'claude-opus-4-6',
+      model: 'claude-sonnet-4-6',
       max_tokens: 4096,
       system: TECHNICAL_REVIEW_SYSTEM_PROMPT,
       messages: [
@@ -110,7 +110,7 @@ export async function reviewIris(request: TechnicalReviewRequest): Promise<Repor
     if (response.stop_reason === 'max_tokens') {
       // Retry with 50% more tokens
       const retryResponse = await anthropic.messages.create({
-        model: 'claude-opus-4-6',
+        model: 'claude-sonnet-4-6',
         max_tokens: 6144,
         system: TECHNICAL_REVIEW_SYSTEM_PROMPT,
         messages: [
@@ -163,7 +163,7 @@ export async function reviewIris(request: TechnicalReviewRequest): Promise<Repor
         const strongerPrompt = `${userPrompt}\n\nIMPORTANT: Respond ONLY with valid JSON. No additional text.`
 
         const finalResponse = await anthropic.messages.create({
-          model: 'claude-opus-4-6',
+          model: 'claude-sonnet-4-6',
           max_tokens: 6144,
           system: TECHNICAL_REVIEW_SYSTEM_PROMPT,
           messages: [
@@ -224,7 +224,7 @@ export async function reviewIris(request: TechnicalReviewRequest): Promise<Repor
       const strongerPrompt = `${userPrompt}\n\nIMPORTANTE: Responde ÚNICAMENTE con JSON válido. Sin texto adicional.`
 
       const retryResponse = await anthropic.messages.create({
-        model: 'claude-opus-4-6',
+        model: 'claude-sonnet-4-6',
         max_tokens: 4096,
         system: TECHNICAL_REVIEW_SYSTEM_PROMPT,
         messages: [
@@ -284,7 +284,7 @@ export async function reviewIris(request: TechnicalReviewRequest): Promise<Repor
           )
 
           const retryResponse = await anthropic.messages.create({
-            model: 'claude-opus-4-6',
+            model: 'claude-sonnet-4-6',
             max_tokens: 4096,
             system: TECHNICAL_REVIEW_SYSTEM_PROMPT,
             messages: [

@@ -32,7 +32,7 @@ export async function* chatAboutReport(
 
   // Stream the response
   const stream = await anthropic.messages.stream({
-    model: 'claude-opus-4-6',
+    model: 'claude-sonnet-4-6',
     max_tokens: 2048,
     system: systemPrompt,
     messages: messages,
