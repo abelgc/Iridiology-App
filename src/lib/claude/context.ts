@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { ReportContent, REPORT_SECTION_KEYS } from '@/types/report'
 
 export interface PatientContext {
@@ -7,7 +7,7 @@ export interface PatientContext {
 }
 
 export async function buildPatientContext(patientId: string): Promise<PatientContext> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   // Query the most recent session for this patient
   const { data: latestSession } = await supabase

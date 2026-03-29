@@ -35,10 +35,13 @@ export async function POST(request: NextRequest) {
     // Uses admin client (no cookies) since request context is gone after response
     const runAnalysis = async () => {
       const bg = createAdminClient()
+      console.log(`[analyze] session ${sessionId} — calling Claude...`)
       try {
         const result = await analyzeIris({ sessionId, patientId, rightIrisBase64, leftIrisBase64, patientData })
+        console.log(`[analyze] session ${sessionId} — Claude returned, 'code' in result: ${'code' in result}`)
 
         if ('code' in result) {
+          console.error(`[analyze] session ${sessionId} — error:`, (result as any).code, (result as any).message)
           await bg.from('sessions').update({ status: 'error' }).eq('id', sessionId)
           return
         }
@@ -53,7 +56,9 @@ export async function POST(request: NextRequest) {
         }
 
         await bg.from('sessions').update({ status: 'completed' }).eq('id', sessionId)
-      } catch {
+        console.log(`[analyze] session ${sessionId} — completed ✓`)
+      } catch (err) {
+        console.error(`[analyze] session ${sessionId} — caught exception:`, err)
         createAdminClient().from('sessions').update({ status: 'error' }).eq('id', sessionId)
       }
     }
