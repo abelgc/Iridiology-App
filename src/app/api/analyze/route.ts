@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
 
     const { patientId, rightIrisBase64, leftIrisBase64, patientData } = body
 
-    // Create a session
+    // Create session immediately
     const { data: sessionData, error: sessionError } = await supabase
       .from('sessions')
       .insert({
@@ -31,97 +31,42 @@ export async function POST(request: NextRequest) {
 
     const sessionId = sessionData.id
 
-    // Stream response
-    const encoder = new TextEncoder()
-    const stream = new ReadableStream({
-      async start(controller) {
-        const send = (data: object) => {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
+    // Fire analysis in background — survives page refresh/navigation
+    const runAnalysis = async () => {
+      const bg = await createClient()
+      try {
+        const result = await analyzeIris({ sessionId, patientId, rightIrisBase64, leftIrisBase64, patientData })
+
+        if ('code' in result) {
+          await bg.from('sessions').update({ status: 'error' }).eq('id', sessionId)
+          return
         }
 
-        try {
-          // Send initial status
-          send({ status: 'analyzing', step: 'Sending images to AI...' })
+        const { data: reportData, error: reportError } = await bg
+          .from('reports')
+          .insert({ session_id: sessionId, report_content: result, report_version: 1, is_edited: false })
+          .select()
+          .single()
 
-          // Call Claude API
-          const analysisRequest: AnalysisRequest = {
-            sessionId,
-            patientId,
-            rightIrisBase64,
-            leftIrisBase64,
-            patientData,
-          }
-
-          const result = await analyzeIris(analysisRequest)
-
-          if ('code' in result) {
-            // Error from Claude
-            await supabase.from('sessions').update({ status: 'error' }).eq('id', sessionId)
-
-            send({
-              status: 'error',
-              message: (result as any).message || 'Analysis failed',
-            })
-          } else {
-            // Success
-            send({ status: 'analyzing', step: 'Generating report...' })
-
-            // Save report to database
-            const { data: reportData, error: reportError } = await supabase
-              .from('reports')
-              .insert({
-                session_id: sessionId,
-                report_content: result,
-                report_version: 1,
-                is_edited: false,
-              })
-              .select()
-              .single()
-
-            if (reportError) {
-              await supabase.from('sessions').update({ status: 'error' }).eq('id', sessionId)
-
-              send({
-                status: 'error',
-                message: 'Failed to save report',
-              })
-            } else {
-              // Update session status to completed
-              await supabase
-                .from('sessions')
-                .update({ status: 'completed' })
-                .eq('id', sessionId)
-
-              send({
-                status: 'complete',
-                reportId: reportData.id,
-              })
-            }
-          }
-        } catch (error) {
-          await supabase.from('sessions').update({ status: 'error' }).eq('id', sessionId)
-
-          send({
-            status: 'error',
-            message: error instanceof Error ? error.message : 'Unknown error',
-          })
-        } finally {
-          controller.close()
+        if (reportError) {
+          await bg.from('sessions').update({ status: 'error' }).eq('id', sessionId)
+          return
         }
-      },
-    })
 
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
-    })
+        await bg.from('sessions').update({ status: 'completed' }).eq('id', sessionId)
+      } catch {
+        const bg2 = await createClient()
+        await bg2.from('sessions').update({ status: 'error' }).eq('id', sessionId)
+      }
+    }
+
+    runAnalysis() // intentionally not awaited
+
+    return NextResponse.json({ sessionId })
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 400 }
+      { status: 400 },
     )
   }
 }

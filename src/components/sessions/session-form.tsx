@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -8,8 +8,6 @@ import { ImageUpload } from './image-upload'
 import { ModeSelector } from './mode-selector'
 import { ImageQualityWarning } from './image-quality-warning'
 import { Loader2 } from 'lucide-react'
-import { useToast } from '@/lib/toast'
-import type { Patient, Session } from '@/types/database'
 
 interface SessionFormProps {
   defaultPatientId?: string
@@ -38,19 +36,9 @@ interface FormData {
   practitionerInterpretation: string
 }
 
-type SSEStatus = 'idle' | 'analyzing' | 'complete' | 'error'
-
-interface SSEEvent {
-  status: SSEStatus
-  step?: string
-  reportId?: string
-  message?: string
-}
 
 export function SessionForm({ defaultPatientId }: SessionFormProps) {
   const router = useRouter()
-  const { toast } = useToast()
-  const formDataRef = useRef<FormData | null>(null)
 
   const [patients, setPatients] = useState<PatientOption[]>([])
   const [formData, setFormData] = useState<FormData>({
@@ -66,9 +54,8 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
     practitionerInterpretation: '',
   })
 
-  const [sseStatus, setSSEStatus] = useState<SSEStatus>('idle')
-  const [sseStep, setSSEStep] = useState<string>('')
-  const [sseError, setSSEError] = useState<string>('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string>('')
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [isLoadingPatients, setIsLoadingPatients] = useState(true)
   const [imageQualityWarnings, setImageQualityWarnings] = useState<string[]>([])
@@ -142,149 +129,53 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!validateForm()) {
-      return
-    }
+    if (!validateForm()) return
 
-    setSSEStatus('analyzing')
-    setSSEStep('Sending images to AI...')
-    setSSEError('')
-    setImageQualityWarnings([])
+    setIsSubmitting(true)
+    setSubmitError('')
 
     try {
       const patient = patients.find((p) => p.id === formData.patientId)
-      if (!patient) {
-        throw new Error('Patient not found')
+      if (!patient) throw new Error('Patient not found')
+
+      const patientData = {
+        full_name: patient.full_name,
+        date_of_birth: patient.date_of_birth,
+        gender: patient.gender,
+        general_history: patient.general_history,
+        symptoms: formData.symptoms || null,
+        practitioner_notes: formData.practitionerNotes || null,
       }
 
       const endpoint =
-        formData.mode === 'standard'
-          ? '/api/analyze'
-          : formData.mode === 'comparison'
-            ? '/api/compare'
-            : '/api/review'
+        formData.mode === 'standard' ? '/api/analyze'
+        : formData.mode === 'comparison' ? '/api/compare'
+        : '/api/review'
 
       const requestBody =
         formData.mode === 'standard'
-          ? {
-              patientId: formData.patientId,
-              rightIrisBase64: formData.rightIrisBase64,
-              leftIrisBase64: formData.leftIrisBase64,
-              patientData: {
-                full_name: patient.full_name,
-                date_of_birth: patient.date_of_birth,
-                gender: patient.gender,
-                general_history: patient.general_history,
-                symptoms: formData.symptoms || null,
-                practitioner_notes: formData.practitionerNotes || null,
-              },
-            }
+          ? { patientId: formData.patientId, rightIrisBase64: formData.rightIrisBase64, leftIrisBase64: formData.leftIrisBase64, patientData }
           : formData.mode === 'comparison'
-            ? {
-                patientId: formData.patientId,
-                rightIrisBase64: formData.rightIrisBase64,
-                leftIrisBase64: formData.leftIrisBase64,
-                previousRightIrisBase64: formData.previousRightIrisBase64,
-                previousLeftIrisBase64: formData.previousLeftIrisBase64,
-                previousSessionDate: '',
-                patientData: {
-                  full_name: patient.full_name,
-                  date_of_birth: patient.date_of_birth,
-                  gender: patient.gender,
-                  general_history: patient.general_history,
-                  symptoms: formData.symptoms || null,
-                  practitioner_notes: formData.practitionerNotes || null,
-                },
-              }
-            : {
-                patientId: formData.patientId,
-                rightIrisBase64: formData.rightIrisBase64,
-                leftIrisBase64: formData.leftIrisBase64,
-                practitionerInterpretation: formData.practitionerInterpretation,
-                patientData: {
-                  full_name: patient.full_name,
-                  date_of_birth: patient.date_of_birth,
-                  gender: patient.gender,
-                  general_history: patient.general_history,
-                  symptoms: formData.symptoms || null,
-                  practitioner_notes: formData.practitionerNotes || null,
-                },
-              }
+            ? { patientId: formData.patientId, rightIrisBase64: formData.rightIrisBase64, leftIrisBase64: formData.leftIrisBase64, previousRightIrisBase64: formData.previousRightIrisBase64, previousLeftIrisBase64: formData.previousLeftIrisBase64, previousSessionDate: '', patientData }
+            : { patientId: formData.patientId, rightIrisBase64: formData.rightIrisBase64, leftIrisBase64: formData.leftIrisBase64, practitionerInterpretation: formData.practitionerInterpretation, patientData }
 
       const response = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody),
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || 'Analysis failed')
+        const err = await response.json()
+        throw new Error(err.message || err.error || 'Failed to start analysis')
       }
 
-      // Parse SSE stream
-      const reader = response.body?.getReader()
-      const decoder = new TextDecoder()
-
-      if (!reader) {
-        throw new Error('No response stream')
-      }
-
-      let reportId = ''
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        const chunk = decoder.decode(value)
-        const lines = chunk.split('\n')
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const event: SSEEvent = JSON.parse(line.slice(6))
-
-              if (event.status === 'analyzing') {
-                setSSEStep(event.step || '')
-              } else if (event.status === 'complete') {
-                setSSEStatus('complete')
-                reportId = event.reportId || ''
-              } else if (event.status === 'error') {
-                setSSEStatus('error')
-                setSSEError(event.message || 'Unknown error')
-              }
-            } catch (e) {
-              // Invalid JSON, skip
-            }
-          }
-        }
-      }
-
-      if (reportId) {
-        // Redirect to report page
-        router.push(`/reports/${reportId}`)
-      }
+      const { sessionId } = await response.json()
+      // Analysis runs in background on server — safe to navigate away
+      router.push(`/sessions/${sessionId}`)
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An error occurred'
-      setSSEStatus('error')
-      setSSEError(errorMessage)
-      formDataRef.current = formData
-
-      // Show error toast with retry button
-      toast({
-        title: 'Analysis Error',
-        description: errorMessage,
-        variant: 'destructive',
-        action: {
-          label: 'Retry',
-          onClick: () => {
-            if (formDataRef.current) {
-              handleSubmit({ preventDefault: () => {} } as React.FormEvent)
-            }
-          },
-        },
-      })
+      setSubmitError(error instanceof Error ? error.message : 'An error occurred')
+      setIsSubmitting(false)
     }
   }
 
@@ -509,59 +400,18 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
         )}
       </Card>
 
-      {/* Image Quality Warning */}
-      {imageQualityWarnings.length > 0 && (
-        <Card className="p-6">
-          <ImageQualityWarning warnings={imageQualityWarnings} />
+      {submitError && (
+        <Card className="p-4 bg-red-50 border-red-200">
+          <p className="text-sm text-red-700">{submitError}</p>
         </Card>
       )}
 
-      {/* Analysis Progress */}
-      {sseStatus !== 'idle' && (
-        <Card className="p-6 bg-blue-50 border-blue-200">
-          <div className="space-y-4">
-            {sseStatus === 'analyzing' && (
-              <>
-                <div className="flex items-center gap-3">
-                  <Loader2 size={20} className="text-blue-600 animate-spin" />
-                  <div>
-                    <p className="font-medium text-blue-900">Analyzing...</p>
-                    <p className="text-sm text-blue-700">{sseStep}</p>
-                  </div>
-                </div>
-              </>
-            )}
-            {sseStatus === 'error' && (
-              <div>
-                <p className="font-medium text-red-900">Error</p>
-                <p className="text-sm text-red-700 mt-1">{sseError}</p>
-                <Button
-                  type="button"
-                  onClick={() => setSSEStatus('idle')}
-                  className="mt-3"
-                  variant="outline"
-                >
-                  Try Again
-                </Button>
-              </div>
-            )}
-            {sseStatus === 'complete' && (
-              <div>
-                <p className="font-medium text-green-900">Analysis Complete!</p>
-                <p className="text-sm text-green-700 mt-1">Redirecting to report...</p>
-              </div>
-            )}
-          </div>
-        </Card>
-      )}
-
-      {/* Submit Button */}
       <div className="flex gap-3">
-        <Button type="submit" size="lg" disabled={sseStatus === 'analyzing'}>
-          {sseStatus === 'analyzing' ? (
+        <Button type="submit" size="lg" disabled={isSubmitting}>
+          {isSubmitting ? (
             <>
               <Loader2 size={16} className="mr-2 animate-spin" />
-              Analyzing...
+              Starting...
             </>
           ) : (
             'Start Analysis'

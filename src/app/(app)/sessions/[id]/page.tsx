@@ -52,25 +52,17 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
 
     const fetchSession = async () => {
       try {
-        setIsLoading(true)
         const response = await fetch(`/api/sessions/${sessionId}`)
-
-        if (!response.ok) {
-          setError('Failed to load session')
-          return
-        }
+        if (!response.ok) { setError('Failed to load session'); return }
 
         const data = await response.json()
         setSession(data)
 
-        // If completed, try to load the report
         if (data.status === 'completed') {
           const reportResponse = await fetch(`/api/reports?sessionId=${sessionId}`)
           if (reportResponse.ok) {
             const reports = await reportResponse.json()
-            if (reports.length > 0) {
-              setReport(reports[0])
-            }
+            if (reports.length > 0) setReport(reports[0])
           }
         }
       } catch (err) {
@@ -83,6 +75,33 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
 
     fetchSession()
   }, [sessionId])
+
+  // Poll every 4 seconds while analysis is running
+  useEffect(() => {
+    if (!sessionId || !session || session.status !== 'analyzing') return
+
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/sessions/${sessionId}`)
+        if (!response.ok) return
+        const data = await response.json()
+        setSession(data)
+
+        if (data.status === 'completed') {
+          clearInterval(interval)
+          const reportResponse = await fetch(`/api/reports?sessionId=${sessionId}`)
+          if (reportResponse.ok) {
+            const reports = await reportResponse.json()
+            if (reports.length > 0) setReport(reports[0])
+          }
+        } else if (data.status === 'error') {
+          clearInterval(interval)
+        }
+      } catch { /* silent — keep polling */ }
+    }, 4000)
+
+    return () => clearInterval(interval)
+  }, [sessionId, session?.status])
 
   if (!sessionId) {
     return <div className="text-center py-8">Loading...</div>
