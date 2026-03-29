@@ -20,6 +20,9 @@ type AnalysisMode = 'standard' | 'comparison' | 'technical_review'
 interface PatientOption {
   id: string
   full_name: string
+  date_of_birth: string | null
+  gender: string | null
+  general_history: string | null
 }
 
 interface FormData {
@@ -169,9 +172,9 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
               leftIrisBase64: formData.leftIrisBase64,
               patientData: {
                 full_name: patient.full_name,
-                date_of_birth: null,
-                gender: null,
-                general_history: null,
+                date_of_birth: patient.date_of_birth,
+                gender: patient.gender,
+                general_history: patient.general_history,
                 symptoms: formData.symptoms || null,
                 practitioner_notes: formData.practitionerNotes || null,
               },
@@ -183,12 +186,12 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
                 leftIrisBase64: formData.leftIrisBase64,
                 previousRightIrisBase64: formData.previousRightIrisBase64,
                 previousLeftIrisBase64: formData.previousLeftIrisBase64,
-                previousSessionDate: '', // Would be fetched from session
+                previousSessionDate: '',
                 patientData: {
                   full_name: patient.full_name,
-                  date_of_birth: null,
-                  gender: null,
-                  general_history: null,
+                  date_of_birth: patient.date_of_birth,
+                  gender: patient.gender,
+                  general_history: patient.general_history,
                   symptoms: formData.symptoms || null,
                   practitioner_notes: formData.practitionerNotes || null,
                 },
@@ -200,9 +203,9 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
                 practitionerInterpretation: formData.practitionerInterpretation,
                 patientData: {
                   full_name: patient.full_name,
-                  date_of_birth: null,
-                  gender: null,
-                  general_history: null,
+                  date_of_birth: patient.date_of_birth,
+                  gender: patient.gender,
+                  general_history: patient.general_history,
                   symptoms: formData.symptoms || null,
                   practitioner_notes: formData.practitionerNotes || null,
                 },
@@ -312,6 +315,16 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
         {validationErrors.patientId && (
           <p className="text-sm text-red-600 mt-1">{validationErrors.patientId}</p>
         )}
+        {formData.patientId && (() => {
+          const selected = patients.find(p => p.id === formData.patientId)
+          if (!selected?.general_history) return null
+          return (
+            <div className="mt-4 p-3 rounded-lg bg-[oklch(0.95_0.01_175)] border border-[oklch(0.85_0.03_175)]">
+              <p className="text-xs font-semibold text-[oklch(0.38_0.08_175)] mb-1">Patient History</p>
+              <p className="text-sm text-[oklch(0.30_0.04_175)]">{selected.general_history}</p>
+            </div>
+          )
+        })()}
       </Card>
 
       {/* Mode Selector */}
