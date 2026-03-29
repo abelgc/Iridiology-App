@@ -21,7 +21,9 @@ CORRECCIONES PREVIAS DEL PROFESIONAL:
 Si se incluyen correcciones de análisis anteriores, intégralas en tu razonamiento. Estas correcciones reflejan el criterio clínico del profesional tratante y deben informar tus interpretaciones, especialmente cuando hay ambigüedad.
 
 FORMATO DE RESPUESTA:
-Responde EXCLUSIVAMENTE con un objeto JSON válido con las siguientes 11 claves. El contenido de cada sección debe estar en formato Markdown.
+Responde EXCLUSIVAMENTE con un objeto JSON válido con las siguientes 14 claves. El contenido de cada sección debe estar en formato Markdown.
+
+Secciones 11–12 son generadas por ti. Sección 13 (protocolo) déjala como string vacío "". Sección 14 (alimentación) la generas tú.
 
 {
   "section_1_terreno_general": "Análisis del terreno constitucional general...",
@@ -34,7 +36,10 @@ Responde EXCLUSIVAMENTE con un objeto JSON válido con las siguientes 11 claves.
   "section_8_sistema_digestivo_intestinal": "Evaluación del sistema digestivo e intestinal...",
   "section_9_sistema_renal_urinario_reproductivo": "Análisis del sistema renal, urinario y reproductivo...",
   "section_10_sistema_estructural_integumentario": "Evaluación del sistema estructural e integumentario...",
-  "section_11_conclusion": "Conclusión integrativa con jerarquía de disfunciones y recomendaciones..."
+  "section_11_ejes_detectados": "Lista de los ejes funcionales detectados. Formato: Eje 1: Sistema A – Sistema B – Sistema C. Eje 2: ...",
+  "section_12_enfoque_ayurvedico": "Diagnóstico ayurvédico con dosha predominante, subdosha afectado y agni. Ejemplo: Vata Prakopa / Pitta Avarana / Apana Vata / Mandagni. Explicación clínica breve.",
+  "section_13_protocolo_tratamiento": "",
+  "section_14_alimentacion": "Tabla Markdown de alimentos recomendados por categoría (Verduras, Frutas, Frutos secos y semillas, Otros) y lista de alimentos a evitar."
 }`
 
 export const COMPARISON_ANALYSIS_SYSTEM_PROMPT = `Eres un iridólogo clínico experto especializado en análisis comparativo temporal de iris. Comparas imágenes anteriores con imágenes actuales para detectar cambios, evolución y transiciones de fase.
@@ -65,7 +70,9 @@ ANÁLISIS COMPARATIVO:
 9. Correlaciona cambios observados con el historial del paciente y tratamientos previos si se mencionan.
 
 FORMATO DE RESPUESTA:
-Responde EXCLUSIVAMENTE con un objeto JSON válido con las siguientes 11 claves. El contenido de cada sección debe estar en formato Markdown e incluir análisis comparativo con indicadores direccionales.
+Responde EXCLUSIVAMENTE con un objeto JSON válido con las siguientes 14 claves. El contenido de cada sección debe estar en formato Markdown e incluir análisis comparativo con indicadores direccionales.
+
+Secciones 11–12 y 14 son generadas por ti. Sección 13 (protocolo) déjala como string vacío "".
 
 {
   "section_1_terreno_general": "Análisis del terreno constitucional general con comparación temporal...",
@@ -78,7 +85,10 @@ Responde EXCLUSIVAMENTE con un objeto JSON válido con las siguientes 11 claves.
   "section_8_sistema_digestivo_intestinal": "Evaluación del sistema digestivo e intestinal con comparación temporal...",
   "section_9_sistema_renal_urinario_reproductivo": "Análisis del sistema renal, urinario y reproductivo con comparación temporal...",
   "section_10_sistema_estructural_integumentario": "Evaluación del sistema estructural e integumentario con comparación temporal...",
-  "section_11_conclusion": "Conclusión integrativa con jerarquía de disfunciones, cambios detectados y recomendaciones..."
+  "section_11_ejes_detectados": "Ejes funcionales detectados con indicadores de cambio temporal. Formato: Eje 1: Sistema A – Sistema B (→ mejora / = estancamiento / ↓ deterioro).",
+  "section_12_enfoque_ayurvedico": "Diagnóstico ayurvédico actualizado con comparación temporal. Dosha predominante, subdosha afectado y agni. Indicar si hubo transición de fase desde sesión anterior.",
+  "section_13_protocolo_tratamiento": "",
+  "section_14_alimentacion": "Tabla Markdown de alimentos recomendados por categoría y lista de alimentos a evitar, actualizada según la evolución observada."
 }`
 
 export const TECHNICAL_REVIEW_SYSTEM_PROMPT = `Eres un iridólogo clínico experto actuando como revisor técnico. El profesional tratante ha escrito su interpretación y solicita tu revisión crítica.
@@ -110,10 +120,12 @@ CORRECCIONES PREVIAS DEL PROFESIONAL:
 Si se incluyen correcciones de análisis anteriores, intégralas en tu razonamiento. Estas correcciones reflejan el criterio clínico del profesional tratante y deben informar tus interpretaciones, especialmente cuando hay ambigüedad.
 
 FORMATO DE RESPUESTA:
-Responde con un objeto JSON con las mismas 11 secciones. En cada sección incluye:
+Responde con un objeto JSON con las mismas 14 secciones. En las secciones 1–10 incluye:
 - **Validación**: Lo que el profesional identificó correctamente
 - **Cuestionamientos**: Lo que podría estar mal interpretado, con explicación
 - **Hallazgos adicionales**: Lo que no fue mencionado pero es visible en las imágenes
+
+En secciones 11–12 y 14 genera tu propia propuesta revisada. Sección 13 déjala como string vacío "".
 
 {
   "section_1_terreno_general": "**Validación**: ...\n\n**Cuestionamientos**: ...\n\n**Hallazgos adicionales**: ...",
@@ -126,7 +138,10 @@ Responde con un objeto JSON con las mismas 11 secciones. En cada sección incluy
   "section_8_sistema_digestivo_intestinal": "**Validación**: ...\n\n**Cuestionamientos**: ...\n\n**Hallazgos adicionales**: ...",
   "section_9_sistema_renal_urinario_reproductivo": "**Validación**: ...\n\n**Cuestionamientos**: ...\n\n**Hallazgos adicionales**: ...",
   "section_10_sistema_estructural_integumentario": "**Validación**: ...\n\n**Cuestionamientos**: ...\n\n**Hallazgos adicionales**: ...",
-  "section_11_conclusion": "**Validación**: ...\n\n**Cuestionamientos**: ...\n\n**Hallazgos adicionales**: ..."
+  "section_11_ejes_detectados": "Ejes funcionales detectados y revisados. Formato: Eje 1: Sistema A – Sistema B – Sistema C.",
+  "section_12_enfoque_ayurvedico": "Diagnóstico ayurvédico revisado. Dosha predominante, subdosha afectado y agni.",
+  "section_13_protocolo_tratamiento": "",
+  "section_14_alimentacion": "Tabla Markdown de alimentos recomendados por categoría y lista de alimentos a evitar."
 }`
 
 export const CHAT_SYSTEM_PROMPT_TEMPLATE = (reportContent: string, patientContext: string): string => `Eres un iridólogo clínico experto. El profesional tiene preguntas sobre un informe de iridología que ya fue generado. A continuación se incluye el informe completo como contexto.

@@ -9,7 +9,10 @@ export const REPORT_SECTION_KEYS = [
   'section_8_sistema_digestivo_intestinal',
   'section_9_sistema_renal_urinario_reproductivo',
   'section_10_sistema_estructural_integumentario',
-  'section_11_conclusion',
+  'section_11_ejes_detectados',
+  'section_12_enfoque_ayurvedico',
+  'section_13_protocolo_tratamiento',
+  'section_14_alimentacion',
 ] as const
 
 export type ReportSectionKey = typeof REPORT_SECTION_KEYS[number]
@@ -27,5 +30,8 @@ export const REPORT_SECTION_LABELS: Record<ReportSectionKey, string> = {
   section_8_sistema_digestivo_intestinal: 'Sistema Digestivo Intestinal',
   section_9_sistema_renal_urinario_reproductivo: 'Sistema Renal Urinario Reproductivo',
   section_10_sistema_estructural_integumentario: 'Sistema Estructural Integumentario',
-  section_11_conclusion: 'Conclusión',
+  section_11_ejes_detectados: 'Ejes Detectados',
+  section_12_enfoque_ayurvedico: 'Enfoque Ayurvédico',
+  section_13_protocolo_tratamiento: 'Protocolo de Tratamiento',
+  section_14_alimentacion: 'Alimentación',
 }
