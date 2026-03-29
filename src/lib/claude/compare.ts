@@ -18,31 +18,31 @@ function buildComparisonUserPrompt(
 ): string {
   const age = request.patientData.date_of_birth
     ? calculateAge(new Date(request.patientData.date_of_birth))
-    : 'No especificada'
+    : 'Not specified'
 
-  return `DATOS DEL PACIENTE:
-- Nombre: ${request.patientData.full_name}
-- Edad: ${age}
-- Género: ${request.patientData.gender || 'No especificado'}
-- Historia clínica: ${request.patientData.general_history || 'No especificada'}
-- Síntomas actuales: ${request.patientData.symptoms || 'No especificados'}
-- Notas del profesional: ${request.patientData.practitioner_notes || 'Ninguna'}
+  return `PATIENT DATA:
+- Name: ${request.patientData.full_name}
+- Age: ${age}
+- Gender: ${request.patientData.gender || 'Not specified'}
+- Clinical history: ${request.patientData.general_history || 'Not specified'}
+- Current symptoms: ${request.patientData.symptoms || 'Not specified'}
+- Practitioner notes: ${request.patientData.practitioner_notes || 'None'}
 
-HALLAZGOS PREVIOS (si existen):
-${previousReportSummary || 'Ninguno'}
+PREVIOUS FINDINGS (if any):
+${previousReportSummary || 'None'}
 
-CORRECCIONES DEL PROFESIONAL (si existen):
-${practitionerCorrections || 'Ninguna'}
+PRACTITIONER CORRECTIONS (if any):
+${practitionerCorrections || 'None'}
 
-IMÁGENES ANTERIORES (sesión anterior):
-- Iris derecho anterior (enviado)
-- Iris izquierdo anterior (enviado)
+PREVIOUS IMAGES (prior session):
+- Previous right iris (attached)
+- Previous left iris (attached)
 
-IMÁGENES ACTUALES (sesión actual):
-- Iris derecho actual (enviado)
-- Iris izquierdo actual (enviado)
+CURRENT IMAGES (current session):
+- Current right iris (attached)
+- Current left iris (attached)
 
-Comparar las imágenes anteriores con las actuales para detectar cambios, evolución y transiciones de fase. Genera el informe clínico completo en el formato JSON especificado, incluyendo análisis comparativo detallado con indicadores direccionales de cambio (mejora/estancamiento/deterioro) para cada sistema.`
+Compare the previous images with the current ones to detect changes, evolution, and phase transitions. Generate the complete clinical report in the specified JSON format, including detailed comparative analysis with directional change indicators (improvement / stagnation / deterioration) for each system.`
 }
 
 async function parseWithRetry(
@@ -194,7 +194,7 @@ export async function compareIris(request: ComparisonRequest): Promise<ReportCon
       const parseResult = await parseWithRetry(textContent.text)
       if ('code' in parseResult && parseResult.code === 'invalid_json') {
         // Retry with stronger instruction
-        const strongerPrompt = `${userPrompt}\n\nIMPORTANTE: Responde ÚNICAMENTE con JSON válido. Sin texto adicional.`
+        const strongerPrompt = `${userPrompt}\n\nIMPORTANT: Respond ONLY with valid JSON. No additional text.`
 
         const finalResponse = await anthropic.messages.create({
           model: 'claude-opus-4-6',

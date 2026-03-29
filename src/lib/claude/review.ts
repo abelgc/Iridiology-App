@@ -18,29 +18,29 @@ function buildReviewUserPrompt(
 ): string {
   const age = request.patientData.date_of_birth
     ? calculateAge(request.patientData.date_of_birth)
-    : 'No especificada'
+    : 'Not specified'
 
-  return `DATOS DEL PACIENTE:
-- Nombre: ${request.patientData.full_name}
-- Edad: ${age}
-- Género: ${request.patientData.gender || 'No especificado'}
-- Historia clínica: ${request.patientData.general_history || 'No especificada'}
-- Síntomas actuales: ${request.patientData.symptoms || 'No especificados'}
-- Notas del profesional: ${request.patientData.practitioner_notes || 'Ninguna'}
+  return `PATIENT DATA:
+- Name: ${request.patientData.full_name}
+- Age: ${age}
+- Gender: ${request.patientData.gender || 'Not specified'}
+- Clinical history: ${request.patientData.general_history || 'Not specified'}
+- Current symptoms: ${request.patientData.symptoms || 'Not specified'}
+- Practitioner notes: ${request.patientData.practitioner_notes || 'None'}
 
-HALLAZGOS PREVIOS (si existen):
-${previousReportSummary || 'Ninguno'}
+PREVIOUS FINDINGS (if any):
+${previousReportSummary || 'None'}
 
-CORRECCIONES DEL PROFESIONAL (si existen):
-${practitionerCorrections || 'Ninguna'}
+PRACTITIONER CORRECTIONS (if any):
+${practitionerCorrections || 'None'}
 
-INTERPRETACIÓN DEL PROFESIONAL (a revisar):
+PRACTITIONER INTERPRETATION (to be reviewed):
 ${request.practitionerInterpretation}
 
-IMÁGENES:
-Se adjuntan las imágenes del iris derecho e izquierdo del paciente.
+IMAGES:
+Right and left iris images of the patient are attached.
 
-Realiza una revisión técnica crítica de la interpretación del profesional. Valida lo que está bien fundamentado, cuestiona lo que podría ser incorrecto, y agrega hallazgos adicionales que no fueron mencionados. Mantén un tono de colega a colega. Genera tu respuesta en el formato JSON especificado con las tres subsecciones en cada sección (Validación, Cuestionamientos, Hallazgos adicionales).`
+Perform a critical technical review of the practitioner's interpretation. Validate what is well-founded, question what may be incorrect, and add findings that were not mentioned. Maintain a colleague-to-colleague tone. Generate your response in the specified JSON format with the three sub-sections in each section (Validation, Questions, Additional findings).`
 }
 
 async function parseWithRetry(
@@ -160,7 +160,7 @@ export async function reviewIris(request: TechnicalReviewRequest): Promise<Repor
       const parseResult = await parseWithRetry(textContent.text)
       if ('code' in parseResult && parseResult.code === 'invalid_json') {
         // Retry with stronger instruction
-        const strongerPrompt = `${userPrompt}\n\nIMPORTANTE: Responde ÚNICAMENTE con JSON válido. Sin texto adicional.`
+        const strongerPrompt = `${userPrompt}\n\nIMPORTANT: Respond ONLY with valid JSON. No additional text.`
 
         const finalResponse = await anthropic.messages.create({
           model: 'claude-opus-4-6',

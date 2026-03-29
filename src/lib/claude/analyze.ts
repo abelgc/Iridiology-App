@@ -14,26 +14,26 @@ export interface AnalysisError {
 function buildUserPrompt(request: AnalysisRequest, previousReportSummary: string | null, practitionerCorrections: string | null): string {
   const age = request.patientData.date_of_birth
     ? calculateAge(request.patientData.date_of_birth)
-    : 'No especificada'
+    : 'Not specified'
 
-  return `DATOS DEL PACIENTE:
-- Nombre: ${request.patientData.full_name}
-- Edad: ${age}
-- Género: ${request.patientData.gender || 'No especificado'}
-- Historia clínica: ${request.patientData.general_history || 'No especificada'}
-- Síntomas actuales: ${request.patientData.symptoms || 'No especificados'}
-- Notas del profesional: ${request.patientData.practitioner_notes || 'Ninguna'}
+  return `PATIENT DATA:
+- Name: ${request.patientData.full_name}
+- Age: ${age}
+- Gender: ${request.patientData.gender || 'Not specified'}
+- Clinical history: ${request.patientData.general_history || 'Not specified'}
+- Current symptoms: ${request.patientData.symptoms || 'Not specified'}
+- Practitioner notes: ${request.patientData.practitioner_notes || 'None'}
 
-HALLAZGOS PREVIOS (si existen):
-${previousReportSummary || 'Ninguno'}
+PREVIOUS FINDINGS (if any):
+${previousReportSummary || 'None'}
 
-CORRECCIONES DEL PROFESIONAL (si existen):
-${practitionerCorrections || 'Ninguna'}
+PRACTITIONER CORRECTIONS (if any):
+${practitionerCorrections || 'None'}
 
-IMÁGENES:
-Se adjuntan las imágenes del iris derecho e izquierdo del paciente.
+IMAGES:
+Right and left iris images of the patient are attached.
 
-Analiza ambos iris y genera el informe clínico completo en el formato JSON especificado. Mantén consistencia con los hallazgos previos cuando aplique — si difiere tu evaluación, explica el cambio.`
+Analyse both irises and generate the complete clinical report in the specified JSON format. Maintain consistency with previous findings where applicable — if your assessment differs, explain the change.`
 }
 
 async function parseWithRetry(
@@ -154,7 +154,7 @@ export async function analyzeIris(request: AnalysisRequest): Promise<ReportConte
       const parseResult = await parseWithRetry(textContent.text)
       if ('code' in parseResult && parseResult.code === 'invalid_json') {
         // Retry with stronger instruction
-        const strongerPrompt = `${userPrompt}\n\nIMPORTANTE: Responde ÚNICAMENTE con JSON válido. Sin texto adicional.`
+        const strongerPrompt = `${userPrompt}\n\nIMPORTANT: Respond ONLY with valid JSON. No additional text.`
 
         const finalResponse = await anthropic.messages.create({
           model: 'claude-opus-4-6',
@@ -215,7 +215,7 @@ export async function analyzeIris(request: AnalysisRequest): Promise<ReportConte
     const parseResult = await parseWithRetry(textContent.text)
     if ('code' in parseResult && parseResult.code === 'invalid_json') {
       // Retry with stronger instruction
-      const strongerPrompt = `${userPrompt}\n\nIMPORTANTE: Responde ÚNICAMENTE con JSON válido. Sin texto adicional.`
+      const strongerPrompt = `${userPrompt}\n\nIMPORTANT: Respond ONLY with valid JSON. No additional text.`
 
       const retryResponse = await anthropic.messages.create({
         model: 'claude-opus-4-6',

@@ -32,7 +32,7 @@ export async function buildPatientContext(patientId: string): Promise<PatientCon
 
     if (reportData) {
       const content = reportData.report_content as ReportContent
-      previousReportSummary = content.section_11_conclusion || null
+      previousReportSummary = content.section_11_ejes_detectados || null
     }
   }
 
@@ -50,9 +50,9 @@ export async function buildPatientContext(patientId: string): Promise<PatientCon
     const formattedCorrections = correctionsData
       .map((correction) => {
         const notes = correction.correction_notes
-          ? ` (Nota del profesional: ${correction.correction_notes})`
+          ? ` (Practitioner note: ${correction.correction_notes})`
           : ''
-        return `Sección ${correction.section_key}: ${correction.corrected_content}${notes}`
+        return `Section ${correction.section_key}: ${correction.corrected_content}${notes}`
       })
       .join('\n\n')
 
