@@ -73,6 +73,16 @@ ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE report_corrections ENABLE ROW LEVEL SECURITY;
 
--- Example RLS policy for authenticated users (adjust as needed)
--- CREATE POLICY "Authenticated users can view their own patients" ON patients
---   FOR SELECT USING (auth.uid() = id); -- Adjust this based on your auth structure
+-- RLS policies: any authenticated user can perform all operations
+-- (single-practitioner app — one logged-in user manages everything)
+CREATE POLICY "Authenticated users can manage patients"
+  ON patients FOR ALL USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Authenticated users can manage sessions"
+  ON sessions FOR ALL USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Authenticated users can manage reports"
+  ON reports FOR ALL USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Authenticated users can manage corrections"
+  ON report_corrections FOR ALL USING (auth.role() = 'authenticated');
