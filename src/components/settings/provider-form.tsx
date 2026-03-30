@@ -78,8 +78,8 @@ export function ProviderForm({ initialSettings }: { initialSettings: SettingRow[
                 onChange={() => setActiveProvider(p)}
                 className="accent-teal-700"
               />
-              <span className="text-sm font-medium capitalize">
-                {p === 'anthropic' ? 'Anthropic (Claude)' : 'OpenAI (GPT-4o)'}
+              <span className="text-sm font-medium">
+                {p === 'anthropic' ? `Anthropic (${anthropicModel})` : `OpenAI (${openaiModel})`}
               </span>
             </label>
           ))}
