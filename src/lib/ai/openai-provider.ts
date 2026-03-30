@@ -13,7 +13,7 @@ export class OpenAIProvider implements AIProvider {
   async complete(request: CompletionRequest): Promise<CompletionResponse> {
     const response = await this.client.chat.completions.create({
       model: this.model,
-      max_tokens: request.maxTokens,
+      max_completion_tokens: request.maxTokens,
       messages: [
         { role: 'system', content: request.systemPrompt },
         {
