@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 
-const ALLOWED_KEYS = ['active_provider', 'anthropic_api_key', 'openai_api_key'] as const
+const ALLOWED_KEYS = ['active_provider', 'anthropic_api_key', 'openai_api_key', 'anthropic_model', 'openai_model'] as const
 
 export async function GET() {
   const supabase = createAdminClient()

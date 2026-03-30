@@ -3,14 +3,16 @@ import type { AIProvider, CompletionRequest, CompletionResponse } from './types'
 
 export class AnthropicProvider implements AIProvider {
   private client: Anthropic
+  private model: string
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, model = 'claude-sonnet-4-6') {
     this.client = new Anthropic({ apiKey, timeout: 120000 })
+    this.model = model
   }
 
   async complete(request: CompletionRequest): Promise<CompletionResponse> {
     const response = await this.client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: this.model,
       max_tokens: request.maxTokens,
       system: request.systemPrompt,
       messages: [

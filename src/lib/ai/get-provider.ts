@@ -8,7 +8,7 @@ export async function getAIProvider(): Promise<AIProvider> {
   const { data } = await supabase
     .from('settings')
     .select('key, value')
-    .in('key', ['active_provider', 'anthropic_api_key', 'openai_api_key'])
+    .in('key', ['active_provider', 'anthropic_api_key', 'openai_api_key', 'anthropic_model', 'openai_model'])
 
   const map = Object.fromEntries((data ?? []).map((r) => [r.key, r.value ?? '']))
 
@@ -16,9 +16,11 @@ export async function getAIProvider(): Promise<AIProvider> {
 
   if (activeProvider === 'openai') {
     const key = map['openai_api_key'] || process.env.OPENAI_API_KEY || ''
-    return new OpenAIProvider(key)
+    const model = map['openai_model'] || 'gpt-4o'
+    return new OpenAIProvider(key, model)
   }
 
   const key = map['anthropic_api_key'] || process.env.ANTHROPIC_API_KEY || ''
-  return new AnthropicProvider(key)
+  const model = map['anthropic_model'] || 'claude-sonnet-4-6'
+  return new AnthropicProvider(key, model)
 }

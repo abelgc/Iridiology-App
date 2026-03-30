@@ -3,14 +3,16 @@ import type { AIProvider, CompletionRequest, CompletionResponse } from './types'
 
 export class OpenAIProvider implements AIProvider {
   private client: OpenAI
+  private model: string
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, model = 'gpt-4o') {
     this.client = new OpenAI({ apiKey, timeout: 120000 })
+    this.model = model
   }
 
   async complete(request: CompletionRequest): Promise<CompletionResponse> {
     const response = await this.client.chat.completions.create({
-      model: 'gpt-4o',
+      model: this.model,
       max_tokens: request.maxTokens,
       messages: [
         { role: 'system', content: request.systemPrompt },

@@ -6,7 +6,7 @@ export default async function SettingsPage() {
   const { data } = await supabase
     .from('settings')
     .select('key, value')
-    .in('key', ['active_provider', 'anthropic_api_key', 'openai_api_key'])
+    .in('key', ['active_provider', 'anthropic_api_key', 'openai_api_key', 'anthropic_model', 'openai_model'])
 
   const settings = (data ?? []).map((row) => ({
     key: row.key,
