@@ -1,9 +1,6 @@
-import { ReportContent, REPORT_SECTION_KEYS } from '@/types/report'
+import { ReportContent } from '@/types/report'
+import { reportContentSchema } from '@/lib/validators/report'
 import { z } from 'zod'
-
-const reportContentSchema = z.object(
-  Object.fromEntries(REPORT_SECTION_KEYS.map((key) => [key, z.string().min(1)])),
-) as unknown as z.ZodType<ReportContent>
 
 export interface ParseError {
   code: 'parse_failed' | 'validation_failed' | 'invalid_json'
