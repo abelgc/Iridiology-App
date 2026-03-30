@@ -1,6 +1,5 @@
 -- Migration 002: Settings Store
--- Adds a key-value settings table for AI provider configuration.
--- Run this in Supabase SQL Editor after the initial schema (001 / schema.sql).
+-- Safe to run multiple times.
 
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,
@@ -10,19 +9,17 @@ CREATE TABLE IF NOT EXISTS settings (
 
 ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 
-DO $$
-BEGIN
+DO $$ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_policies
     WHERE tablename = 'settings'
-      AND policyname = 'Authenticated users can manage settings'
+    AND policyname = 'Authenticated users can manage settings'
   ) THEN
     CREATE POLICY "Authenticated users can manage settings"
       ON settings FOR ALL USING (auth.role() = 'authenticated');
   END IF;
 END $$;
 
--- Seed defaults — safe to re-run (ON CONFLICT does nothing if rows exist)
 INSERT INTO settings (key, value) VALUES
   ('active_provider',   'openai'),
   ('anthropic_api_key', ''),
