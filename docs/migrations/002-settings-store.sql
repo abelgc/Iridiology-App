@@ -10,8 +10,17 @@ CREATE TABLE IF NOT EXISTS settings (
 
 ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Authenticated users can manage settings"
-  ON settings FOR ALL USING (auth.role() = 'authenticated');
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE tablename = 'settings'
+      AND policyname = 'Authenticated users can manage settings'
+  ) THEN
+    CREATE POLICY "Authenticated users can manage settings"
+      ON settings FOR ALL USING (auth.role() = 'authenticated');
+  END IF;
+END $$;
 
 -- Seed defaults — safe to re-run (ON CONFLICT does nothing if rows exist)
 INSERT INTO settings (key, value) VALUES
