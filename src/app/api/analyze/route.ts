@@ -38,10 +38,8 @@ export async function POST(request: NextRequest) {
       console.log(`[analyze] session ${sessionId} — calling Claude...`)
       try {
         const result = await analyzeIris({ sessionId, patientId, rightIrisBase64, leftIrisBase64, patientData })
-        console.log(`[analyze] session ${sessionId} — Claude returned, 'code' in result: ${'code' in result}`)
-
         if ('code' in result) {
-          console.error(`[analyze] session ${sessionId} — error:`, (result as any).code, (result as any).message)
+          console.error(`\x1b[31m[analyze] session ${sessionId} — error: ${(result as any).code} ${(result as any).message}\x1b[0m`)
           await bg.from('sessions').update({ status: 'error' }).eq('id', sessionId)
           return
         }
@@ -58,7 +56,7 @@ export async function POST(request: NextRequest) {
         await bg.from('sessions').update({ status: 'completed' }).eq('id', sessionId)
         console.log(`[analyze] session ${sessionId} — completed ✓`)
       } catch (err) {
-        console.error(`[analyze] session ${sessionId} — caught exception:`, err)
+        console.error(`\x1b[31m[analyze] session ${sessionId} — caught exception: ${err}\x1b[0m`)
         createAdminClient().from('sessions').update({ status: 'error' }).eq('id', sessionId)
       }
     }
