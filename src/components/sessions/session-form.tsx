@@ -221,7 +221,7 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
         </label>
         <select
           value={formData.patientId}
-          onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
+          onChange={(e) => { const v = e.target.value; setFormData(prev => ({ ...prev, patientId: v })) }}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         >
           <option value="">Select a patient...</option>
@@ -250,7 +250,7 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
       <Card className="p-6">
         <ModeSelector
           value={formData.mode}
-          onChange={(mode) => setFormData({ ...formData, mode })}
+          onChange={(mode) => setFormData(prev => ({ ...prev, mode }))}
         />
       </Card>
 
@@ -260,7 +260,7 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
         <input
           type="date"
           value={formData.sessionDate}
-          onChange={(e) => setFormData({ ...formData, sessionDate: e.target.value })}
+          onChange={(e) => { const v = e.target.value; setFormData(prev => ({ ...prev, sessionDate: v })) }}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
       </Card>
@@ -270,7 +270,7 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
         <label className="block text-sm font-medium text-gray-700 mb-3">Current Symptoms</label>
         <textarea
           value={formData.symptoms}
-          onChange={(e) => setFormData({ ...formData, symptoms: e.target.value })}
+          onChange={(e) => { const v = e.target.value; setFormData(prev => ({ ...prev, symptoms: v })) }}
           rows={3}
           placeholder="Enter any current symptoms..."
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -282,7 +282,7 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
         <label className="block text-sm font-medium text-gray-700 mb-3">Practitioner Notes</label>
         <textarea
           value={formData.practitionerNotes}
-          onChange={(e) => setFormData({ ...formData, practitionerNotes: e.target.value })}
+          onChange={(e) => { const v = e.target.value; setFormData(prev => ({ ...prev, practitionerNotes: v })) }}
           rows={3}
           placeholder="Enter any relevant notes..."
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -297,7 +297,7 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
               <ImageUpload
                 label="Right Iris"
                 value={formData.rightIrisBase64}
-                onChange={(base64) => setFormData({ ...formData, rightIrisBase64: base64 })}
+                onChange={(base64) => setFormData(prev => ({ ...prev, rightIrisBase64: base64 }))}
                 required={true}
               />
               {validationErrors.rightIris && (
@@ -308,7 +308,7 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
               <ImageUpload
                 label="Left Iris"
                 value={formData.leftIrisBase64}
-                onChange={(base64) => setFormData({ ...formData, leftIrisBase64: base64 })}
+                onChange={(base64) => setFormData(prev => ({ ...prev, leftIrisBase64: base64 }))}
                 required={true}
               />
               {validationErrors.leftIris && (
@@ -343,9 +343,7 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
                   <ImageUpload
                     label="Previous Right Iris"
                     value={formData.previousRightIrisBase64}
-                    onChange={(base64) =>
-                      setFormData({ ...formData, previousRightIrisBase64: base64 })
-                    }
+                    onChange={(base64) => setFormData(prev => ({ ...prev, previousRightIrisBase64: base64 }))}
                     required={true}
                   />
                   {validationErrors.previousRightIris && (
@@ -356,9 +354,7 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
                   <ImageUpload
                     label="Previous Left Iris"
                     value={formData.previousLeftIrisBase64}
-                    onChange={(base64) =>
-                      setFormData({ ...formData, previousLeftIrisBase64: base64 })
-                    }
+                    onChange={(base64) => setFormData(prev => ({ ...prev, previousLeftIrisBase64: base64 }))}
                     required={true}
                   />
                   {validationErrors.previousLeftIris && (
@@ -375,7 +371,7 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
                   <ImageUpload
                     label="Current Right Iris"
                     value={formData.rightIrisBase64}
-                    onChange={(base64) => setFormData({ ...formData, rightIrisBase64: base64 })}
+                    onChange={(base64) => setFormData(prev => ({ ...prev, rightIrisBase64: base64 }))}
                     required={true}
                   />
                   {validationErrors.rightIris && (
@@ -386,7 +382,7 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
                   <ImageUpload
                     label="Current Left Iris"
                     value={formData.leftIrisBase64}
-                    onChange={(base64) => setFormData({ ...formData, leftIrisBase64: base64 })}
+                    onChange={(base64) => setFormData(prev => ({ ...prev, leftIrisBase64: base64 }))}
                     required={true}
                   />
                   {validationErrors.leftIris && (
@@ -404,7 +400,7 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
               <ImageUpload
                 label="Right Iris"
                 value={formData.rightIrisBase64}
-                onChange={(base64) => setFormData({ ...formData, rightIrisBase64: base64 })}
+                onChange={(base64) => setFormData(prev => ({ ...prev, rightIrisBase64: base64 }))}
                 required={true}
               />
               {validationErrors.rightIris && (
@@ -415,7 +411,7 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
               <ImageUpload
                 label="Left Iris"
                 value={formData.leftIrisBase64}
-                onChange={(base64) => setFormData({ ...formData, leftIrisBase64: base64 })}
+                onChange={(base64) => setFormData(prev => ({ ...prev, leftIrisBase64: base64 }))}
                 required={true}
               />
               {validationErrors.leftIris && (
@@ -429,9 +425,7 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
               </label>
               <textarea
                 value={formData.practitionerInterpretation}
-                onChange={(e) =>
-                  setFormData({ ...formData, practitionerInterpretation: e.target.value })
-                }
+                onChange={(e) => { const v = e.target.value; setFormData(prev => ({ ...prev, practitionerInterpretation: v })) }}
                 rows={4}
                 placeholder="Enter your professional interpretation..."
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
