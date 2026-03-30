@@ -23,6 +23,11 @@ interface PatientOption {
   general_history: string | null
 }
 
+interface LastSessionInfo {
+  session_date: string
+  analysis_mode: string
+}
+
 interface FormData {
   patientId: string
   mode: AnalysisMode
@@ -59,6 +64,7 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [isLoadingPatients, setIsLoadingPatients] = useState(true)
   const [imageQualityWarnings, setImageQualityWarnings] = useState<string[]>([])
+  const [lastSession, setLastSession] = useState<LastSessionInfo | null>(null)
 
   // Load patients on mount
   useEffect(() => {
@@ -78,6 +84,28 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
 
     loadPatients()
   }, [])
+
+  // Auto-load last session when comparison mode + patient selected
+  useEffect(() => {
+    if (formData.mode !== 'comparison' || !formData.patientId) {
+      setLastSession(null)
+      return
+    }
+
+    const loadLastSession = async () => {
+      try {
+        const res = await fetch(`/api/sessions?patientId=${formData.patientId}`)
+        if (!res.ok) return
+        const sessions: Array<{ session_date: string; status: string; analysis_mode: string }> = await res.json()
+        const last = sessions.find((s) => s.status === 'completed')
+        setLastSession(last ? { session_date: last.session_date, analysis_mode: last.analysis_mode } : null)
+      } catch {
+        // silently ignore
+      }
+    }
+
+    loadLastSession()
+  }, [formData.patientId, formData.mode])
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {}
@@ -292,6 +320,22 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
 
         {formData.mode === 'comparison' && (
           <>
+            {lastSession && (
+              <div className="p-3 rounded-lg bg-[oklch(0.97_0.04_65)] border border-[oklch(0.85_0.08_65)]">
+                <p className="text-xs font-semibold text-[oklch(0.45_0.10_65)] mb-1">Last Session on File</p>
+                <p className="text-sm text-[oklch(0.30_0.06_65)]">
+                  {new Date(lastSession.session_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  {' — '}
+                  <span className="capitalize">{lastSession.analysis_mode.replace('_', ' ')}</span>
+                </p>
+                <p className="text-xs text-[oklch(0.55_0.08_65)] mt-1">Previous report findings will be used as context for the comparison analysis.</p>
+              </div>
+            )}
+            {!lastSession && formData.patientId && (
+              <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                <p className="text-sm text-gray-500">No previous completed session found for this patient.</p>
+              </div>
+            )}
             <div className="border-t pt-6">
               <h3 className="font-medium text-gray-900 mb-4">Previous Session Images</h3>
               <div className="space-y-6">

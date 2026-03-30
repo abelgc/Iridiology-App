@@ -40,14 +40,14 @@ export function ModeSelector({ value, onChange }: ModeSelectorProps) {
             className={cn(
               'relative flex items-start gap-3 p-4 border-2 rounded-lg text-left transition-colors',
               value === mode.id
-                ? 'border-blue-500 bg-blue-50'
+                ? 'border-[oklch(0.68_0.12_65)] bg-[oklch(0.97_0.04_65)]'
                 : 'border-gray-200 bg-white hover:border-gray-300',
             )}
           >
             <div
               className={cn(
                 'flex-shrink-0 w-5 h-5 border-2 rounded-full mt-0.5 transition-colors',
-                value === mode.id ? 'border-blue-500 bg-blue-500' : 'border-gray-300 bg-white',
+                value === mode.id ? 'border-[oklch(0.68_0.12_65)] bg-[oklch(0.68_0.12_65)]' : 'border-gray-300 bg-white',
               )}
             >
               {value === mode.id && <div className="w-full h-full rounded-full flex items-center justify-center text-white text-xs font-bold">✓</div>}

@@ -32,7 +32,11 @@ export async function buildPatientContext(patientId: string): Promise<PatientCon
 
     if (reportData) {
       const content = reportData.report_content as ReportContent
-      previousReportSummary = content.section_11_ejes_detectados || null
+      const parts: string[] = []
+      if (content.section_1_terreno_general) parts.push(`General Terrain:\n${content.section_1_terreno_general}`)
+      if (content.section_11_ejes_detectados) parts.push(`Detected Axes:\n${content.section_11_ejes_detectados}`)
+      if (content.section_12_enfoque_ayurvedico) parts.push(`Ayurvedic Approach:\n${content.section_12_enfoque_ayurvedico}`)
+      previousReportSummary = parts.length > 0 ? parts.join('\n\n') : null
     }
   }
 
