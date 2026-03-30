@@ -86,3 +86,22 @@ CREATE POLICY "Authenticated users can manage reports"
 
 CREATE POLICY "Authenticated users can manage corrections"
   ON report_corrections FOR ALL USING (auth.role() = 'authenticated');
+
+-- Settings table (key-value store for app configuration)
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Authenticated users can manage settings"
+  ON settings FOR ALL USING (auth.role() = 'authenticated');
+
+-- Seed defaults (no-op if already present)
+INSERT INTO settings (key, value) VALUES
+  ('active_provider', 'openai'),
+  ('anthropic_api_key', ''),
+  ('openai_api_key', '')
+ON CONFLICT (key) DO NOTHING;
