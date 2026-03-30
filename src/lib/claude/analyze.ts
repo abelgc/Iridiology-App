@@ -1,4 +1,4 @@
-import { anthropic } from './client'
+import { getAIProvider } from '@/lib/ai/get-provider'
 import { STANDARD_ANALYSIS_SYSTEM_PROMPT } from './prompts'
 import { buildPatientContext } from './context'
 import { parseReportResponse, type ParseError } from './parse'
@@ -57,6 +57,13 @@ async function parseWithRetry(
 }
 
 export async function analyzeIris(request: AnalysisRequest): Promise<ReportContent | AnalysisError> {
+  const provider = await getAIProvider()
+
+  const images = [
+    { data: request.rightIrisBase64, mediaType: 'image/jpeg' as const },
+    { data: request.leftIrisBase64, mediaType: 'image/jpeg' as const },
+  ]
+
   try {
     const patientContext = await buildPatientContext(request.patientId)
 
@@ -66,199 +73,63 @@ export async function analyzeIris(request: AnalysisRequest): Promise<ReportConte
       patientContext.practitionerCorrections,
     )
 
-    // Call Claude API with vision
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
-      system: STANDARD_ANALYSIS_SYSTEM_PROMPT,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: userPrompt,
-            },
-            {
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: 'image/jpeg',
-                data: request.rightIrisBase64,
-              },
-            },
-            {
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: 'image/jpeg',
-                data: request.leftIrisBase64,
-              },
-            },
-          ],
-        },
-      ],
+    // Call AI provider with vision
+    const response = await provider.complete({
+      systemPrompt: STANDARD_ANALYSIS_SYSTEM_PROMPT,
+      userText: userPrompt,
+      images,
+      maxTokens: 4096,
     })
 
     // Check for token limit
-    if (response.stop_reason === 'max_tokens') {
+    if (response.stopReason === 'max_tokens') {
       // Retry with 50% more tokens
-      const retryResponse = await anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 6144, // 4096 * 1.5
-        system: STANDARD_ANALYSIS_SYSTEM_PROMPT,
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: userPrompt,
-              },
-              {
-                type: 'image',
-                source: {
-                  type: 'base64',
-                  media_type: 'image/jpeg',
-                  data: request.rightIrisBase64,
-                },
-              },
-              {
-                type: 'image',
-                source: {
-                  type: 'base64',
-                  media_type: 'image/jpeg',
-                  data: request.leftIrisBase64,
-                },
-              },
-            ],
-          },
-        ],
+      const retryResponse = await provider.complete({
+        systemPrompt: STANDARD_ANALYSIS_SYSTEM_PROMPT,
+        userText: userPrompt,
+        images,
+        maxTokens: 6144, // 4096 * 1.5
       })
 
-      if (retryResponse.stop_reason === 'max_tokens') {
+      if (retryResponse.stopReason === 'max_tokens') {
         return {
           code: 'response_too_long',
           message: 'Response still truncated after increasing token limit',
         }
       }
 
-      const textContent = retryResponse.content.find((c) => c.type === 'text')
-      if (!textContent || textContent.type !== 'text') {
-        return {
-          code: 'analysis_failed',
-          message: 'No text content in API response',
-        }
-      }
-
-      const parseResult = await parseWithRetry(textContent.text)
+      const parseResult = await parseWithRetry(retryResponse.text)
       if ('code' in parseResult && parseResult.code === 'invalid_json') {
         // Retry with stronger instruction
         const strongerPrompt = `${userPrompt}\n\nIMPORTANT: Respond ONLY with valid JSON. No additional text.`
 
-        const finalResponse = await anthropic.messages.create({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 6144,
-          system: STANDARD_ANALYSIS_SYSTEM_PROMPT,
-          messages: [
-            {
-              role: 'user',
-              content: [
-                {
-                  type: 'text',
-                  text: strongerPrompt,
-                },
-                {
-                  type: 'image',
-                  source: {
-                    type: 'base64',
-                    media_type: 'image/jpeg',
-                    data: request.rightIrisBase64,
-                  },
-                },
-                {
-                  type: 'image',
-                  source: {
-                    type: 'base64',
-                    media_type: 'image/jpeg',
-                    data: request.leftIrisBase64,
-                  },
-                },
-              ],
-            },
-          ],
+        const finalResponse = await provider.complete({
+          systemPrompt: STANDARD_ANALYSIS_SYSTEM_PROMPT,
+          userText: strongerPrompt,
+          images,
+          maxTokens: 6144,
         })
 
-        const finalTextContent = finalResponse.content.find((c) => c.type === 'text')
-        if (!finalTextContent || finalTextContent.type !== 'text') {
-          return {
-            code: 'analysis_failed',
-            message: 'No text content in final API response',
-          }
-        }
-
-        const finalParseResult = await parseWithRetry(finalTextContent.text, 2)
+        const finalParseResult = await parseWithRetry(finalResponse.text, 2)
         return finalParseResult as ReportContent | AnalysisError
       }
 
       return parseResult as ReportContent | AnalysisError
     }
 
-    const textContent = response.content.find((c) => c.type === 'text')
-    if (!textContent || textContent.type !== 'text') {
-      return {
-        code: 'analysis_failed',
-        message: 'No text content in API response',
-      }
-    }
-
-    const parseResult = await parseWithRetry(textContent.text)
+    const parseResult = await parseWithRetry(response.text)
     if ('code' in parseResult && parseResult.code === 'invalid_json') {
       // Retry with stronger instruction
       const strongerPrompt = `${userPrompt}\n\nIMPORTANT: Respond ONLY with valid JSON. No additional text.`
 
-      const retryResponse = await anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
-        system: STANDARD_ANALYSIS_SYSTEM_PROMPT,
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: strongerPrompt,
-              },
-              {
-                type: 'image',
-                source: {
-                  type: 'base64',
-                  media_type: 'image/jpeg',
-                  data: request.rightIrisBase64,
-                },
-              },
-              {
-                type: 'image',
-                source: {
-                  type: 'base64',
-                  media_type: 'image/jpeg',
-                  data: request.leftIrisBase64,
-                },
-              },
-            ],
-          },
-        ],
+      const retryResponse = await provider.complete({
+        systemPrompt: STANDARD_ANALYSIS_SYSTEM_PROMPT,
+        userText: strongerPrompt,
+        images,
+        maxTokens: 4096,
       })
 
-      const retryTextContent = retryResponse.content.find((c) => c.type === 'text')
-      if (!retryTextContent || retryTextContent.type !== 'text') {
-        return {
-          code: 'analysis_failed',
-          message: 'No text content in retry API response',
-        }
-      }
-
-      const retryParseResult = await parseWithRetry(retryTextContent.text, 2)
+      const retryParseResult = await parseWithRetry(retryResponse.text, 2)
       return retryParseResult as ReportContent | AnalysisError
     }
 
@@ -277,48 +148,14 @@ export async function analyzeIris(request: AnalysisRequest): Promise<ReportConte
             patientContext.practitionerCorrections,
           )
 
-          const retryResponse = await anthropic.messages.create({
-            model: 'claude-sonnet-4-6',
-            max_tokens: 4096,
-            system: STANDARD_ANALYSIS_SYSTEM_PROMPT,
-            messages: [
-              {
-                role: 'user',
-                content: [
-                  {
-                    type: 'text',
-                    text: userPrompt,
-                  },
-                  {
-                    type: 'image',
-                    source: {
-                      type: 'base64',
-                      media_type: 'image/jpeg',
-                      data: request.rightIrisBase64,
-                    },
-                  },
-                  {
-                    type: 'image',
-                    source: {
-                      type: 'base64',
-                      media_type: 'image/jpeg',
-                      data: request.leftIrisBase64,
-                    },
-                  },
-                ],
-              },
-            ],
+          const retryResponse = await provider.complete({
+            systemPrompt: STANDARD_ANALYSIS_SYSTEM_PROMPT,
+            userText: userPrompt,
+            images,
+            maxTokens: 4096,
           })
 
-          const textContent = retryResponse.content.find((c) => c.type === 'text')
-          if (!textContent || textContent.type !== 'text') {
-            return {
-              code: 'analysis_failed',
-              message: 'No text content in retry API response',
-            }
-          }
-
-          const parseResult = await parseWithRetry(textContent.text)
+          const parseResult = await parseWithRetry(retryResponse.text)
           return parseResult as ReportContent | AnalysisError
         } catch {
           return {
