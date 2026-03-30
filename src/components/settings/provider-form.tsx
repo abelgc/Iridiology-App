@@ -26,6 +26,7 @@ export function ProviderForm({ initialSettings }: { initialSettings: SettingRow[
   const [openaiModel, setOpenaiModel] = useState(
     get('openai_model')?.value || 'gpt-4o'
   )
+
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -142,7 +143,7 @@ export function ProviderForm({ initialSettings }: { initialSettings: SettingRow[
             className="w-full px-3 py-2 border rounded-md text-sm font-mono"
             style={{ borderColor: 'oklch(0.8 0.04 175)' }}
           />
-          <p className="text-xs text-gray-400">e.g. gpt-4o, gpt-4.5, gpt-4.5-mini</p>
+          <p className="text-xs text-gray-400">e.g. gpt-4o, gpt-5.4, gpt-5.4-mini</p>
         </div>
       </div>
 

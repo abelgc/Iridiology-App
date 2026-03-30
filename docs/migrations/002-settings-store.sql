@@ -25,5 +25,5 @@ INSERT INTO settings (key, value) VALUES
   ('anthropic_api_key', ''),
   ('openai_api_key',    ''),
   ('anthropic_model',   'claude-sonnet-4-6'),
-  ('openai_model',      'gpt-4.5')
+  ('openai_model',      'gpt-4o')
 ON CONFLICT (key) DO NOTHING;

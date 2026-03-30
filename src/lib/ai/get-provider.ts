@@ -16,7 +16,7 @@ export async function getAIProvider(): Promise<AIProvider> {
 
   if (activeProvider === 'openai') {
     const key = map['openai_api_key'] || process.env.OPENAI_API_KEY || ''
-    const model = map['openai_model'] || 'gpt-4o'
+    const model = map['openai_model'] || process.env.OPENAI_MODEL || 'gpt-4o'
     return new OpenAIProvider(key, model)
   }
 
