@@ -27,13 +27,13 @@ export function ReportSection({
   const hasQualityWarning = content.includes('Hallazgo limitado por calidad de imagen')
 
   return (
-    <div className="border rounded-lg bg-white dark:bg-gray-900 mb-4">
-      <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800" onClick={() => setIsExpanded(!isExpanded)}>
+    <div className="border rounded-lg bg-white dark:bg-gray-900 mb-4 print:border-gray-300 print:mb-6">
+      <div className="flex items-center justify-between p-4 print:p-0 print:border-b print:pb-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 print:hover:bg-transparent" onClick={() => setIsExpanded(!isExpanded)}>
         <div className="flex items-center gap-3 flex-1">
           <ChevronDown
-            className={`w-5 h-5 transition-transform ${isExpanded ? '' : '-rotate-90'}`}
+            className={`w-5 h-5 transition-transform print:hidden ${isExpanded ? '' : '-rotate-90'}`}
           />
-          <h2 className="text-lg font-semibold">{label}</h2>
+          <h2 className="text-lg font-semibold print:text-base">{label}</h2>
           {hasQualityWarning && (
             <Badge variant="secondary" className="flex items-center gap-1">
               <AlertCircle className="w-3 h-3" />
@@ -63,8 +63,8 @@ export function ReportSection({
       </div>
 
       {isExpanded && (
-        <div className="px-4 pb-4 border-t">
-          <MarkdownRenderer content={content} className="text-sm" />
+        <div className="px-4 pb-4 border-t print:border-t-0 print:px-0 print:pb-4 print:pt-3">
+          <MarkdownRenderer content={content} className="text-sm print:text-sm print:leading-relaxed" />
         </div>
       )}
     </div>

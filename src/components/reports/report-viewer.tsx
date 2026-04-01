@@ -67,8 +67,8 @@ export function ReportViewer({ report, corrections = [] }: ReportViewerProps) {
     : report.report_content
 
   return (
-    <div className="space-y-4">
-      <div className="flex gap-2 mb-6 no-print items-center flex-wrap">
+    <div className="space-y-4 print:space-y-0">
+      <div className="flex gap-2 mb-6 no-print items-center flex-wrap print:hidden">
         <Link href={`/reports/${report.id}/edit`}>
           <Button variant="default">Edit Report</Button>
         </Link>

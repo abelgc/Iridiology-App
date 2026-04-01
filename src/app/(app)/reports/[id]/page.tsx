@@ -126,13 +126,13 @@ export default function ReportViewPage({ params }: { params: Promise<{ id: strin
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-8">
-      <div className="mb-8">
+    <div className="max-w-4xl mx-auto py-8 print:max-w-full print:mx-0 print:p-8">
+      <div className="mb-8 print:mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           {patient?.full_name || 'Patient'} - Report
         </h1>
         {session && (
-          <p className="text-gray-600">
+          <p className="text-gray-600 print:text-sm">
             Session Date: {new Date(session.session_date).toLocaleDateString()}
           </p>
         )}
