@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { ProviderForm } from '@/components/settings/provider-form'
 
+export const dynamic = 'force-dynamic'
+
 export default async function SettingsPage() {
   const supabase = createAdminClient()
   const { data } = await supabase
