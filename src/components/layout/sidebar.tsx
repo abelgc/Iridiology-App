@@ -17,7 +17,7 @@ export function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 flex flex-col bg-[oklch(0.25_0.06_175)] text-[oklch(0.95_0.01_80)]">
+    <aside className="fixed left-0 top-0 h-screen w-64 flex flex-col bg-[oklch(0.25_0.06_175)] text-[oklch(0.95_0.01_80)] print:hidden">
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5 border-b border-[oklch(0.32_0.07_175)]">
         <Image src="/logo.jpeg" alt="Narasimha Clay" width={44} height={44} className="rounded-full object-cover" />

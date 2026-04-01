@@ -39,7 +39,7 @@ export function Header() {
   }
 
   return (
-    <header className="fixed top-0 left-64 right-0 border-b border-[oklch(0.88_0.02_80)] bg-[oklch(0.98_0.008_80)] h-16 flex items-center justify-between px-6">
+    <header className="fixed top-0 left-64 right-0 border-b border-[oklch(0.88_0.02_80)] bg-[oklch(0.98_0.008_80)] h-16 flex items-center justify-between px-6 print:hidden">
       <h1 className="text-lg font-semibold text-[oklch(0.38_0.08_175)]">Narasimha Clay</h1>
       <div className="flex items-center gap-4">
         {userEmail && <span className="text-sm text-[oklch(0.50_0.03_60)]">{userEmail}</span>}
