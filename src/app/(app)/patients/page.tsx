@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { PatientList } from '@/components/patients/patient-list'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,7 +13,7 @@ async function PatientsContent({ searchParams }: PatientsPageProps) {
   const params = await searchParams
   const search = params.search
 
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   let query = supabase
     .from('patients')
