@@ -1,10 +1,10 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { patientCreateSchema } from '@/lib/validators/patient'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const searchParams = request.nextUrl.searchParams
     const search = searchParams.get('search')
 
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     const validated = patientCreateSchema.parse(body)
 
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const { data, error } = await supabase
       .from('patients')
       .insert([validated])

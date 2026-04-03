@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { reportUpdateSchema } from '@/lib/validators/report'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -6,7 +6,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { id } = await params
 
   try {
@@ -37,7 +37,7 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { id } = await params
 
   try {

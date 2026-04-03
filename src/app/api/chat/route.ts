@@ -1,10 +1,10 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { chatAboutReport } from '@/lib/claude/chat'
 import { ChatRequest } from '@/types/claude'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   try {
     const body = (await request.json()) as ChatRequest

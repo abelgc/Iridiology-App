@@ -1,10 +1,10 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { reviewIris } from '@/lib/claude/review'
 import { TechnicalReviewRequest } from '@/types/claude'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   try {
     const body = (await request.json()) as TechnicalReviewRequest
