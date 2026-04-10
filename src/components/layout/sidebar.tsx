@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { LayoutDashboard, Users, ScanEye, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useSidebar } from '@/lib/sidebar-state'
 
 const navItems = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -15,9 +16,28 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const { isOpen, close } = useSidebar()
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 flex flex-col bg-[oklch(0.25_0.06_175)] text-[oklch(0.95_0.01_80)] print:hidden">
+    <>
+      {/* Backdrop overlay - visible on mobile when drawer is open */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={close}
+          aria-label="Close sidebar"
+        />
+      )}
+
+      {/* Sidebar drawer */}
+      <aside
+        className={cn(
+          'fixed left-0 top-0 h-screen w-64 flex flex-col bg-[oklch(0.25_0.06_175)] text-[oklch(0.95_0.01_80)] print:hidden',
+          'transition-transform duration-300 ease-in-out',
+          'md:translate-x-0 md:block',
+          isOpen ? 'translate-x-0 z-50' : '-translate-x-full md:translate-x-0',
+        )}>
+
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5 border-b border-[oklch(0.32_0.07_175)]">
         <Image src="/logo.jpeg" alt="Narasimha Clay" width={44} height={44} className="rounded-full object-cover" />
@@ -37,6 +57,7 @@ export function Sidebar() {
             <Link
               key={item.label}
               href={item.href}
+              onClick={close}
               className={cn(
                 'flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors',
                 isActive
@@ -50,6 +71,7 @@ export function Sidebar() {
           )
         })}
       </nav>
-    </aside>
+      </aside>
+    </>
   )
 }

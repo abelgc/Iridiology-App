@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { LogOut } from 'lucide-react'
+import { LogOut, Menu } from 'lucide-react'
+import { useSidebar } from '@/lib/sidebar-state'
 
 export function Header() {
   const router = useRouter()
+  const { toggle } = useSidebar()
   const [userEmail, setUserEmail] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -39,8 +41,17 @@ export function Header() {
   }
 
   return (
-    <header className="fixed top-0 left-64 right-0 border-b border-[oklch(0.88_0.02_80)] bg-[oklch(0.98_0.008_80)] h-16 flex items-center justify-between px-6 print:hidden">
-      <h1 className="text-lg font-semibold text-[oklch(0.38_0.08_175)]">Narasimha Clay</h1>
+    <header className="fixed top-0 left-0 md:left-64 right-0 border-b border-[oklch(0.88_0.02_80)] bg-[oklch(0.98_0.008_80)] h-16 flex items-center justify-between px-6 print:hidden z-30" style={{ '--header-height': '64px' } as React.CSSProperties}>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={toggle}
+          className="md:hidden p-2 rounded-lg hover:bg-[oklch(0.88_0.02_80)] transition-colors"
+          aria-label="Toggle sidebar"
+        >
+          <Menu className="size-5 text-[oklch(0.38_0.08_175)]" />
+        </button>
+        <h1 className="text-lg font-semibold text-[oklch(0.38_0.08_175)]">Narasimha Clay</h1>
+      </div>
       <div className="flex items-center gap-4">
         {userEmail && <span className="text-sm text-[oklch(0.50_0.03_60)]">{userEmail}</span>}
         <Button

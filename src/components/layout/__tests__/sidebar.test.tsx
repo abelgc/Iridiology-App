@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { vi } from 'vitest'
 import { Sidebar } from '../sidebar'
+import { SidebarProvider } from '../sidebar-provider'
 
 // Mock Next.js navigation
 vi.mock('next/navigation', () => ({
@@ -9,16 +10,24 @@ vi.mock('next/navigation', () => ({
 
 describe('Sidebar', () => {
   it('renders all navigation links', () => {
-    render(<Sidebar />)
+    render(
+      <SidebarProvider>
+        <Sidebar />
+      </SidebarProvider>
+    )
 
     expect(screen.getByText('Dashboard')).toBeInTheDocument()
     expect(screen.getByText('Patients')).toBeInTheDocument()
     expect(screen.getByText('New Session')).toBeInTheDocument()
-    expect(screen.getByText('Reports')).toBeInTheDocument()
+    expect(screen.getByText('Settings')).toBeInTheDocument()
   })
 
   it('renders navigation links with correct hrefs', () => {
-    render(<Sidebar />)
+    render(
+      <SidebarProvider>
+        <Sidebar />
+      </SidebarProvider>
+    )
 
     const dashboardLink = screen.getByRole('link', { name: /dashboard/i })
     const patientsLink = screen.getByRole('link', { name: /patients/i })
@@ -30,7 +39,11 @@ describe('Sidebar', () => {
   })
 
   it('renders dashboard link with home href', () => {
-    render(<Sidebar />)
+    render(
+      <SidebarProvider>
+        <Sidebar />
+      </SidebarProvider>
+    )
 
     const dashboardLink = screen.getByRole('link', { name: /dashboard/i })
     expect(dashboardLink).toHaveAttribute('href', '/')
