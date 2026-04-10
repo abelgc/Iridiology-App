@@ -62,7 +62,7 @@ export function ProviderForm({ initialSettings }: { initialSettings: SettingRow[
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 max-w-lg">
+    <form onSubmit={handleSubmit} className="space-y-8 max-w-lg px-4 sm:px-0">
       {/* Active provider */}
       <div className="space-y-3">
         <label className="block text-sm font-medium" style={{ color: 'oklch(0.3 0.06 175)' }}>

@@ -83,7 +83,7 @@ export function ReportViewer({ report, corrections = [] }: ReportViewerProps) {
           <button
             onClick={lang === 'es' ? handleToggleLang : undefined}
             disabled={isTranslating}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-l-md border transition-colors ${
+            className={`px-4 py-2.5 text-sm font-semibold rounded-l-md border transition-colors min-h-[44px] flex items-center justify-center ${
               lang === 'en'
                 ? 'bg-[oklch(0.68_0.12_65)] text-[oklch(0.22_0.04_50)] border-[oklch(0.68_0.12_65)]'
                 : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
@@ -94,7 +94,7 @@ export function ReportViewer({ report, corrections = [] }: ReportViewerProps) {
           <button
             onClick={lang === 'en' ? handleToggleLang : undefined}
             disabled={isTranslating}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-r-md border-t border-b border-r transition-colors ${
+            className={`px-4 py-2.5 text-sm font-semibold rounded-r-md border-t border-b border-r transition-colors min-h-[44px] flex items-center justify-center ${
               lang === 'es'
                 ? 'bg-[oklch(0.68_0.12_65)] text-[oklch(0.22_0.04_50)] border-[oklch(0.68_0.12_65)]'
                 : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'

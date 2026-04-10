@@ -111,7 +111,7 @@ export function ReportChat({ reportId, patientName }: ReportChatProps) {
   }
 
   return (
-    <div className="flex flex-col h-full max-h-screen bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+    <div className="flex flex-col h-full max-h-[100dvh] bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
       {/* Messages container */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? (
@@ -155,8 +155,10 @@ export function ReportChat({ reportId, patientName }: ReportChatProps) {
             disabled={isLoading || !input.trim()}
             size="sm"
             className="px-4"
+            aria-label="Send message"
           >
             <Send className="w-4 h-4" />
+            <span className="sr-only">Send</span>
           </Button>
         </div>
         <Button

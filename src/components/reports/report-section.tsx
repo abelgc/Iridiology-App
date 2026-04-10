@@ -28,12 +28,12 @@ export function ReportSection({
 
   return (
     <div className="border rounded-lg bg-white dark:bg-gray-900 mb-4 print:border-gray-300 print:mb-6">
-      <div className="flex items-center justify-between p-4 print:p-0 print:border-b print:pb-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 print:hover:bg-transparent" onClick={() => setIsExpanded(!isExpanded)}>
+      <div className="flex items-center justify-between p-4 print:p-0 print:border-b print:pb-3 cursor-pointer hover:bg-gray-50 active:bg-gray-100 dark:hover:bg-gray-800 dark:active:bg-gray-700 print:hover:bg-transparent print:active:bg-transparent" onClick={() => setIsExpanded(!isExpanded)}>
         <div className="flex items-center gap-3 flex-1">
           <ChevronDown
             className={`w-5 h-5 transition-transform print:hidden ${isExpanded ? '' : '-rotate-90'}`}
           />
-          <h2 className="text-lg font-semibold print:text-base">{label}</h2>
+          <h2 className="text-base md:text-lg font-semibold print:text-base">{label}</h2>
           {hasQualityWarning && (
             <Badge variant="secondary" className="flex items-center gap-1">
               <AlertCircle className="w-3 h-3" />

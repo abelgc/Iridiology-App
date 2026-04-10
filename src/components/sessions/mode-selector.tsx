@@ -38,7 +38,7 @@ export function ModeSelector({ value, onChange }: ModeSelectorProps) {
             type="button"
             onClick={() => onChange(mode.id)}
             className={cn(
-              'relative flex items-start gap-3 p-4 border-2 rounded-lg text-left transition-colors',
+              'relative flex items-start gap-3 p-4 border-2 rounded-lg text-left transition-colors min-h-[44px]',
               value === mode.id
                 ? 'border-[oklch(0.68_0.12_65)] bg-[oklch(0.97_0.04_65)]'
                 : 'border-gray-200 bg-white hover:border-gray-300',
@@ -54,7 +54,7 @@ export function ModeSelector({ value, onChange }: ModeSelectorProps) {
             </div>
             <div className="flex-1">
               <p className="font-medium text-gray-900">{mode.label}</p>
-              <p className="text-sm text-gray-600 mt-0.5">{mode.description}</p>
+              <p className="text-sm text-gray-600 mt-0.5 hidden sm:block">{mode.description}</p>
             </div>
           </button>
         ))}

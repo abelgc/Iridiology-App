@@ -57,7 +57,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-[oklch(0.25_0.06_175)]">
-      <Card className="w-full max-w-sm p-8 bg-[oklch(0.98_0.008_80)] border-[oklch(0.88_0.02_80)]">
+      <Card className="w-full max-w-sm p-4 sm:p-8 mx-4 sm:mx-auto bg-[oklch(0.98_0.008_80)] border-[oklch(0.88_0.02_80)]">
         <div className="flex flex-col items-center mb-6">
           <Image src="/logo.jpeg" alt="Narasimha Clay" width={72} height={72} className="rounded-full object-cover mb-3" />
           <h1 className="text-xl font-bold text-[oklch(0.22_0.04_50)]">Narasimha Clay</h1>
@@ -76,6 +76,7 @@ export default function LoginPage() {
             <Input
               type="email"
               placeholder="your@email.com"
+              autoComplete="email"
               {...register('email')}
               aria-invalid={!!errors.email}
             />
@@ -89,6 +90,7 @@ export default function LoginPage() {
             <Input
               type="password"
               placeholder="••••••"
+              autoComplete="current-password"
               {...register('password')}
               aria-invalid={!!errors.password}
             />

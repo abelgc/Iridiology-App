@@ -133,7 +133,7 @@ export function PatientForm({ patient, onSubmit, isLoading }: PatientFormProps) 
             <FormItem>
               <FormLabel>Phone</FormLabel>
               <FormControl>
-                <Input placeholder="Phone number" {...field} value={field.value || ''} />
+                <Input type="tel" placeholder="Phone number" {...field} value={field.value || ''} />
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -15,7 +15,7 @@ export function ChatMessage({ message, isStreaming = false }: ChatMessageProps) 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
       <div
-        className={`max-w-xs lg:max-w-md xl:max-w-lg px-4 py-3 rounded-lg ${
+        className={`max-w-[85vw] sm:max-w-xs md:max-w-md lg:max-w-lg px-4 py-3 rounded-lg ${
           isUser
             ? 'bg-blue-500 text-white rounded-br-none'
             : 'bg-gray-100 text-gray-900 rounded-bl-none dark:bg-gray-800 dark:text-gray-100'
