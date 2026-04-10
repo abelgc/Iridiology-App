@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Upload, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -14,7 +14,12 @@ interface ImageUploadProps {
 export function ImageUpload({ label, value, onChange, required = false }: ImageUploadProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isTouchDevice, setIsTouchDevice] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0)
+  }, [])
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -84,7 +89,7 @@ export function ImageUpload({ label, value, onChange, required = false }: ImageU
 
       {value ? (
         <div className="space-y-2">
-          <div className="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden">
+          <div className="relative w-full h-32 md:h-48 bg-gray-100 rounded-lg overflow-hidden">
             <img
               src={`data:image/jpeg;base64,${value}`}
               alt="Preview"
@@ -94,7 +99,7 @@ export function ImageUpload({ label, value, onChange, required = false }: ImageU
           <button
             type="button"
             onClick={handleRemove}
-            className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 font-medium"
+            className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 font-medium min-h-[44px] px-2 py-2"
           >
             <X size={16} />
             Remove
@@ -102,12 +107,12 @@ export function ImageUpload({ label, value, onChange, required = false }: ImageU
         </div>
       ) : (
         <div
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
+          onDragOver={!isTouchDevice ? handleDragOver : undefined}
+          onDragLeave={!isTouchDevice ? handleDragLeave : undefined}
+          onDrop={!isTouchDevice ? handleDrop : undefined}
           onClick={handleClick}
           className={cn(
-            'relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors',
+            'relative border-2 border-dashed rounded-lg p-6 md:p-8 text-center cursor-pointer transition-colors min-h-[160px] md:min-h-[200px] flex flex-col items-center justify-center',
             isDragging
               ? 'border-blue-400 bg-blue-50'
               : 'border-gray-300 bg-gray-50 hover:border-gray-400',
@@ -122,8 +127,12 @@ export function ImageUpload({ label, value, onChange, required = false }: ImageU
             className="hidden"
           />
           <Upload size={32} className="mx-auto mb-2 text-gray-400" />
-          <p className="text-sm font-medium text-gray-700">Drag and drop your image here</p>
-          <p className="text-xs text-gray-500 mt-1">or click to browse</p>
+          <p className="text-sm font-medium text-gray-700">
+            {isTouchDevice ? 'Tap to browse your photos' : 'Drag and drop your image here'}
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            {isTouchDevice ? 'or use photo library' : 'or click to browse'}
+          </p>
         </div>
       )}
 

@@ -50,11 +50,11 @@ export function ReportEditor({ report, onSave }: ReportEditorProps) {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Section selector */}
         <div className="space-y-4">
           <h2 className="text-lg font-semibold">Sections</h2>
-          <div className="space-y-2 border rounded-lg p-4 bg-gray-50 dark:bg-gray-900 max-h-96 overflow-y-auto">
+          <div className="space-y-2 border rounded-lg p-4 bg-gray-50 dark:bg-gray-900 max-h-80 md:max-h-96 overflow-y-auto">
             {REPORT_SECTION_KEYS.map((sectionKey) => (
               <button
                 key={sectionKey}
@@ -80,7 +80,7 @@ export function ReportEditor({ report, onSave }: ReportEditorProps) {
                 <textarea
                   value={currentContent}
                   onChange={(e) => handleSectionChange(e.target.value)}
-                  className="w-full h-64 p-3 border rounded-lg font-mono text-sm"
+                  className="w-full h-48 md:h-64 p-3 border rounded-lg font-mono text-sm"
                   placeholder="Enter section content in Markdown..."
                 />
               </div>

@@ -130,7 +130,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       </div>
 
       {/* Chat container */}
-      <div className="h-96">
+      <div className="h-[calc(100dvh-var(--header-height)-20rem)] min-h-96">
         <ReportChat
           reportId={reportId}
           patientName={patient.full_name}

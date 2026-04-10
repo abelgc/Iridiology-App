@@ -212,9 +212,9 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
+    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-3 md:space-y-6 px-3 md:px-0">
       {/* Patient Selector */}
-      <Card className="p-6">
+      <Card className="p-4 md:p-6">
         <label className="block text-sm font-medium text-gray-700 mb-3">
           Patient
           <span className="text-red-500 ml-1">*</span>
@@ -247,7 +247,7 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
       </Card>
 
       {/* Mode Selector */}
-      <Card className="p-6">
+      <Card className="p-4 md:p-6">
         <ModeSelector
           value={formData.mode}
           onChange={(mode) => setFormData(prev => ({ ...prev, mode }))}
@@ -255,42 +255,42 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
       </Card>
 
       {/* Session Date */}
-      <Card className="p-6">
+      <Card className="p-4 md:p-6">
         <label className="block text-sm font-medium text-gray-700 mb-3">Session Date</label>
         <input
           type="date"
           value={formData.sessionDate}
           onChange={(e) => { const v = e.target.value; setFormData(prev => ({ ...prev, sessionDate: v })) }}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px]"
         />
       </Card>
 
       {/* Symptoms */}
-      <Card className="p-6">
+      <Card className="p-4 md:p-6">
         <label className="block text-sm font-medium text-gray-700 mb-3">Current Symptoms</label>
         <textarea
           value={formData.symptoms}
           onChange={(e) => { const v = e.target.value; setFormData(prev => ({ ...prev, symptoms: v })) }}
           rows={3}
           placeholder="Enter any current symptoms..."
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px]"
         />
       </Card>
 
       {/* Practitioner Notes */}
-      <Card className="p-6">
+      <Card className="p-4 md:p-6">
         <label className="block text-sm font-medium text-gray-700 mb-3">Practitioner Notes</label>
         <textarea
           value={formData.practitionerNotes}
           onChange={(e) => { const v = e.target.value; setFormData(prev => ({ ...prev, practitionerNotes: v })) }}
           rows={3}
           placeholder="Enter any relevant notes..."
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px]"
         />
       </Card>
 
       {/* Images based on mode */}
-      <Card className="p-6 space-y-6">
+      <Card className="p-4 md:p-6 space-y-3 md:space-y-6">
         {formData.mode === 'standard' && (
           <>
             <div>
@@ -444,8 +444,8 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
         </Card>
       )}
 
-      <div className="flex gap-3">
-        <Button type="submit" size="lg" disabled={isSubmitting}>
+      <div className="flex gap-3 pt-2">
+        <Button type="submit" size="lg" disabled={isSubmitting} className="w-full md:w-auto min-h-[44px]">
           {isSubmitting ? (
             <>
               <Loader2 size={16} className="mr-2 animate-spin" />

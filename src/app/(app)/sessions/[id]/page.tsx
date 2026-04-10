@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { BackButton } from '@/components/ui/back-button'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import Link from 'next/link'
@@ -180,6 +181,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="max-w-2xl mx-auto py-8">
+      <BackButton />
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Session Details</h1>
         <p className="text-gray-600">View session information and analysis results</p>
@@ -196,7 +198,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
             <div>{getStatusBadge(session.status)}</div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
               <p className="text-sm font-medium text-gray-600">Session Date</p>
               <p className="text-base text-gray-900">
@@ -298,7 +300,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
       {/* Patient info */}
       <Card className="p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Patient Information</h3>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {session.patients.date_of_birth && (
             <div>
               <p className="text-sm text-gray-600">Date of Birth</p>

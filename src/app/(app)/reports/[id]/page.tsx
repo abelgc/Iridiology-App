@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { BackButton } from '@/components/ui/back-button'
 import { ReportViewer } from '@/components/reports/report-viewer'
 import { AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -127,6 +128,7 @@ export default function ReportViewPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div className="max-w-4xl mx-auto py-8 print:max-w-full print:mx-0 print:p-8">
+      <BackButton />
       <div className="mb-8 print:mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           {patient?.full_name || 'Patient'} - Report
