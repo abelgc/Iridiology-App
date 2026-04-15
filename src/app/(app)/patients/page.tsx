@@ -17,7 +17,7 @@ async function PatientsContent({ searchParams }: PatientsPageProps) {
 
   let query = supabase
     .from('patients')
-    .select('*')
+    .select('*, sessions(created_at)')
     .order('full_name', { ascending: true })
 
   if (search) {

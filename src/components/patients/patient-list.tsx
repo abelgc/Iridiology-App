@@ -13,8 +13,18 @@ import {
 } from '@/components/ui/table'
 import Link from 'next/link'
 
+type PatientWithSessions = Patient & { sessions?: { created_at: string }[] | null }
+
 interface PatientListProps {
-  patients: Patient[]
+  patients: PatientWithSessions[]
+}
+
+function getLastSession(sessions?: { created_at: string }[] | null): string {
+  if (!sessions || sessions.length === 0) return '-'
+  const latest = sessions.reduce((a, b) =>
+    new Date(a.created_at) > new Date(b.created_at) ? a : b
+  )
+  return new Date(latest.created_at).toLocaleString()
 }
 
 export function PatientList({ patients }: PatientListProps) {
@@ -29,6 +39,7 @@ export function PatientList({ patients }: PatientListProps) {
               <TableHead>Date of Birth (Age)</TableHead>
               <TableHead>Gender</TableHead>
               <TableHead>Email</TableHead>
+              <TableHead>Last Session</TableHead>
               <TableHead className="w-24">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -43,6 +54,7 @@ export function PatientList({ patients }: PatientListProps) {
                 </TableCell>
                 <TableCell>{patient.gender || '-'}</TableCell>
                 <TableCell>{patient.email || '-'}</TableCell>
+                <TableCell>{getLastSession(patient.sessions)}</TableCell>
                 <TableCell>
                   <Button
                     asChild
@@ -81,6 +93,10 @@ export function PatientList({ patients }: PatientListProps) {
             <div>
               <p className="text-xs text-gray-600 font-medium">Email</p>
               <p className="text-gray-900 break-all">{patient.email || '-'}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-600 font-medium">Last Session</p>
+              <p className="text-gray-900">{getLastSession(patient.sessions)}</p>
             </div>
             <div className="pt-2">
               <Button

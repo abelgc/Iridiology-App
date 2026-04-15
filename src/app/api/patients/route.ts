@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
 
     const validated = patientCreateSchema.parse(body)
+    if (validated.date_of_birth === '') validated.date_of_birth = null
 
     const supabase = createAdminClient()
     const { data, error } = await supabase

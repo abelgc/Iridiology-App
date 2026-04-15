@@ -8,8 +8,7 @@ const TRANSLATE_SYSTEM_PROMPT = `You are a medical translator specialising in ir
 RULES:
 - Translate ONLY the values in the JSON, never the keys.
 - Preserve all Markdown formatting (**, ##, tables, bullet points).
-- section_13_protocolo_tratamiento must remain an empty string "".
-- Return ONLY a valid JSON object with the same 14 keys. No extra text.`
+- Return ONLY a valid JSON object with the same keys. No extra text.`
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,10 +28,9 @@ export async function POST(request: NextRequest) {
 
     const content = report.report_content as ReportContent
 
-    // Build a compact JSON with only non-empty sections (skip section_13)
+    // Build a compact JSON with only non-empty sections
     const toTranslate: Partial<ReportContent> = {}
     for (const key of REPORT_SECTION_KEYS) {
-      if (key === 'section_13_protocolo_tratamiento') continue
       toTranslate[key] = content[key] || ''
     }
 
@@ -51,8 +49,6 @@ export async function POST(request: NextRequest) {
       .trim()
 
     const translated = JSON.parse(cleaned) as Partial<ReportContent>
-    // section_13 always empty
-    translated['section_13_protocolo_tratamiento'] = ''
 
     return NextResponse.json({ content: translated })
   } catch (err) {

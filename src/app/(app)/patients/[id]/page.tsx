@@ -3,16 +3,9 @@ import { notFound } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { BackButton } from '@/components/ui/back-button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { formatDate, calculateAge } from '@/lib/utils'
 import Link from 'next/link'
+import { SessionsTable } from '@/components/patients/sessions-table'
 
 interface PatientDetailPageProps {
   params: Promise<{ id: string }>
@@ -130,82 +123,7 @@ export default async function PatientDetailPage({
             <CardTitle>Sessions</CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Table view - visible on md and above */}
-            <div className="hidden md:block rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Mode</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-24">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sessionsList.map((session) => (
-                    <TableRow key={session.id}>
-                      <TableCell>{formatDate(session.session_date)}</TableCell>
-                      <TableCell className="capitalize">
-                        {session.analysis_mode?.replace(/_/g, ' ')}
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
-                            session.status === 'completed'
-                              ? 'bg-green-100 text-green-800'
-                              : session.status === 'error'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-yellow-100 text-yellow-800'
-                          }`}
-                        >
-                          {session.status}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Button asChild variant="outline" size="sm">
-                          <Link href={`/sessions/${session.id}`}>View</Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-
-            {/* Card view - visible on sm and below */}
-            <div className="md:hidden space-y-4">
-              {sessionsList.map((session) => (
-                <div key={session.id} className="rounded-lg border p-4 space-y-3">
-                  <div>
-                    <p className="text-xs text-gray-600 font-medium">Date</p>
-                    <p className="text-gray-900">{formatDate(session.session_date)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-600 font-medium">Mode</p>
-                    <p className="text-gray-900 capitalize">{session.analysis_mode?.replace(/_/g, ' ')}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-600 font-medium">Status</p>
-                    <span
-                      className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
-                        session.status === 'completed'
-                          ? 'bg-green-100 text-green-800'
-                          : session.status === 'error'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                      }`}
-                    >
-                      {session.status}
-                    </span>
-                  </div>
-                  <div className="pt-2">
-                    <Button asChild variant="outline" size="sm" className="w-full">
-                      <Link href={`/sessions/${session.id}`}>View</Link>
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <SessionsTable sessions={sessionsList} />
           </CardContent>
         </Card>
       )}

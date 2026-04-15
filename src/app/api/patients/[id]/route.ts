@@ -41,6 +41,7 @@ export async function PUT(
     const body = await request.json()
 
     const validated = patientUpdateSchema.parse(body)
+    if (validated.date_of_birth === '') validated.date_of_birth = null
 
     const supabase = createAdminClient()
     const { data, error } = await supabase
