@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import { ReportSection } from '../report-section'
 
 describe('ReportSection', () => {
-  const mockSection = 'section_1_terreno_general'
+  const mockSection = 'section_1_general_terrain'
   const mockContent = 'This is a sample report content with some findings.'
   const mockOnEdit = vi.fn()
 
@@ -16,7 +16,7 @@ describe('ReportSection', () => {
       />
     )
 
-    expect(screen.getByText('Terreno General')).toBeInTheDocument()
+    expect(screen.getByText('General Terrain')).toBeInTheDocument()
   })
 
   it('shows quality warning when content contains "Hallazgo limitado por calidad de imagen"', () => {

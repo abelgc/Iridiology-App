@@ -1,8 +1,8 @@
 import { z } from 'zod'
 import { REPORT_SECTION_KEYS } from '@/types/report'
 
-// section_13 (protocol) is intentionally left empty for the practitioner to fill manually
-const OPTIONAL_SECTIONS = new Set(['section_13_protocolo_tratamiento'])
+// No optional sections - all 12 sections must be provided
+const OPTIONAL_SECTIONS = new Set<string>()
 
 export const reportContentSchema = z.object(
   Object.fromEntries(

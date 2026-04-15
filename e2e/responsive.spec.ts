@@ -2,9 +2,8 @@ import { test, expect, devices } from '@playwright/test';
 
 // Test tablet responsiveness
 test.describe('Responsive Design - Tablet', () => {
-  test.use({ ...devices['iPad Pro'] });
-
   test('sidebar should adapt to tablet layout', async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto('/');
 
     // Sidebar should be visible or have a toggle on tablet
@@ -16,6 +15,7 @@ test.describe('Responsive Design - Tablet', () => {
   });
 
   test('navigation should be accessible on tablet', async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto('/');
 
     // Check that navigation elements are clickable
@@ -25,6 +25,7 @@ test.describe('Responsive Design - Tablet', () => {
   });
 
   test('forms should be readable on tablet', async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto('/');
 
     // Check viewport size for tablet
@@ -35,9 +36,8 @@ test.describe('Responsive Design - Tablet', () => {
 });
 
 test.describe('Responsive Design - Desktop', () => {
-  test.use({ ...devices['Desktop Chrome'] });
-
   test('layout should be full width on desktop', async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
     await page.goto('/');
 
     const viewportSize = page.viewportSize();
@@ -45,6 +45,7 @@ test.describe('Responsive Design - Desktop', () => {
   });
 
   test('desktop navigation should be visible', async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
     await page.goto('/');
 
     const nav = page.locator('nav');

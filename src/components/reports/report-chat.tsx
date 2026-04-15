@@ -33,7 +33,8 @@ export function ReportChat({ reportId, patientName }: ReportChatProps) {
       role: 'user',
       content: input,
     }
-    setMessages((prev) => [...prev, userMessage])
+    const userInputText = input
+    setMessages((prev) => [...prev, userMessage, { role: 'assistant', content: '' }])
     setInput('')
     setIsLoading(true)
 
@@ -45,7 +46,7 @@ export function ReportChat({ reportId, patientName }: ReportChatProps) {
         },
         body: JSON.stringify({
           reportId,
-          message: input,
+          message: userInputText,
           chatHistory: messages,
         }),
       })
