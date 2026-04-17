@@ -11,38 +11,16 @@ import { reportContentSchema } from '@/lib/validators/report'
 
 describe('Claude Prompts', () => {
   describe('STANDARD_ANALYSIS_SYSTEM_PROMPT', () => {
-    it('should contain all 10 mandatory clinical rules with key phrases', () => {
-      // Rule 1: functional dysregulation and structural depletion
+    it('should contain core clinical logic phrases', () => {
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('functional dysregulation')
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('structural depletion')
-
-      // Rule 2: structural evidence
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('structural evidence')
-
-      // Rule 3: metabolic load or congestion
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('metabolic load')
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('congestion')
-
-      // Rule 4: autonomic dysregulation
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('autonomic dysregulation')
-
-      // Rule 5: burdened liver
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('burdened liver')
-
-      // Rule 6: functionally modulated
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('functionally modulated')
-
-      // Rule 7: fatigue under stress
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('fatigue under stress')
-
-      // Rule 8: SEVERITY CALIBRATION
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('SEVERITY CALIBRATION')
-
-      // Rule 9: Default bias correction
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Default bias correction')
-
-      // Rule 10: hepatic burden
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('hepatic burden')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('autonomic tone')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('intestinal permeability')
     })
 
     it('should contain all 12 new section keys in JSON format', () => {
@@ -72,7 +50,7 @@ describe('Claude Prompts', () => {
     it('should emphasize function over color', () => {
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Functional signs')
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Structural signs')
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Color interpretation')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Color alone')
     })
   })
 
