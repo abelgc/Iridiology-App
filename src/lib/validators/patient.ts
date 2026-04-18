@@ -3,6 +3,9 @@ import { z } from 'zod'
 export const patientCreateSchema = z.object({
   full_name: z.string().min(1, 'Name is required').max(255),
   date_of_birth: z.string().optional().nullable(),
+  country_of_birth: z.string().optional().nullable(),
+  city_of_birth: z.string().optional().nullable(),
+  time_of_day: z.enum(['morning', 'evening']).optional().nullable(),
   gender: z.string().optional().nullable(),
   email: z.string().email('Invalid email').optional().nullable().or(z.literal('')),
   phone: z.string().optional().nullable(),
