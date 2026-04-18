@@ -16,7 +16,7 @@ interface ChakraRecommendation {
 }
 
 export function shouldEnhanceWithJyotish(data: any): boolean {
-  return (
+  return !!(
     data?.date_of_birth &&
     typeof data.date_of_birth === 'string' &&
     data?.country_of_birth &&
