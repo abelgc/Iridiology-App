@@ -38,6 +38,9 @@ export function PatientForm({ patient, onSubmit, isLoading }: PatientFormProps) 
     defaultValues: {
       full_name: patient?.full_name || '',
       date_of_birth: patient?.date_of_birth || '',
+      country_of_birth: patient?.country_of_birth || '',
+      city_of_birth: patient?.city_of_birth || '',
+      time_of_day: patient?.time_of_day || '',
       gender: patient?.gender || '',
       email: patient?.email || '',
       phone: patient?.phone || '',
@@ -82,6 +85,56 @@ export function PatientForm({ patient, onSubmit, isLoading }: PatientFormProps) 
               <FormLabel>Date of Birth</FormLabel>
               <FormControl>
                 <Input type="date" {...field} value={field.value || ''} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="country_of_birth"
+          render={({ field }: any) => (
+            <FormItem>
+              <FormLabel>Country of Birth (optional)</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g., India" {...field} value={field.value || ''} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="city_of_birth"
+          render={({ field }: any) => (
+            <FormItem>
+              <FormLabel>City of Birth (optional)</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g., Mumbai" {...field} value={field.value || ''} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="time_of_day"
+          render={({ field }: any) => (
+            <FormItem>
+              <FormLabel>Time of Birth (optional)</FormLabel>
+              <FormControl>
+                <Select value={field.value || ''} onValueChange={field.onChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="morning">Morning</SelectItem>
+                    <SelectItem value="evening">Evening</SelectItem>
+                  </SelectContent>
+                </Select>
               </FormControl>
               <FormMessage />
             </FormItem>
