@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { analyzeIris } from '@/lib/claude/analyze'
 import { AnalysisRequest } from '@/types/claude'
 import { NextRequest, NextResponse } from 'next/server'
+import { enhanceEmotionalFieldWithJyotish, shouldEnhanceWithJyotish } from '@/lib/claude/enhance-emotional-field'
 
 export async function POST(request: NextRequest) {
   const supabase = createAdminClient()
@@ -44,9 +45,27 @@ export async function POST(request: NextRequest) {
           return
         }
 
+        let finalReport = result
+
+        // Enhance emotional field with Jyotish if all astrological fields present
+        if (shouldEnhanceWithJyotish(patientData)) {
+          console.log(`[analyze] session ${sessionId} — enhancing emotional field with Jyotish...`)
+          finalReport = await enhanceEmotionalFieldWithJyotish(
+            result,
+            patientData.full_name,
+            {
+              date_of_birth: patientData.date_of_birth!,
+              country_of_birth: patientData.country_of_birth!,
+              city_of_birth: patientData.city_of_birth!,
+              time_of_day: patientData.time_of_day as 'morning' | 'evening',
+            },
+          )
+          console.log(`[analyze] session ${sessionId} — emotional field enhanced ✓`)
+        }
+
         const { error: reportError } = await bg
           .from('reports')
-          .insert({ session_id: sessionId, report_content: result, report_version: 1, is_edited: false })
+          .insert({ session_id: sessionId, report_content: finalReport, report_version: 1, is_edited: false })
 
         if (reportError) {
           await bg.from('sessions').update({ status: 'error' }).eq('id', sessionId)
