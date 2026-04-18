@@ -15,16 +15,16 @@ interface ChakraRecommendation {
   reasoning: string
 }
 
-export function shouldEnhanceWithJyotish(data: Partial<JyotishEnhancementData>): data is JyotishEnhancementData {
-  if (!data.date_of_birth || !data.country_of_birth || !data.city_of_birth || !data.time_of_day) {
-    return false
-  }
-
-  if (data.time_of_day !== 'morning' && data.time_of_day !== 'evening') {
-    return false
-  }
-
-  return true
+export function shouldEnhanceWithJyotish(data: any): boolean {
+  return (
+    data?.date_of_birth &&
+    typeof data.date_of_birth === 'string' &&
+    data?.country_of_birth &&
+    typeof data.country_of_birth === 'string' &&
+    data?.city_of_birth &&
+    typeof data.city_of_birth === 'string' &&
+    (data?.time_of_day === 'morning' || data?.time_of_day === 'evening')
+  )
 }
 
 export async function enhanceEmotionalFieldWithJyotish(

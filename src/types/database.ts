@@ -4,6 +4,9 @@ export interface Patient {
   updated_at: string
   full_name: string
   date_of_birth: string | null
+  country_of_birth: string | null
+  city_of_birth: string | null
+  time_of_day: 'morning' | 'evening' | null
   gender: string | null
   email: string | null
   phone: string | null

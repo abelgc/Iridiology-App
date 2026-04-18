@@ -40,7 +40,7 @@ export function PatientForm({ patient, onSubmit, isLoading }: PatientFormProps) 
       date_of_birth: patient?.date_of_birth || '',
       country_of_birth: patient?.country_of_birth || '',
       city_of_birth: patient?.city_of_birth || '',
-      time_of_day: patient?.time_of_day || '',
+      time_of_day: patient?.time_of_day || null,
       gender: patient?.gender || '',
       email: patient?.email || '',
       phone: patient?.phone || '',
