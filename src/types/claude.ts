@@ -6,6 +6,9 @@ export interface AnalysisRequest {
   patientData: {
     full_name: string
     date_of_birth: string | null
+    country_of_birth?: string | null
+    city_of_birth?: string | null
+    time_of_day?: 'morning' | 'evening' | null
     gender: string | null
     general_history: string | null
     symptoms: string | null
