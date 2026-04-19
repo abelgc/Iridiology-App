@@ -71,30 +71,25 @@ export async function getAIProvider(tier: 'basic' | 'premium') {
 
 ## Product Flow
 
-### Client Journey (MVP)
+### Client Journey (MVP — Stateless, No Login)
 
 ```
-1. Sign up / Login (public page)
-2. Select report tier ($12 or $19.90)
-3. Answer 9-question intake:
-   - Name, email, main concern, symptom duration, medications
-   - Date of birth, country of birth, city of birth, time of day
-4. Pay (before analysis)
-5. Upload iris images (2: right + left)
-6. System analyzes, generates 11-section Spanish report
-   → If all birth data + time provided: Calculate emotional field + chakra recommendation
-7. View report (read-only)
-8. Optional: Share report or request follow-up
+1. Land on /client → choose language (EN/ES) + tier ($12 or $19.90)
+2. Answer 9-question intake (name, email, concern, duration, meds, DOB, country, city, time of day)
+3. Mock payment (Phase 1) / Real Stripe (Phase 2)
+4. View tutorial → upload 2 iris images (right + left)
+5. System analyzes (Haiku basic / Sonnet premium), generates 11-section report in chosen language
+   → If birth data complete: Jyotish enhancement on emotional field
+6. View report (read-only) at /client/report/[token]
+7. Receive email with permanent download link
+8. Optional: Print, request re-email, book practitioner (Phase 2)
 ```
 
-### Practitioner Journey (Unchanged)
+### Practitioner Journey (MVP — Unchanged)
 
-```
-Existing: Patients → Sessions → Reports → Edit/Chat
-NEW: Can see "Client Submissions" tab with completed client intake + report
-     Can request deeper questionnaire (optional)
-     Can refine report if needed
-```
+Existing flow preserved exactly. Practitioner sees nothing about client self-service in Phase 1.
+
+Practitioner integration (viewing client submissions, refining reports, follow-up booking) deferred to Phase 2.
 
 ---
 
@@ -105,20 +100,27 @@ NEW: Can see "Client Submissions" tab with completed client intake + report
 
 ### New Tables
 
+**Decision: Decouple from sessions/patients tables.** Client analyses do NOT use the existing `patients` or `sessions` tables (those require `full_name NOT NULL` and `patient_id NOT NULL`). Client_analyses stores the report directly via foreign key to `reports`, but does NOT create patient records.
+
+**Decision: Two-stage retention.** The row is kept forever (so report token works forever). Only PII fields are nulled after 30 days via cron.
+
 ```sql
--- Client analysis sessions (NO USER ACCOUNT NEEDED)
+-- Client analysis sessions (standalone, NOT linked to patients table)
 CREATE TABLE client_analyses (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  -- Payment info
-  payment_tier VARCHAR(20) NOT NULL CHECK (payment_tier IN ('basic_12', 'premium_19.90')),
-  amount DECIMAL(10, 2) NOT NULL,
-  currency VARCHAR(3) DEFAULT 'EUR',
-  stripe_payment_intent_id TEXT UNIQUE,
-  paid_at TIMESTAMP WITH TIME ZONE NOT NULL,
-  language VARCHAR(5) DEFAULT 'es' CHECK (language IN ('en', 'es')),
   
-  -- Intake (temporary, deleted after 30 days unless client books)
-  email TEXT NOT NULL, -- For report delivery only
+  -- Payment info (paid_at nullable for MVP mock-payment mode)
+  payment_tier VARCHAR(20) NOT NULL CHECK (payment_tier IN ('basic_12', 'premium_19_90')),
+  amount DECIMAL(10, 2) NOT NULL,
+  currency VARCHAR(3) NOT NULL DEFAULT 'EUR',
+  stripe_payment_intent_id TEXT UNIQUE,
+  paid_at TIMESTAMP WITH TIME ZONE, -- NULL in MVP mock mode
+  is_mock_payment BOOLEAN DEFAULT FALSE, -- TRUE in dev/testing
+  
+  language VARCHAR(2) NOT NULL DEFAULT 'es' CHECK (language IN ('en', 'es')),
+  
+  -- Intake fields (PII — nulled after pii_expires_at)
+  email TEXT, -- nullable so cron can clear after 30d
   main_complaint TEXT,
   symptom_duration TEXT,
   current_medications TEXT,
@@ -127,45 +129,67 @@ CREATE TABLE client_analyses (
   city_of_birth TEXT,
   time_of_day VARCHAR(10) CHECK (time_of_day IN ('morning', 'evening')),
   
-  -- Session link to practitioner data (if booked)
-  session_id UUID REFERENCES sessions(id) ON DELETE SET NULL,
+  -- Report (PERMANENT — never deleted, this is what client paid for)
+  report_id UUID REFERENCES reports(id) ON DELETE SET NULL,
+  report_download_token TEXT UNIQUE NOT NULL, -- Generated at row creation, UUID v4
   
-  -- Report
-  report_id UUID REFERENCES reports(id) ON DELETE CASCADE,
-  report_download_token TEXT UNIQUE, -- One-time or permanent link token
+  -- Status tracking
+  status VARCHAR(20) NOT NULL DEFAULT 'intake_pending' 
+    CHECK (status IN ('intake_pending', 'paid', 'analyzing', 'completed', 'failed')),
+  failure_reason TEXT,
   
   -- Timestamps
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   report_delivered_at TIMESTAMP WITH TIME ZONE,
-  expires_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() + INTERVAL '30 days'
+  pii_expires_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() + INTERVAL '30 days')
 );
 
--- No user_profiles or user accounts table needed for MVP
+CREATE INDEX idx_client_analyses_token ON client_analyses(report_download_token);
+CREATE INDEX idx_client_analyses_status ON client_analyses(status);
+CREATE INDEX idx_client_analyses_pii_expires ON client_analyses(pii_expires_at) WHERE email IS NOT NULL;
+
+-- Reports table modification: make session_id nullable (client analyses don't have sessions)
+ALTER TABLE reports ALTER COLUMN session_id DROP NOT NULL;
+
+-- RLS: client_analyses is server-only (admin/service-role access only)
+ALTER TABLE client_analyses ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Service role only"
+  ON client_analyses FOR ALL
+  USING (false); -- No client/anon access; all access via API routes using service role
+
+-- Reports table: existing RLS allows authenticated users (practitioner) to read all reports
+-- Client report access happens via API route using token, not direct DB access
+```
+
+**Cleanup mechanism:** Use Supabase pg_cron extension to NULL PII fields nightly:
+
+```sql
+-- Schedule nightly cleanup
+SELECT cron.schedule(
+  'clear-client-pii',
+  '0 3 * * *', -- 3 AM daily
+  $$
+    UPDATE client_analyses
+    SET email = NULL,
+        main_complaint = NULL,
+        symptom_duration = NULL,
+        current_medications = NULL,
+        date_of_birth = NULL,
+        country_of_birth = NULL,
+        city_of_birth = NULL,
+        time_of_day = NULL
+    WHERE pii_expires_at < NOW()
+      AND email IS NOT NULL;
+  $$
+);
 ```
 
 **Why this design:**
-- ✅ No signup complexity
-- ✅ GDPR compliant (no permanent client database)
-- ✅ Reports accessible forever via email link (client owns it)
-- ✅ If client books practitioner: their intake becomes part of practitioner workflow
-
-### Schema Modifications
-
-```sql
--- Sessions table: add source tracking + language
-ALTER TABLE sessions ADD COLUMN created_by VARCHAR(20) DEFAULT 'practitioner' CHECK (created_by IN ('practitioner', 'client_self_service'));
-ALTER TABLE sessions ADD COLUMN language VARCHAR(5) DEFAULT 'es' CHECK (language IN ('en', 'es'));
-
--- No RLS needed for client_analyses — data expires automatically
--- Practitioner sees own patients only (existing RLS works)
--- Client_analyses is audit-only (read by admin for analytics)
-```
-
-**Why minimal schema changes:**
-- No user tracking required (stateless)
-- No role separation needed (practitioner ≠ client by data separation alone)
-- Language stored per analysis (not per user)
-- Sessions table already exists; just add source + language
+- ✅ No signup complexity (stateless, no auth)
+- ✅ GDPR compliant (PII cleared after 30 days, only report content retained)
+- ✅ Reports accessible forever via download token (client owns deliverable)
+- ✅ Existing `patients`/`sessions` tables untouched (zero practitioner disruption)
+- ✅ `reports` table reused (1 minor change: session_id nullable)
 
 ---
 
@@ -341,14 +365,35 @@ ALTER TABLE sessions ADD COLUMN language VARCHAR(5) DEFAULT 'es' CHECK (language
 
 ---
 
+## Resolved Architectural Decisions (Final)
+
+| Topic | Decision |
+|-------|----------|
+| **Email provider** | Resend (Next.js-friendly, simple API, generous free tier) |
+| **PDF generation** | Browser print-to-PDF using existing print styles (no new dep for MVP) |
+| **PII cleanup** | Supabase pg_cron nightly job nulls PII fields after 30 days |
+| **Image validation** | Max 10MB each, JPEG/PNG only, exactly 2 images, min 800×800px |
+| **Tutorial** | Embedded video link from existing partner Google Form on upload page |
+| **Token format** | UUID v4 (122 bits entropy, non-enumerable, URL-safe) |
+| **Auth middleware** | Add `/client/*` and `/api/client/*` to public exclusion list |
+| **Currency** | EUR default; tier names use underscores (`basic_12`, `premium_19_90`) for SQL safety |
+| **Locale detection** | `es-*` → `es`, `en-*` → `en`, anything else → `en`; client can override with flag |
+| **Status tracking** | Add `status` enum to `client_analyses` for failure recovery / retry |
+| **Practitioner integration** | Phase 2 only — MVP keeps client/practitioner UIs fully isolated |
+| **Mock payment** | MVP-only flag `is_mock_payment=TRUE`; production must reject mock requests |
+
 ## Safety Checklist
 
-- [ ] Images: Verified never written to disk
-- [ ] User isolation: RLS policies scope all queries by role + user_id
-- [ ] Payment: Only unpaid clients blocked from upload
-- [ ] Session creation: `created_by_role='client'` always set for client submissions
-- [ ] Report access: Client can only GET their own reports
-- [ ] No accidental data leakage: Separate `/api/client/*` from `/api/*`
+- [ ] Images verified never written to disk or Supabase Storage
+- [ ] `client_analyses` RLS denies all anon/auth access (service role only via API)
+- [ ] Auth middleware excludes `/client/*` and `/api/client/*` from login redirect
+- [ ] Mock payment endpoint disabled when `NODE_ENV=production`
+- [ ] Image validation enforces size/format/count limits BEFORE Claude call
+- [ ] Report download token uses UUID v4 (cryptographically random)
+- [ ] PII cleanup cron verified running and tested
+- [ ] Practitioner routes/APIs unchanged (regression test on patient flow)
+- [ ] Email delivery failures logged but do not block report generation
+- [ ] Sessions table `created_by` field never set to `client_self_service` in MVP (we don't use sessions for client analyses)
 
 ---
 
