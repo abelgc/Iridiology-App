@@ -36,6 +36,6 @@ export async function GET(
 
   return NextResponse.json({
     language: data.language,
-    report: (data.reports as { report_content: unknown }).report_content,
+    report: (data.reports as any).report_content,
   })
 }
