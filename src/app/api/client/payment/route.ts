@@ -1,0 +1,39 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createAdminClient } from '@/lib/supabase/server'
+import { isValidReportToken } from '@/lib/client/report-token'
+
+export async function POST(request: NextRequest) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'mock_payment_disabled_in_production' }, { status: 403 })
+  }
+
+  let body: { report_download_token?: string }
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'invalid_json' }, { status: 400 })
+  }
+
+  const token = body.report_download_token
+  if (!token || !isValidReportToken(token)) {
+    return NextResponse.json({ error: 'invalid_token' }, { status: 400 })
+  }
+
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from('client_analyses')
+    .update({
+      paid_at: new Date().toISOString(),
+      is_mock_payment: true,
+      status: 'paid',
+    })
+    .eq('report_download_token', token)
+    .select('report_download_token, status')
+    .single()
+
+  if (error || !data) {
+    return NextResponse.json({ error: 'db_update_failed' }, { status: 500 })
+  }
+
+  return NextResponse.json(data, { status: 200 })
+}
