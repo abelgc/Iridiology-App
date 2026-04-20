@@ -1,6 +1,6 @@
 # Client App MVP Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Add a stateless, bilingual (EN/ES), self-service client flow that turns a 9-question intake + 2 iris images into an emailed 11-section report — without disrupting the existing practitioner workflow.
 
@@ -73,28 +73,28 @@
 
 **Files:** none (git operations)
 
-- [ ] **Step 1: Verify clean working tree**
+- [x] **Step 1: Verify clean working tree**
 
 ```bash
 git status
 ```
 Expected: only the existing untracked files (`.claude/`, `docs/CUESTIONARIO...pdf`) and modified `package-lock.json` from current context. No staged changes that should not be on the new branch.
 
-- [ ] **Step 2: Create feature branch**
+- [x] **Step 2: Create feature branch**
 
 ```bash
 git checkout -b feat/client-app-mvp
 ```
 Expected: `Switched to a new branch 'feat/client-app-mvp'`
 
-- [ ] **Step 3: Push branch to set upstream**
+- [x] **Step 3: Push branch to set upstream**
 
 ```bash
 git push -u origin feat/client-app-mvp
 ```
 Expected: branch created on remote.
 
-- [ ] **Step 4: Confirm Node + npm versions match repo**
+- [x] **Step 4: Confirm Node + npm versions match repo**
 
 ```bash
 node --version
@@ -102,7 +102,7 @@ npm --version
 ```
 Expected: Node ≥ 20, npm ≥ 10. If mismatched, switch via `nvm use` before continuing.
 
-- [ ] **Step 5: Install deps clean**
+- [x] **Step 5: Install deps clean**
 
 ```bash
 npm ci
@@ -116,7 +116,7 @@ Expected: install completes without errors.
 **Files:**
 - Create: `docs/migrations/003-client-analyses.sql`
 
-- [ ] **Step 1: Create migration file**
+- [x] **Step 1: Create migration file**
 
 Create `docs/migrations/003-client-analyses.sql` with this exact content:
 
@@ -182,12 +182,12 @@ CREATE POLICY "Service role only"
   USING (false);
 ```
 
-- [ ] **Step 2: Apply migration via Supabase SQL editor**
+- [x] **Step 2: Apply migration via Supabase SQL editor**
 
 Open Supabase dashboard → SQL editor → paste file contents → Run.
 Expected: "Success. No rows returned."
 
-- [ ] **Step 3: Verify table exists**
+- [x] **Step 3: Verify table exists**
 
 In SQL editor, run:
 
@@ -199,7 +199,7 @@ ORDER BY ordinal_position;
 ```
 Expected: 19 columns, with `email` nullable, `report_download_token` not null, `paid_at` nullable.
 
-- [ ] **Step 4: Verify reports.session_id is nullable**
+- [x] **Step 4: Verify reports.session_id is nullable**
 
 ```sql
 SELECT is_nullable
@@ -208,7 +208,7 @@ WHERE table_name = 'reports' AND column_name = 'session_id';
 ```
 Expected: `YES`.
 
-- [ ] **Step 5: Schedule nightly PII cleanup**
+- [x] **Step 5: Schedule nightly PII cleanup**
 
 In Supabase SQL editor, ensure `pg_cron` extension is enabled (Database → Extensions → pg_cron → Enable). Then run:
 
@@ -233,7 +233,7 @@ SELECT cron.schedule(
 ```
 Expected: returns a cron job id (integer).
 
-- [ ] **Step 6: Commit migration**
+- [x] **Step 6: Commit migration**
 
 ```bash
 git add docs/migrations/003-client-analyses.sql
@@ -249,7 +249,7 @@ git commit -m "feat(db): add client_analyses table and PII cleanup cron"
 - Create: `src/lib/i18n-context.tsx`
 - Test: `src/lib/__tests__/i18n.test.ts`
 
-- [ ] **Step 1: Write the failing test for translations dictionary**
+- [x] **Step 1: Write the failing test for translations dictionary**
 
 Create `src/lib/__tests__/i18n.test.ts`:
 
@@ -288,14 +288,14 @@ describe('i18n', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify failure**
+- [x] **Step 2: Run test to verify failure**
 
 ```bash
 npm run test -- src/lib/__tests__/i18n.test.ts
 ```
 Expected: fails with "Cannot find module '@/lib/i18n'".
 
-- [ ] **Step 3: Create translations file**
+- [x] **Step 3: Create translations file**
 
 Create `src/lib/i18n.ts`:
 
@@ -419,14 +419,14 @@ export function detectLocale(navigatorLang: string | undefined): Lang {
 }
 ```
 
-- [ ] **Step 4: Run test to verify pass**
+- [x] **Step 4: Run test to verify pass**
 
 ```bash
 npm run test -- src/lib/__tests__/i18n.test.ts
 ```
 Expected: 5 tests pass.
 
-- [ ] **Step 5: Create i18n React context**
+- [x] **Step 5: Create i18n React context**
 
 Create `src/lib/i18n-context.tsx`:
 
@@ -487,7 +487,7 @@ export function useLanguage() {
 }
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/lib/i18n.ts src/lib/i18n-context.tsx src/lib/__tests__/i18n.test.ts
@@ -501,14 +501,14 @@ git commit -m "feat(i18n): add EN/ES translations dictionary and language contex
 **Files:**
 - Modify: `src/middleware.ts`
 
-- [ ] **Step 1: Read current middleware to learn its structure**
+- [x] **Step 1: Read current middleware to learn its structure**
 
 ```bash
 cat src/middleware.ts
 ```
 Note the current matcher and the redirect logic so the next step preserves practitioner behavior.
 
-- [ ] **Step 2: Update middleware to skip /client and /api/client routes**
+- [x] **Step 2: Update middleware to skip /client and /api/client routes**
 
 Modify the existing redirect/matcher logic to add an early return when `request.nextUrl.pathname` starts with `/client` or `/api/client`. Example minimal addition (adapt to whatever the file currently exports):
 
@@ -524,7 +524,7 @@ if (
 
 If the file uses `config.matcher`, also add `'/((?!client|api/client|_next|.*\\..*).*)'` style exclusion so middleware does not run for client routes at all. Pick whichever pattern matches the existing file style — do not introduce a second pattern style.
 
-- [ ] **Step 3: Manually verify practitioner redirect still works**
+- [x] **Step 3: Manually verify practitioner redirect still works**
 
 ```bash
 npm run dev
@@ -533,7 +533,7 @@ In a browser, open `http://localhost:3000/patients` while logged out. Expected: 
 
 Then open `http://localhost:3000/client`. Expected: 404 (route does not exist yet) — NOT a redirect to `/login`. Stop dev server (`Ctrl+C`).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/middleware.ts
@@ -548,7 +548,7 @@ git commit -m "feat(middleware): bypass auth for /client and /api/client routes"
 - Create: `src/lib/client/report-token.ts`
 - Test: `src/lib/client/__tests__/report-token.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `src/lib/client/__tests__/report-token.test.ts`:
 
@@ -579,14 +579,14 @@ describe('report-token', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify failure**
+- [x] **Step 2: Run test to verify failure**
 
 ```bash
 npm run test -- src/lib/client/__tests__/report-token.test.ts
 ```
 Expected: fails — module not found.
 
-- [ ] **Step 3: Implement token module**
+- [x] **Step 3: Implement token module**
 
 Create `src/lib/client/report-token.ts`:
 
@@ -605,14 +605,14 @@ export function isValidReportToken(value: string): boolean {
 }
 ```
 
-- [ ] **Step 4: Run test to verify pass**
+- [x] **Step 4: Run test to verify pass**
 
 ```bash
 npm run test -- src/lib/client/__tests__/report-token.test.ts
 ```
 Expected: 4 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/client/report-token.ts src/lib/client/__tests__/report-token.test.ts
@@ -627,7 +627,7 @@ git commit -m "feat(client): add UUID v4 report download token generator"
 - Create: `src/lib/client/image-validation.ts`
 - Test: `src/lib/client/__tests__/image-validation.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `src/lib/client/__tests__/image-validation.test.ts`:
 
@@ -680,14 +680,14 @@ describe('image-validation', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify failure**
+- [x] **Step 2: Run test to verify failure**
 
 ```bash
 npm run test -- src/lib/client/__tests__/image-validation.test.ts
 ```
 Expected: fails — module not found.
 
-- [ ] **Step 3: Implement validation**
+- [x] **Step 3: Implement validation**
 
 Create `src/lib/client/image-validation.ts`:
 
@@ -733,14 +733,14 @@ export function readImageDimensions(file: File): Promise<{ width: number; height
 }
 ```
 
-- [ ] **Step 4: Run test to verify pass**
+- [x] **Step 4: Run test to verify pass**
 
 ```bash
 npm run test -- src/lib/client/__tests__/image-validation.test.ts
 ```
 Expected: 5 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/client/image-validation.ts src/lib/client/__tests__/image-validation.test.ts
@@ -756,7 +756,7 @@ git commit -m "feat(client): add image upload validation (size, format, dimensio
 - Create: `src/types/client-analysis.ts`
 - Test: `src/lib/validators/__tests__/client-intake.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `src/lib/validators/__tests__/client-intake.test.ts`:
 
@@ -807,14 +807,14 @@ describe('clientIntakeSchema', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify failure**
+- [x] **Step 2: Run test to verify failure**
 
 ```bash
 npm run test -- src/lib/validators/__tests__/client-intake.test.ts
 ```
 Expected: fails — module not found.
 
-- [ ] **Step 3: Create types file**
+- [x] **Step 3: Create types file**
 
 Create `src/types/client-analysis.ts`:
 
@@ -835,7 +835,7 @@ export const TIER_PRICING: Record<PaymentTier, { amount: number; currency: 'EUR'
 }
 ```
 
-- [ ] **Step 4: Implement Zod schema**
+- [x] **Step 4: Implement Zod schema**
 
 Create `src/lib/validators/client-intake.ts`:
 
@@ -859,14 +859,14 @@ export const clientIntakeSchema = z.object({
 export type ClientIntakeInput = z.infer<typeof clientIntakeSchema>
 ```
 
-- [ ] **Step 5: Run test to verify pass**
+- [x] **Step 5: Run test to verify pass**
 
 ```bash
 npm run test -- src/lib/validators/__tests__/client-intake.test.ts
 ```
 Expected: 6 tests pass.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/types/client-analysis.ts src/lib/validators/client-intake.ts src/lib/validators/__tests__/client-intake.test.ts
@@ -885,7 +885,7 @@ git commit -m "feat(client): add Zod schema and types for client intake"
 - Modify: `src/lib/claude/enhance-emotional-field.ts`
 - Test: `src/lib/claude/__tests__/prompts.test.ts` (extend existing if present)
 
-- [ ] **Step 1: Read each file to learn its current shape**
+- [x] **Step 1: Read each file to learn its current shape**
 
 ```bash
 cat src/lib/ai/get-provider.ts
@@ -896,7 +896,7 @@ ls src/lib/claude/__tests__
 ```
 Note any settings-driven provider selection or existing tests so the next steps don't duplicate them.
 
-- [ ] **Step 2: Write the failing test for tier routing**
+- [x] **Step 2: Write the failing test for tier routing**
 
 Append to `src/lib/claude/__tests__/prompts.test.ts` (or create the file if it does not exist):
 
@@ -914,14 +914,14 @@ describe('getModelForTier', () => {
 })
 ```
 
-- [ ] **Step 3: Run test to verify failure**
+- [x] **Step 3: Run test to verify failure**
 
 ```bash
 npm run test -- src/lib/claude/__tests__/prompts.test.ts
 ```
 Expected: fails — `getModelForTier` not exported.
 
-- [ ] **Step 4: Add tier-aware export to get-provider.ts**
+- [x] **Step 4: Add tier-aware export to get-provider.ts**
 
 Inside `src/lib/ai/get-provider.ts`, add (do not remove the existing settings-driven `getAIProvider` function):
 
@@ -938,7 +938,7 @@ export function getModelForTier(tier: PaymentTier): string {
 
 If the file currently constructs the Anthropic client with a hard-coded model id, also add an overload that accepts a model id so callers can pass `getModelForTier(tier)` through. Match the file's existing function-export style; do not introduce a new pattern.
 
-- [ ] **Step 5: Add EN versions of the analysis prompts**
+- [x] **Step 5: Add EN versions of the analysis prompts**
 
 Inside `src/lib/claude/prompts.ts`, locate the existing `STANDARD_ANALYSIS_SYSTEM_PROMPT` (Spanish). Add an English version next to it:
 
@@ -953,22 +953,22 @@ export function getStandardAnalysisSystemPrompt(lang: 'en' | 'es'): string {
 
 Keep the JSON output schema identical between languages — the report viewer relies on the `section_1_terreno_general` ... `section_11_conclusion` key set.
 
-- [ ] **Step 6: Add a `language` parameter to analyze()**
+- [x] **Step 6: Add a `language` parameter to analyze()**
 
 In `src/lib/claude/analyze.ts`, modify the exported analyze function signature to accept `language: 'en' | 'es'` (default `'es'` to preserve current callers) and `modelId?: string`. Use `getStandardAnalysisSystemPrompt(language)` to choose the system prompt and pass `modelId` through to the provider call. Do not change the JSON parsing or error contract.
 
-- [ ] **Step 7: Add a `language` parameter to enhanceEmotionalFieldWithJyotish**
+- [x] **Step 7: Add a `language` parameter to enhanceEmotionalFieldWithJyotish**
 
 In `src/lib/claude/enhance-emotional-field.ts`, add an optional `language: 'en' | 'es'` parameter (default `'es'`). When `'en'`, replace Spanish strings in the blend prompt with English equivalents, and instruct the model to respond in English. Do not change the function's return shape or its `shouldEnhanceWithJyotish` helper.
 
-- [ ] **Step 8: Run all claude tests**
+- [x] **Step 8: Run all claude tests**
 
 ```bash
 npm run test -- src/lib/claude
 ```
 Expected: all tests pass, including the new tier routing test.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/lib/ai/get-provider.ts src/lib/claude/prompts.ts src/lib/claude/analyze.ts src/lib/claude/enhance-emotional-field.ts src/lib/claude/__tests__/prompts.test.ts
@@ -984,14 +984,14 @@ git commit -m "feat(claude): add language and tier parameters to analysis pipeli
 - Create: `src/lib/client/email.ts`
 - Test: `src/lib/client/__tests__/email.test.ts`
 
-- [ ] **Step 1: Install Resend SDK**
+- [x] **Step 1: Install Resend SDK**
 
 ```bash
 npm install resend
 ```
 Expected: `resend` added to `dependencies`.
 
-- [ ] **Step 2: Add env var template**
+- [x] **Step 2: Add env var template**
 
 Append to `.env.example` (create the file if it doesn't exist):
 
@@ -1001,7 +1001,7 @@ RESEND_FROM_EMAIL=Iridiology App <noreply@yourdomain.com>
 CLIENT_APP_BASE_URL=http://localhost:3000
 ```
 
-- [ ] **Step 3: Write the failing test**
+- [x] **Step 3: Write the failing test**
 
 Create `src/lib/client/__tests__/email.test.ts`:
 
@@ -1051,14 +1051,14 @@ describe('sendReportEmail', () => {
 })
 ```
 
-- [ ] **Step 4: Run test to verify failure**
+- [x] **Step 4: Run test to verify failure**
 
 ```bash
 npm run test -- src/lib/client/__tests__/email.test.ts
 ```
 Expected: fails — `@/lib/client/email` not found.
 
-- [ ] **Step 5: Implement email module**
+- [x] **Step 5: Implement email module**
 
 Create `src/lib/client/email.ts`:
 
@@ -1114,14 +1114,14 @@ export async function sendReportEmail(params: {
 }
 ```
 
-- [ ] **Step 6: Run test to verify pass**
+- [x] **Step 6: Run test to verify pass**
 
 ```bash
 npm run test -- src/lib/client/__tests__/email.test.ts
 ```
 Expected: 2 tests pass.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add package.json package-lock.json .env.example src/lib/client/email.ts src/lib/client/__tests__/email.test.ts
@@ -1136,7 +1136,7 @@ git commit -m "feat(client): add Resend-based report email delivery"
 - Create: `src/app/api/client/intake/route.ts`
 - Test: `src/app/api/client/intake/__tests__/route.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `src/app/api/client/intake/__tests__/route.test.ts`:
 
@@ -1209,14 +1209,14 @@ describe('POST /api/client/intake', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify failure**
+- [x] **Step 2: Run test to verify failure**
 
 ```bash
 npm run test -- src/app/api/client/intake/__tests__/route.test.ts
 ```
 Expected: fails — route not found.
 
-- [ ] **Step 3: Implement the route**
+- [x] **Step 3: Implement the route**
 
 Create `src/app/api/client/intake/route.ts`:
 
@@ -1282,14 +1282,14 @@ export async function POST(request: NextRequest) {
 }
 ```
 
-- [ ] **Step 4: Run test to verify pass**
+- [x] **Step 4: Run test to verify pass**
 
 ```bash
 npm run test -- src/app/api/client/intake/__tests__/route.test.ts
 ```
 Expected: 2 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/app/api/client/intake/route.ts src/app/api/client/intake/__tests__/route.test.ts
@@ -1304,7 +1304,7 @@ git commit -m "feat(api): POST /api/client/intake creates client_analyses row"
 - Create: `src/app/api/client/payment/route.ts`
 - Test: `src/app/api/client/payment/__tests__/route.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `src/app/api/client/payment/__tests__/route.test.ts`:
 
@@ -1365,14 +1365,14 @@ describe('POST /api/client/payment (mock)', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify failure**
+- [x] **Step 2: Run test to verify failure**
 
 ```bash
 npm run test -- src/app/api/client/payment/__tests__/route.test.ts
 ```
 Expected: fails — route not found.
 
-- [ ] **Step 3: Implement the mock route**
+- [x] **Step 3: Implement the mock route**
 
 Create `src/app/api/client/payment/route.ts`:
 
@@ -1418,14 +1418,14 @@ export async function POST(request: NextRequest) {
 }
 ```
 
-- [ ] **Step 4: Run test to verify pass**
+- [x] **Step 4: Run test to verify pass**
 
 ```bash
 npm run test -- src/app/api/client/payment/__tests__/route.test.ts
 ```
 Expected: 2 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/app/api/client/payment/route.ts src/app/api/client/payment/__tests__/route.test.ts
@@ -1442,7 +1442,7 @@ git commit -m "feat(api): POST /api/client/payment mock-pays an intake (dev only
 - Create: `src/app/api/client/upload/route.ts`
 - Test: `src/app/api/client/upload/__tests__/route.test.ts`
 
-- [ ] **Step 1: Write the upload validator test**
+- [x] **Step 1: Write the upload validator test**
 
 Create `src/lib/validators/__tests__/client-upload.test.ts`:
 
@@ -1482,14 +1482,14 @@ describe('clientUploadSchema', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify failure**
+- [x] **Step 2: Run test to verify failure**
 
 ```bash
 npm run test -- src/lib/validators/__tests__/client-upload.test.ts
 ```
 Expected: fails — module not found.
 
-- [ ] **Step 3: Implement upload validator**
+- [x] **Step 3: Implement upload validator**
 
 Create `src/lib/validators/client-upload.ts`:
 
@@ -1508,14 +1508,14 @@ export const clientUploadSchema = z.object({
 export type ClientUploadInput = z.infer<typeof clientUploadSchema>
 ```
 
-- [ ] **Step 4: Run validator test to verify pass**
+- [x] **Step 4: Run validator test to verify pass**
 
 ```bash
 npm run test -- src/lib/validators/__tests__/client-upload.test.ts
 ```
 Expected: 3 tests pass.
 
-- [ ] **Step 5: Write the route test**
+- [x] **Step 5: Write the route test**
 
 Create `src/app/api/client/upload/__tests__/route.test.ts`:
 
@@ -1636,14 +1636,14 @@ describe('POST /api/client/upload', () => {
 })
 ```
 
-- [ ] **Step 6: Run test to verify failure**
+- [x] **Step 6: Run test to verify failure**
 
 ```bash
 npm run test -- src/app/api/client/upload/__tests__/route.test.ts
 ```
 Expected: fails — route not found.
 
-- [ ] **Step 7: Implement the upload route**
+- [x] **Step 7: Implement the upload route**
 
 Create `src/app/api/client/upload/route.ts`:
 
@@ -1788,14 +1788,14 @@ export async function POST(request: NextRequest) {
 
 If the existing `analyze()` signature in `src/lib/claude/analyze.ts` does not match what is called above, adjust the call in the route to match the modified signature from Task 7. Do not duplicate analyze logic here.
 
-- [ ] **Step 8: Run test to verify pass**
+- [x] **Step 8: Run test to verify pass**
 
 ```bash
 npm run test -- src/app/api/client/upload/__tests__/route.test.ts
 ```
 Expected: 2 tests pass.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/lib/validators/client-upload.ts src/lib/validators/__tests__/client-upload.test.ts src/app/api/client/upload/route.ts src/app/api/client/upload/__tests__/route.test.ts
@@ -1811,7 +1811,7 @@ git commit -m "feat(api): POST /api/client/upload runs analysis and stores repor
 - Create: `src/app/api/client/reports/[token]/email/route.ts`
 - Test: `src/app/api/client/reports/[token]/__tests__/route.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `src/app/api/client/reports/[token]/__tests__/route.test.ts`:
 
@@ -1860,14 +1860,14 @@ describe('GET /api/client/reports/[token]', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify failure**
+- [x] **Step 2: Run test to verify failure**
 
 ```bash
 npm run test -- src/app/api/client/reports/[token]/__tests__/route.test.ts
 ```
 Expected: fails — route not found.
 
-- [ ] **Step 3: Implement the GET route**
+- [x] **Step 3: Implement the GET route**
 
 Create `src/app/api/client/reports/[token]/route.ts`:
 
@@ -1915,7 +1915,7 @@ export async function GET(
 }
 ```
 
-- [ ] **Step 4: Implement the email-resend route**
+- [x] **Step 4: Implement the email-resend route**
 
 Create `src/app/api/client/reports/[token]/email/route.ts`:
 
@@ -1958,14 +1958,14 @@ export async function POST(
 }
 ```
 
-- [ ] **Step 5: Run tests to verify pass**
+- [x] **Step 5: Run tests to verify pass**
 
 ```bash
 npm run test -- src/app/api/client/reports
 ```
 Expected: 2 tests pass.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/app/api/client/reports
@@ -1981,7 +1981,7 @@ git commit -m "feat(api): GET report by token + POST email-resend"
 - Create: `src/components/client/language-toggle.tsx`
 - Test: `src/components/client/__tests__/language-toggle.test.tsx`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `src/components/client/__tests__/language-toggle.test.tsx`:
 
@@ -2017,14 +2017,14 @@ describe('LanguageToggle', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify failure**
+- [x] **Step 2: Run test to verify failure**
 
 ```bash
 npm run test -- src/components/client/__tests__/language-toggle.test.tsx
 ```
 Expected: fails — component not found.
 
-- [ ] **Step 3: Implement the toggle**
+- [x] **Step 3: Implement the toggle**
 
 Create `src/components/client/language-toggle.tsx`:
 
@@ -2065,7 +2065,7 @@ export function LanguageToggle() {
 }
 ```
 
-- [ ] **Step 4: Implement the client layout**
+- [x] **Step 4: Implement the client layout**
 
 Create `src/app/client/layout.tsx`:
 
@@ -2091,14 +2091,14 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
 }
 ```
 
-- [ ] **Step 5: Run tests to verify pass**
+- [x] **Step 5: Run tests to verify pass**
 
 ```bash
 npm run test -- src/components/client/__tests__/language-toggle.test.tsx
 ```
 Expected: 2 tests pass.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/app/client/layout.tsx src/components/client/language-toggle.tsx src/components/client/__tests__/language-toggle.test.tsx
@@ -2113,7 +2113,7 @@ git commit -m "feat(client): add /client layout with language toggle"
 - Create: `src/components/client/tier-selector.tsx`
 - Create: `src/app/client/page.tsx`
 
-- [ ] **Step 1: Implement the tier selector component**
+- [x] **Step 1: Implement the tier selector component**
 
 Create `src/components/client/tier-selector.tsx`:
 
@@ -2160,7 +2160,7 @@ export function TierSelector() {
 }
 ```
 
-- [ ] **Step 2: Implement the entry page**
+- [x] **Step 2: Implement the entry page**
 
 Create `src/app/client/page.tsx`:
 
@@ -2182,14 +2182,14 @@ export default function ClientEntryPage() {
 }
 ```
 
-- [ ] **Step 3: Manually verify in dev**
+- [x] **Step 3: Manually verify in dev**
 
 ```bash
 npm run dev
 ```
 Open `http://localhost:3000/client`. Expected: language flags toggle UI strings; tier cards visible. Click tier → URL becomes `/client/intake` (will 404 until next task). Stop dev server.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/client/tier-selector.tsx src/app/client/page.tsx
@@ -2205,7 +2205,7 @@ git commit -m "feat(client): add /client entry page with tier selector"
 - Test: `src/components/client/__tests__/intake-form.test.tsx`
 - Create: `src/app/client/intake/page.tsx`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `src/components/client/__tests__/intake-form.test.tsx`:
 
@@ -2252,14 +2252,14 @@ describe('IntakeForm', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify failure**
+- [x] **Step 2: Run test to verify failure**
 
 ```bash
 npm run test -- src/components/client/__tests__/intake-form.test.tsx
 ```
 Expected: fails — component not found.
 
-- [ ] **Step 3: Implement the form**
+- [x] **Step 3: Implement the form**
 
 Create `src/components/client/intake-form.tsx`:
 
@@ -2386,7 +2386,7 @@ Add the `.input` class in `src/app/globals.css` if it doesn't exist:
 }
 ```
 
-- [ ] **Step 4: Implement the intake page**
+- [x] **Step 4: Implement the intake page**
 
 Create `src/app/client/intake/page.tsx`:
 
@@ -2439,14 +2439,14 @@ export default function IntakePage() {
 }
 ```
 
-- [ ] **Step 5: Run tests to verify pass**
+- [x] **Step 5: Run tests to verify pass**
 
 ```bash
 npm run test -- src/components/client/__tests__/intake-form.test.tsx
 ```
 Expected: 2 tests pass.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/components/client/intake-form.tsx src/components/client/__tests__/intake-form.test.tsx src/app/client/intake/page.tsx src/app/globals.css
@@ -2460,7 +2460,7 @@ git commit -m "feat(client): add intake form and /client/intake page"
 **Files:**
 - Create: `src/app/client/intake/payment/page.tsx`
 
-- [ ] **Step 1: Implement the mock payment page**
+- [x] **Step 1: Implement the mock payment page**
 
 Create `src/app/client/intake/payment/page.tsx`:
 
@@ -2520,14 +2520,14 @@ export default function MockPaymentPage() {
 }
 ```
 
-- [ ] **Step 2: Verify in dev**
+- [x] **Step 2: Verify in dev**
 
 ```bash
 npm run dev
 ```
 Walk through `/client → /client/intake → /client/intake/payment`. Click Continue. Expected: redirect to `/client/upload` (will 404 until next task). Stop dev.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/app/client/intake/payment/page.tsx
@@ -2545,7 +2545,7 @@ git commit -m "feat(client): add mock payment page that marks intake paid"
 - Create: `src/app/client/upload/page.tsx`
 - Create: `src/app/client/upload/processing/page.tsx`
 
-- [ ] **Step 1: Write the failing test for the upload component**
+- [x] **Step 1: Write the failing test for the upload component**
 
 Create `src/components/client/__tests__/iris-image-upload.test.tsx`:
 
@@ -2577,14 +2577,14 @@ describe('IrisImageUpload', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify failure**
+- [x] **Step 2: Run test to verify failure**
 
 ```bash
 npm run test -- src/components/client/__tests__/iris-image-upload.test.tsx
 ```
 Expected: fails — component not found.
 
-- [ ] **Step 3: Implement the tutorial component**
+- [x] **Step 3: Implement the tutorial component**
 
 Create `src/components/client/upload-tutorial.tsx`:
 
@@ -2613,7 +2613,7 @@ export function UploadTutorial() {
 }
 ```
 
-- [ ] **Step 4: Implement the image-upload component**
+- [x] **Step 4: Implement the image-upload component**
 
 Create `src/components/client/iris-image-upload.tsx`:
 
@@ -2741,7 +2741,7 @@ function EyeZone({
 }
 ```
 
-- [ ] **Step 5: Implement the upload page**
+- [x] **Step 5: Implement the upload page**
 
 Create `src/app/client/upload/page.tsx`:
 
@@ -2799,7 +2799,7 @@ export default function UploadPage() {
 }
 ```
 
-- [ ] **Step 6: Implement a simple processing page**
+- [x] **Step 6: Implement a simple processing page**
 
 Create `src/app/client/upload/processing/page.tsx`:
 
@@ -2819,14 +2819,14 @@ export default function ProcessingPage() {
 }
 ```
 
-- [ ] **Step 7: Run tests to verify pass**
+- [x] **Step 7: Run tests to verify pass**
 
 ```bash
 npm run test -- src/components/client/__tests__/iris-image-upload.test.tsx
 ```
 Expected: 2 tests pass.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/components/client src/app/client/upload
@@ -2841,7 +2841,7 @@ git commit -m "feat(client): add upload tutorial, image upload component, and up
 - Create: `src/components/client/client-report-viewer.tsx`
 - Create: `src/app/client/report/[token]/page.tsx`
 
-- [ ] **Step 1: Implement the read-only report viewer**
+- [x] **Step 1: Implement the read-only report viewer**
 
 Create `src/components/client/client-report-viewer.tsx`:
 
@@ -2891,7 +2891,7 @@ export function ClientReportViewer({
 
 If `react-markdown` and `remark-gfm` are already used by the existing report viewer (Task 0 inspected `src/components/reports/report-viewer.tsx`), reuse the same imports — do not introduce a different markdown lib.
 
-- [ ] **Step 2: Implement the page**
+- [x] **Step 2: Implement the page**
 
 Create `src/app/client/report/[token]/page.tsx`:
 
@@ -2971,14 +2971,14 @@ export default function ClientReportPage() {
 }
 ```
 
-- [ ] **Step 3: Verify in dev**
+- [x] **Step 3: Verify in dev**
 
 ```bash
 npm run dev
 ```
 Walk full flow: `/client → /client/intake → /client/intake/payment → /client/upload → /client/report/[token]`. Expected: at the end, the report renders. Print works via browser. Stop dev.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/client/client-report-viewer.tsx src/app/client/report
@@ -2992,7 +2992,7 @@ git commit -m "feat(client): add read-only report viewer with print + email-rese
 **Files:**
 - Create: `e2e/client-self-service.spec.ts`
 
-- [ ] **Step 1: Write the e2e test**
+- [x] **Step 1: Write the e2e test**
 
 Create `e2e/client-self-service.spec.ts`:
 
@@ -3025,14 +3025,14 @@ test.describe('Client self-service flow', () => {
 })
 ```
 
-- [ ] **Step 2: Run e2e (without Claude credentials it stops at upload — that's the goal of this test)**
+- [x] **Step 2: Run e2e (without Claude credentials it stops at upload — that's the goal of this test)**
 
 ```bash
 npm run test:e2e -- e2e/client-self-service.spec.ts
 ```
 Expected: passes (we deliberately do not upload images here, since that would call Claude in test).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add e2e/client-self-service.spec.ts
@@ -3045,21 +3045,21 @@ git commit -m "test(e2e): client self-service intake → mock-pay → upload nav
 
 **Files:** none (verification)
 
-- [ ] **Step 1: Run full unit suite**
+- [x] **Step 1: Run full unit suite**
 
 ```bash
 npm run test
 ```
 Expected: all tests pass — including pre-existing practitioner tests.
 
-- [ ] **Step 2: Run all e2e (including pre-existing practitioner specs)**
+- [x] **Step 2: Run all e2e (including pre-existing practitioner specs)**
 
 ```bash
 npm run test:e2e
 ```
 Expected: all suites pass.
 
-- [ ] **Step 3: Manually verify practitioner login still works**
+- [x] **Step 3: Manually verify practitioner login still works**
 
 ```bash
 npm run dev
@@ -3072,7 +3072,7 @@ npm run dev
 
 Expected: every existing flow behaves exactly as before.
 
-- [ ] **Step 4: Commit a marker if anything had to be tweaked**
+- [x] **Step 4: Commit a marker if anything had to be tweaked**
 
 If you had to update any practitioner code to keep tests green, commit those tweaks. Otherwise, no commit needed for this task.
 
