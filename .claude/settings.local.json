@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx vitest *)",
+      "Bash(npx --yes vitest run src/lib/claude/__tests__/prompts.test.ts)",
+      "Bash(npm test *)",
+      "Bash(./node_modules/.bin/vitest run *)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(cmd /c \"node_modules\\\\\\\\.bin\\\\\\\\tsc --noEmit 2>&1\")",
+      "WebFetch(domain:tally.so)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git checkout *)",
+      "Bash(git push *)",
+      "Bash(npm --version)",
+      "Bash(npm ci *)",
+      "Bash(git restore *)",
+      "Bash(xargs grep *)",
+      "Bash(npm run *)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(taskkill /F /IM node.exe)",
+      "Read(//tmp/**)",
+      "Bash(taskkill *)",
+      "Bash(wmic process *)",
+      "Bash(kill -9 13316)",
+      "Bash(kill -9 557)",
+      "Bash(rm -rf .next)",
+      "Bash(netstat -ano)",
+      "Bash(curl -s http://localhost:3001/patients)",
+      "Bash(curl -s -L http://localhost:3001/patients)",
+      "Bash(curl -s -i http://localhost:3001/patients)",
+      "Bash(awk '{print $2}')",
+      "Bash(xargs kill *)",
+      "Bash(pkill -f \"npm run dev\")",
+      "Bash(curl -s -i http://localhost:3001/client)",
+      "Bash(curl -s -i http://localhost:3001/api/client)",
+      "Bash(git reset *)",
+      "Bash(curl -s http://localhost:3002/client)",
+      "Bash(curl -s -I http://localhost:3002/client)",
+      "Bash(curl -v http://localhost:3002/client)"
+    ]
+  }
+}
