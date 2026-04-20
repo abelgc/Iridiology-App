@@ -64,6 +64,10 @@ export async function POST(request: NextRequest) {
       modelId,
     })
 
+    if ('code' in reportContent) {
+      throw new Error(`Analysis failed: ${reportContent.message}`)
+    }
+
     let finalReport = reportContent
     if (
       shouldEnhanceWithJyotish({
