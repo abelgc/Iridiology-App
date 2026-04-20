@@ -7,7 +7,7 @@ export const clientIntakeSchema = z.object({
   email: z.string().email(),
   main_complaint: z.string().min(1).max(2000),
   symptom_duration: z.string().min(1).max(255),
-  current_medications: z.string().max(2000).default(''),
+  current_medications: z.string().max(2000).optional(),
   date_of_birth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   country_of_birth: z.string().min(1).max(255),
   city_of_birth: z.string().min(1).max(255),

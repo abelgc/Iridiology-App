@@ -37,7 +37,9 @@
       "Bash(git reset *)",
       "Bash(curl -s http://localhost:3002/client)",
       "Bash(curl -s -I http://localhost:3002/client)",
-      "Bash(curl -v http://localhost:3002/client)"
+      "Bash(curl -v http://localhost:3002/client)",
+      "WebSearch",
+      "Bash(npm install *)"
     ]
   }
 }

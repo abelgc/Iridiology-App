@@ -157,6 +157,7 @@ export async function analyzeIris(
             patientContext.previousReportSummary,
             patientContext.practitionerCorrections,
           )
+          const systemPrompt = getStandardAnalysisSystemPrompt(language)
 
           const retryResponse = await provider.complete({
             systemPrompt,
@@ -208,11 +209,12 @@ export async function analyze(options: {
   }
 
   const request: AnalysisRequest = {
+    sessionId: '', // Client analyses don't have a session ID
     patientId: '', // Client analyses don't have a patient ID, they're one-off
     patientData: {
       full_name: options.patient.full_name,
       date_of_birth: options.patient.date_of_birth,
-      gender: undefined,
+      gender: null,
       general_history: options.patient.general_history,
       symptoms: options.patient.symptoms,
       practitioner_notes: options.patient.practitioner_notes,
