@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { clientUploadSchema } from '@/lib/validators/client-upload'
 import { analyze } from '@/lib/claude/analyze'
+import { ReportContent } from '@/types/report'
 import {
   shouldEnhanceWithJyotish,
   enhanceEmotionalFieldWithJyotish,
