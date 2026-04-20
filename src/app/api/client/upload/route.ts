@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       throw new Error(`Analysis failed: ${reportContent.message}`)
     }
 
-    let finalReport = reportContent
+    let finalReport = reportContent as ReportContent
     if (
       shouldEnhanceWithJyotish({
         date_of_birth: row.date_of_birth,
