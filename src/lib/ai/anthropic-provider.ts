@@ -11,8 +11,9 @@ export class AnthropicProvider implements AIProvider {
   }
 
   async complete(request: CompletionRequest): Promise<CompletionResponse> {
+    const modelToUse = request.modelId || this.model
     const response = await this.client.messages.create({
-      model: this.model,
+      model: modelToUse,
       max_tokens: request.maxTokens,
       system: request.systemPrompt,
       messages: [

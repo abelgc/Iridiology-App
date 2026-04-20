@@ -2,6 +2,14 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { AnthropicProvider } from './anthropic-provider'
 import { OpenAIProvider } from './openai-provider'
 import type { AIProvider } from './types'
+import type { PaymentTier } from '@/types/client-analysis'
+
+const HAIKU_MODEL_ID = 'claude-haiku-4-5-20251001'
+const SONNET_MODEL_ID = 'claude-sonnet-4-6'
+
+export function getModelForTier(tier: PaymentTier): string {
+  return tier === 'premium_19_90' ? SONNET_MODEL_ID : HAIKU_MODEL_ID
+}
 
 export async function getAIProvider(): Promise<AIProvider> {
   const supabase = createAdminClient()

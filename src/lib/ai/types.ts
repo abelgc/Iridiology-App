@@ -3,6 +3,7 @@ export interface CompletionRequest {
   userText: string
   images: Array<{ data: string; mediaType: 'image/jpeg' | 'image/png' | 'image/webp' }>
   maxTokens: number
+  modelId?: string
 }
 
 export interface CompletionResponse {

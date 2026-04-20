@@ -11,8 +11,9 @@ export class OpenAIProvider implements AIProvider {
   }
 
   async complete(request: CompletionRequest): Promise<CompletionResponse> {
+    const modelToUse = request.modelId || this.model
     const response = await this.client.chat.completions.create({
-      model: this.model,
+      model: modelToUse,
       max_completion_tokens: request.maxTokens,
       messages: [
         { role: 'system', content: request.systemPrompt },

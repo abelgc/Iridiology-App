@@ -1,5 +1,5 @@
 import { getAIProvider } from '@/lib/ai/get-provider'
-import { STANDARD_ANALYSIS_SYSTEM_PROMPT } from './prompts'
+import { getStandardAnalysisSystemPrompt } from './prompts'
 import { buildPatientContext } from './context'
 import { parseReportResponse, type ParseError } from './parse'
 import { ReportContent } from '@/types/report'
@@ -56,7 +56,11 @@ async function parseWithRetry(
   return result
 }
 
-export async function analyzeIris(request: AnalysisRequest): Promise<ReportContent | AnalysisError> {
+export async function analyzeIris(
+  request: AnalysisRequest,
+  language: 'en' | 'es' = 'es',
+  modelId?: string,
+): Promise<ReportContent | AnalysisError> {
   const provider = await getAIProvider()
 
   const images = [
@@ -73,22 +77,26 @@ export async function analyzeIris(request: AnalysisRequest): Promise<ReportConte
       patientContext.practitionerCorrections,
     )
 
+    const systemPrompt = getStandardAnalysisSystemPrompt(language)
+
     // Call AI provider with vision
     const response = await provider.complete({
-      systemPrompt: STANDARD_ANALYSIS_SYSTEM_PROMPT,
+      systemPrompt,
       userText: userPrompt,
       images,
       maxTokens: 4096,
+      modelId,
     })
 
     // Check for token limit
     if (response.stopReason === 'max_tokens') {
       // Retry with 50% more tokens
       const retryResponse = await provider.complete({
-        systemPrompt: STANDARD_ANALYSIS_SYSTEM_PROMPT,
+        systemPrompt,
         userText: userPrompt,
         images,
         maxTokens: 6144, // 4096 * 1.5
+        modelId,
       })
 
       if (retryResponse.stopReason === 'max_tokens') {
@@ -104,10 +112,11 @@ export async function analyzeIris(request: AnalysisRequest): Promise<ReportConte
         const strongerPrompt = `${userPrompt}\n\nIMPORTANT: Respond ONLY with valid JSON. No additional text.`
 
         const finalResponse = await provider.complete({
-          systemPrompt: STANDARD_ANALYSIS_SYSTEM_PROMPT,
+          systemPrompt,
           userText: strongerPrompt,
           images,
           maxTokens: 6144,
+          modelId,
         })
 
         const finalParseResult = await parseWithRetry(finalResponse.text, 2)
@@ -123,10 +132,11 @@ export async function analyzeIris(request: AnalysisRequest): Promise<ReportConte
       const strongerPrompt = `${userPrompt}\n\nIMPORTANT: Respond ONLY with valid JSON. No additional text.`
 
       const retryResponse = await provider.complete({
-        systemPrompt: STANDARD_ANALYSIS_SYSTEM_PROMPT,
+        systemPrompt,
         userText: strongerPrompt,
         images,
         maxTokens: 4096,
+        modelId,
       })
 
       const retryParseResult = await parseWithRetry(retryResponse.text, 2)
@@ -149,10 +159,11 @@ export async function analyzeIris(request: AnalysisRequest): Promise<ReportConte
           )
 
           const retryResponse = await provider.complete({
-            systemPrompt: STANDARD_ANALYSIS_SYSTEM_PROMPT,
+            systemPrompt,
             userText: userPrompt,
             images,
             maxTokens: 4096,
+            modelId,
           })
 
           const parseResult = await parseWithRetry(retryResponse.text)

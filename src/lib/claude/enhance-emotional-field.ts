@@ -31,6 +31,7 @@ export async function enhanceEmotionalFieldWithJyotish(
   reportContent: ReportContent,
   patientName: string,
   astrologyData: JyotishEnhancementData,
+  language: 'en' | 'es' = 'es',
 ): Promise<ReportContent> {
   try {
     const provider = await getAIProvider()
@@ -40,7 +41,7 @@ Date of Birth: ${astrologyData.date_of_birth}
 Place of Birth: ${astrologyData.city_of_birth}, ${astrologyData.country_of_birth}
 Time of Day: ${astrologyData.time_of_day}
 
-Based on this birth data, recommend the primary chakra and main emotion to focus on for emotional healing.`
+Based on this birth data, recommend the primary chakra and main emotion to focus on for emotional healing. Respond in ${language === 'en' ? 'English' : 'Spanish'}.`
 
     // First call: Get chakra and emotion recommendation
     const chakraResponse = await provider.complete({
@@ -65,6 +66,7 @@ Based on this birth data, recommend the primary chakra and main emotion to focus
     }
 
     // Second call: Blend chakra recommendation into emotional field
+    const langInstruction = language === 'en' ? 'English' : 'Spanish'
     const blendPrompt = `You are an expert iridologist blending Jyotish insights into an existing emotional field analysis.
 
 CURRENT EMOTIONAL FIELD SECTION:
@@ -82,10 +84,10 @@ Enhance the emotional field analysis by thoughtfully integrating the Jyotish cha
 4. Maintain the same clinical, professional tone
 5. Write in plain prose paragraphs — no bullet points or symbols
 
-Respond with ONLY the enhanced emotional field text, no additional commentary.`
+Respond with ONLY the enhanced emotional field text, no additional commentary. Write your response in ${langInstruction}.`
 
     const blendResponse = await provider.complete({
-      systemPrompt: 'You are an expert clinical iridologist specializing in integrating Jyotish insights into iridology reports. Write in a clinical, professional tone using full paragraphs.',
+      systemPrompt: `You are an expert clinical iridologist specializing in integrating Jyotish insights into iridology reports. Write in a clinical, professional tone using full paragraphs. Always respond in ${langInstruction}.`,
       userText: blendPrompt,
       images: [],
       maxTokens: 1000,

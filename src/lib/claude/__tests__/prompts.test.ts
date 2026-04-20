@@ -5,9 +5,11 @@ import {
   COMPARISON_ANALYSIS_SYSTEM_PROMPT,
   TECHNICAL_REVIEW_SYSTEM_PROMPT,
   buildChatSystemPrompt,
+  getStandardAnalysisSystemPrompt,
 } from '../prompts'
 import { REPORT_SECTION_KEYS } from '@/types/report'
 import { reportContentSchema } from '@/lib/validators/report'
+import { getModelForTier } from '@/lib/ai/get-provider'
 
 describe('Claude Prompts', () => {
   describe('STANDARD_ANALYSIS_SYSTEM_PROMPT', () => {
@@ -144,6 +146,42 @@ describe('Claude Prompts', () => {
       expect(REPORT_SECTION_KEYS).toHaveLength(12)
       expect(REPORT_SECTION_KEYS[0]).toBe('section_1_general_terrain')
       expect(REPORT_SECTION_KEYS[11]).toBe('section_12_conclusion')
+    })
+  })
+
+  describe('getModelForTier', () => {
+    it('returns the haiku model id for basic tier', () => {
+      expect(getModelForTier('basic_12')).toMatch(/haiku/i)
+    })
+
+    it('returns the sonnet model id for premium tier', () => {
+      expect(getModelForTier('premium_19_90')).toMatch(/sonnet/i)
+    })
+  })
+
+  describe('getStandardAnalysisSystemPrompt', () => {
+    it('returns Spanish prompt by default', () => {
+      const prompt = getStandardAnalysisSystemPrompt('es')
+      expect(prompt).toBe(STANDARD_ANALYSIS_SYSTEM_PROMPT)
+      expect(prompt).toContain('Write in a clinical, structured narrative style')
+    })
+
+    it('returns English prompt when language is en', () => {
+      const prompt = getStandardAnalysisSystemPrompt('en')
+      expect(prompt).toContain('Write in a clinical, structured narrative style')
+      expect(prompt).toContain('section_1_general_terrain')
+    })
+
+    it('both prompts should have identical JSON structure keys', () => {
+      const esPrompt = getStandardAnalysisSystemPrompt('es')
+      const enPrompt = getStandardAnalysisSystemPrompt('en')
+
+      // Extract JSON keys from both prompts
+      const esKeys = esPrompt.match(/"section_\d+_[^"]+"/g) || []
+      const enKeys = enPrompt.match(/"section_\d+_[^"]+"/g) || []
+
+      expect(esKeys).toEqual(enKeys)
+      expect(esKeys.length).toBeGreaterThan(0)
     })
   })
 })
