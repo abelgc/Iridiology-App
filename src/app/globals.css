@@ -133,6 +133,12 @@
   }
 }
 
+@layer components {
+  .input {
+    @apply w-full rounded-md border px-3 py-2 bg-white;
+  }
+}
+
 @media print {
   nav,
   aside,

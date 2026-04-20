@@ -183,3 +183,43 @@ export async function analyzeIris(
     }
   }
 }
+
+/**
+ * Client-facing analyze function that accepts base64 images and simple patient data.
+ * Wraps analyzeIris with format conversion for the client upload flow.
+ */
+export async function analyze(options: {
+  images: [string, string] // [right_eye_base64, left_eye_base64]
+  patient: {
+    full_name: string
+    date_of_birth: string
+    general_history: string
+    symptoms: string
+    practitioner_notes: string
+  }
+  language: 'en' | 'es'
+  modelId?: string
+}): Promise<ReportContent | AnalysisError> {
+  // Convert base64 data URLs to the format expected by analyzeIris
+  // Strip the "data:image/...;base64," prefix
+  const extractBase64 = (dataUrl: string): string => {
+    const match = dataUrl.match(/^data:image\/\w+;base64,(.+)$/)
+    return match ? match[1] : dataUrl
+  }
+
+  const request: AnalysisRequest = {
+    patientId: '', // Client analyses don't have a patient ID, they're one-off
+    patientData: {
+      full_name: options.patient.full_name,
+      date_of_birth: options.patient.date_of_birth,
+      gender: undefined,
+      general_history: options.patient.general_history,
+      symptoms: options.patient.symptoms,
+      practitioner_notes: options.patient.practitioner_notes,
+    },
+    rightIrisBase64: extractBase64(options.images[0]),
+    leftIrisBase64: extractBase64(options.images[1]),
+  }
+
+  return analyzeIris(request, options.language, options.modelId)
+}
