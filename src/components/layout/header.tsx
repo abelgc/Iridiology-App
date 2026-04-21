@@ -23,7 +23,6 @@ export function Header() {
         setUserEmail(user.email || '')
       }
     }
-
     getUser()
   }, [])
 
@@ -41,25 +40,42 @@ export function Header() {
   }
 
   return (
-    <header className="fixed top-0 left-0 md:left-64 right-0 border-b border-[oklch(0.88_0.02_80)] bg-[oklch(0.98_0.008_80)] h-16 flex items-center justify-between px-6 print:hidden z-30" style={{ '--header-height': '64px' } as React.CSSProperties}>
+    <header
+      className="fixed top-0 left-0 md:left-64 right-0 h-16 flex items-center justify-between px-6 print:hidden z-30"
+      style={{
+        background: 'oklch(0.98 0.008 80)',
+        borderBottom: '1px solid oklch(0.88 0.02 80)',
+      }}
+    >
       <div className="flex items-center gap-3">
         <button
           onClick={toggle}
-          className="md:hidden p-2 rounded-lg hover:bg-[oklch(0.88_0.02_80)] transition-colors"
+          className="md:hidden p-2 rounded-lg transition-colors"
+          style={{ color: 'oklch(0.38 0.08 175)' }}
           aria-label="Toggle sidebar"
         >
-          <Menu className="size-5 text-[oklch(0.38_0.08_175)]" />
+          <Menu className="size-5" />
         </button>
-        <h1 className="text-lg font-semibold text-[oklch(0.38_0.08_175)]">Narasimha Clay</h1>
+        <h1
+          className="text-lg font-semibold"
+          style={{ fontFamily: 'var(--font-serif)', color: 'oklch(0.38 0.08 175)' }}
+        >
+          Narasimha Solutions
+        </h1>
       </div>
       <div className="flex items-center gap-4">
-        {userEmail && <span className="text-sm text-[oklch(0.50_0.03_60)]">{userEmail}</span>}
+        {userEmail && (
+          <span className="text-sm hidden sm:block" style={{ color: 'oklch(0.50 0.03 60)' }}>
+            {userEmail}
+          </span>
+        )}
         <Button
           variant="ghost"
           size="sm"
           onClick={handleLogout}
           disabled={isLoading}
-          className="gap-2 text-[oklch(0.50_0.03_60)] hover:text-[oklch(0.22_0.04_50)]"
+          className="gap-2"
+          style={{ color: 'oklch(0.50 0.03 60)' }}
         >
           <LogOut className="size-4" />
           Logout

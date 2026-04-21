@@ -34,19 +34,16 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     setGlobalError('')
     setIsLoading(true)
-
     try {
       const supabase = createClient()
       const { error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
       })
-
       if (error) {
         setGlobalError(error.message)
         return
       }
-
       router.push('/')
     } catch (err) {
       setGlobalError('An unexpected error occurred')
@@ -56,23 +53,43 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-[oklch(0.25_0.06_175)]">
-      <Card className="w-full max-w-sm p-4 sm:p-8 mx-4 sm:mx-auto bg-[oklch(0.98_0.008_80)] border-[oklch(0.88_0.02_80)]">
+    <div
+      className="flex items-center justify-center min-h-screen"
+      style={{ background: 'oklch(0.25 0.06 175)' }}
+    >
+      <Card
+        className="w-full max-w-sm p-4 sm:p-8 mx-4 sm:mx-auto"
+        style={{ background: 'oklch(0.98 0.008 80)', border: '1px solid oklch(0.88 0.02 80)' }}
+      >
         <div className="flex flex-col items-center mb-6">
-          <Image src="/logo.jpeg" alt="Narasimha Clay" width={72} height={72} className="rounded-full object-cover mb-3" />
-          <h1 className="text-xl font-bold text-[oklch(0.22_0.04_50)]">Narasimha Clay</h1>
-          <p className="text-sm text-[oklch(0.50_0.03_60)]">Iridology Analysis</p>
+          <Image
+            src="/logo-solutions.png"
+            alt="Narasimha Solutions"
+            width={72}
+            height={72}
+            className="rounded-full object-cover mb-3"
+            style={{ border: '2px solid oklch(0.68 0.12 65)' }}
+          />
+          <h1
+            className="text-xl font-bold"
+            style={{ fontFamily: 'var(--font-serif)', color: 'oklch(0.22 0.04 50)' }}
+          >
+            Narasimha Solutions
+          </h1>
+          <p className="text-sm mt-1" style={{ color: 'oklch(0.50 0.03 60)', letterSpacing: '0.04em' }}>
+            Iridology Analysis
+          </p>
         </div>
 
         {globalError && (
-          <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded text-destructive text-sm">
+          <div className="mb-4 p-3 rounded text-sm" style={{ background: 'oklch(0.95 0.02 27)', border: '1px solid oklch(0.75 0.1 27)', color: 'oklch(0.45 0.18 27)' }}>
             {globalError}
           </div>
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'oklch(0.40 0.04 60)' }}>Email</label>
             <Input
               type="email"
               placeholder="your@email.com"
@@ -81,12 +98,12 @@ export default function LoginPage() {
               aria-invalid={!!errors.email}
             />
             {errors.email && (
-              <p className="text-destructive text-sm mt-1">{errors.email.message}</p>
+              <p className="text-sm mt-1" style={{ color: 'oklch(0.55 0.2 27)' }}>{errors.email.message}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Password</label>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'oklch(0.40 0.04 60)' }}>Password</label>
             <Input
               type="password"
               placeholder="••••••"
@@ -95,12 +112,12 @@ export default function LoginPage() {
               aria-invalid={!!errors.password}
             />
             {errors.password && (
-              <p className="text-destructive text-sm mt-1">{errors.password.message}</p>
+              <p className="text-sm mt-1" style={{ color: 'oklch(0.55 0.2 27)' }}>{errors.password.message}</p>
             )}
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Signing in...' : 'Sign In'}
+            {isLoading ? 'Signing in…' : 'Sign In'}
           </Button>
         </form>
       </Card>
