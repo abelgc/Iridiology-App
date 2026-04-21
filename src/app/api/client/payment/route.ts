@@ -3,8 +3,8 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { isValidReportToken } from '@/lib/client/report-token'
 
 export async function POST(request: NextRequest) {
-  if (process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ error: 'mock_payment_disabled_in_production' }, { status: 403 })
+  if (!process.env.ENABLE_MOCK_PAYMENT) {
+    return NextResponse.json({ error: 'mock_payment_disabled' }, { status: 403 })
   }
 
   let body: { report_download_token?: string }

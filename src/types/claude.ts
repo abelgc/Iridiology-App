@@ -14,6 +14,7 @@ export interface AnalysisRequest {
     symptoms: string | null
     practitioner_notes: string | null
   }
+  health_questionnaire?: Record<string, unknown> | null
 }
 
 export interface ComparisonRequest extends AnalysisRequest {

@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
       country_of_birth: data.country_of_birth,
       city_of_birth: data.city_of_birth,
       time_of_day: data.time_of_day,
+      health_questionnaire: data.health_questionnaire ?? null,
       report_download_token: generateReportToken(),
       status: 'intake_pending',
     })
