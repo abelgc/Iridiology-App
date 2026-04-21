@@ -13,7 +13,7 @@ export const clientIntakeSchema = z.object({
   country_of_birth: z.string().min(1).max(255),
   city_of_birth: z.string().min(1).max(255),
   time_of_day: z.enum(['morning', 'evening']),
-  health_questionnaire: healthQuestionnaireSchema.optional(),
+  health_questionnaire: healthQuestionnaireSchema.optional().default({}),
 })
 
 export type ClientIntakeInput = z.infer<typeof clientIntakeSchema>
