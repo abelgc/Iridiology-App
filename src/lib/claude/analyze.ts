@@ -130,6 +130,7 @@ export async function analyzeIris(
       request,
       patientContext.previousReportSummary,
       patientContext.practitionerCorrections,
+      request.health_questionnaire,
     )
 
     const systemPrompt = getStandardAnalysisSystemPrompt(language)
@@ -211,6 +212,7 @@ export async function analyzeIris(
             request,
             patientContext.previousReportSummary,
             patientContext.practitionerCorrections,
+            request.health_questionnaire,
           )
           const systemPrompt = getStandardAnalysisSystemPrompt(language)
 
@@ -253,6 +255,7 @@ export async function analyze(options: {
     symptoms: string
     practitioner_notes: string
   }
+  health_questionnaire?: Record<string, unknown> | null
   language: 'en' | 'es'
   modelId?: string
 }): Promise<ReportContent | AnalysisError> {
@@ -274,6 +277,7 @@ export async function analyze(options: {
       symptoms: options.patient.symptoms,
       practitioner_notes: options.patient.practitioner_notes,
     },
+    health_questionnaire: options.health_questionnaire ?? null,
     rightIrisBase64: extractBase64(options.images[0]),
     leftIrisBase64: extractBase64(options.images[1]),
   }

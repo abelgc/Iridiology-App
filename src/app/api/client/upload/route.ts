@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
           ? `Current medications: ${row.current_medications}`
           : '',
       },
+      health_questionnaire: (row.health_questionnaire as Record<string, unknown> | null) ?? null,
       language: row.language,
       modelId,
     })
