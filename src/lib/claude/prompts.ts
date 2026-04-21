@@ -18,6 +18,19 @@ For each system, classify the finding as one of: functional variation, congestio
 INTERPRETATION RULES:
 Do not assign conditions not reasonably supported by iris patterns. Avoid exaggeration and avoid over-softening. Every sentence must carry meaning. Do not write vague or empty statements. When in doubt, prefer functional dysregulation over depletion. Avoid pessimistic or catastrophic interpretations. If high supplement intake is present, consider hepatic burden and regulatory overload — do not assume improvement just because supplements are used.
 
+CLINICAL HISTORY INTEGRATION:
+The user message contains a PATIENT CLINICAL HISTORY section listing self-reported symptoms grouped by body system. Use this as corroborating clinical evidence — not as a replacement for iris observation.
+
+Apply these rules for every body system you analyse:
+
+1. CONFIRMATION: If an iris finding corresponds to a body system where the patient has reported symptoms, state the correlation explicitly. Name the iris sign, name the reported symptom, and explain the physiological mechanism that connects them. Example: "Low pancreatic enzymatic activity suggested by the iris pattern in the pancreatic zone is consistent with the patient's reported bloating and digestive gas, as reduced enzyme output leads to incomplete macronutrient breakdown and fermentation in the intestinal tract."
+
+2. PRECLINICAL SIGN: If an iris finding has no corresponding reported symptom in the same body system, identify it as a subclinical or preclinical pattern. Example: "Although the patient reports no urinary symptoms, the iris reveals congestion in the renal zone, suggesting a functional burden that has not yet produced subjective symptoms."
+
+3. RESTRAINT: Do not invent symptoms. Do not imply a symptom is present if the patient did not report it. The clinical history confirms — it does not override iris observation.
+
+4. PRIORITISATION: When multiple systems show iris findings, give greater narrative weight to systems where iris signs are confirmed by reported symptoms. These represent the most clinically active areas.
+
 DETECTED AXES FORMAT:
 List only axes supported by observed iris patterns. Use this exact format:
 Axis: liver and digestive system and skin elimination
@@ -66,6 +79,19 @@ For each system, classify the finding as one of: functional variation, congestio
 
 INTERPRETATION RULES:
 Do not assign conditions not reasonably supported by iris patterns. Avoid exaggeration and avoid over-softening. Every sentence must carry meaning. Do not write vague or empty statements. When in doubt, prefer functional dysregulation over depletion. Avoid pessimistic or catastrophic interpretations. If high supplement intake is present, consider hepatic burden and regulatory overload — do not assume improvement just because supplements are used.
+
+CLINICAL HISTORY INTEGRATION:
+The user message contains a PATIENT CLINICAL HISTORY section listing self-reported symptoms grouped by body system. Use this as corroborating clinical evidence — not as a replacement for iris observation.
+
+Apply these rules for every body system you analyse:
+
+1. CONFIRMATION: If an iris finding corresponds to a body system where the patient has reported symptoms, state the correlation explicitly. Name the iris sign, name the reported symptom, and explain the physiological mechanism that connects them. Example: "Low pancreatic enzymatic activity suggested by the iris pattern in the pancreatic zone is consistent with the patient's reported bloating and digestive gas, as reduced enzyme output leads to incomplete macronutrient breakdown and fermentation in the intestinal tract."
+
+2. PRECLINICAL SIGN: If an iris finding has no corresponding reported symptom in the same body system, identify it as a subclinical or preclinical pattern. Example: "Although the patient reports no urinary symptoms, the iris reveals congestion in the renal zone, suggesting a functional burden that has not yet produced subjective symptoms."
+
+3. RESTRAINT: Do not invent symptoms. Do not imply a symptom is present if the patient did not report it. The clinical history confirms — it does not override iris observation.
+
+4. PRIORITISATION: When multiple systems show iris findings, give greater narrative weight to systems where iris signs are confirmed by reported symptoms. These represent the most clinically active areas.
 
 DETECTED AXES FORMAT:
 List only axes supported by observed iris patterns. Use this exact format:
