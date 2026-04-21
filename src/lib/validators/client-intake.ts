@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { healthQuestionnaireSchema } from './health-questionnaire'
 
 export const clientIntakeSchema = z.object({
   language: z.enum(['en', 'es']),
@@ -12,6 +13,7 @@ export const clientIntakeSchema = z.object({
   country_of_birth: z.string().min(1).max(255),
   city_of_birth: z.string().min(1).max(255),
   time_of_day: z.enum(['morning', 'evening']),
+  health_questionnaire: healthQuestionnaireSchema.optional(),
 })
 
 export type ClientIntakeInput = z.infer<typeof clientIntakeSchema>
