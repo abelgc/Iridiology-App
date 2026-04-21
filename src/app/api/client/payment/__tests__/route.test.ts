@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 const updateMock = vi.fn()
 const fromMock = vi.fn(() => ({
@@ -24,7 +24,11 @@ vi.mock('@/lib/supabase/server', () => ({
 beforeEach(() => {
   updateMock.mockClear()
   fromMock.mockClear()
-  process.env.NODE_ENV = 'test'
+  process.env.ENABLE_MOCK_PAYMENT = 'true'
+})
+
+afterEach(() => {
+  delete process.env.ENABLE_MOCK_PAYMENT
 })
 
 describe('POST /api/client/payment (mock)', () => {
@@ -41,8 +45,8 @@ describe('POST /api/client/payment (mock)', () => {
     expect(updateMock).toHaveBeenCalledTimes(1)
   })
 
-  it('refuses mock payment in production', async () => {
-    process.env.NODE_ENV = 'production'
+  it('refuses mock payment when ENABLE_MOCK_PAYMENT is not set', async () => {
+    delete process.env.ENABLE_MOCK_PAYMENT
     const { POST } = await import('@/app/api/client/payment/route')
     const req = new Request('http://test/api/client/payment', {
       method: 'POST',
