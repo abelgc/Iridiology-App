@@ -165,9 +165,6 @@ export function IntakeForm({
 
       {/* Free-text extra fields */}
       <QuestionSection title={t('qSectionExtra')}>
-        <Field label={t('qExtraMedications')}>
-          <textarea className="input" rows={2} {...register('health_questionnaire.medications_supplements')} />
-        </Field>
         <Field label={t('qExtraAllergies')}>
           <input className="input" {...register('health_questionnaire.known_allergies')} />
         </Field>

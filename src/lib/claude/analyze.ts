@@ -43,7 +43,6 @@ export function formatQuestionnaire(q: Record<string, unknown> | null | undefine
   }
 
   const freeTexts: Array<[string, string]> = [
-    ['medications_supplements', 'Medications/supplements'],
     ['known_allergies', 'Known allergies'],
     ['past_surgeries', 'Past surgeries'],
     ['family_history', 'Family history'],

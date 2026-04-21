@@ -23,12 +23,12 @@ describe('healthQuestionnaireSchema', () => {
 
   it('accepts optional free-text fields', () => {
     const result = healthQuestionnaireSchema.safeParse({
-      medications_supplements: 'Metformin 500mg',
       known_allergies: 'Penicillin',
+      past_surgeries: 'Appendectomy 2010',
     })
     expect(result.success).toBe(true)
     if (!result.success) return
-    expect(result.data.medications_supplements).toBe('Metformin 500mg')
+    expect(result.data.known_allergies).toBe('Penicillin')
   })
 
   it('rejects non-boolean values for symptom fields', () => {

@@ -19,11 +19,11 @@ describe('formatQuestionnaire', () => {
 
   it('includes free-text fields when provided', () => {
     const result = formatQuestionnaire({
-      medications_supplements: 'Metformin 500mg',
       known_allergies: 'Penicillin',
+      past_surgeries: 'Appendectomy 2010',
     } as any)
-    expect(result).toContain('Medications/supplements: Metformin 500mg')
     expect(result).toContain('Known allergies: Penicillin')
+    expect(result).toContain('Past surgeries: Appendectomy 2010')
   })
 
   it('returns "None reported" when questionnaire is null or undefined', () => {

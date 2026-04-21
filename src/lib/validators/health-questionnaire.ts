@@ -134,7 +134,6 @@ export const healthQuestionnaireSchema = z.object({
     frequent_fever: boolField,
   }),
 
-  medications_supplements: z.string().max(2000).optional(),
   known_allergies: z.string().max(1000).optional(),
   past_surgeries: z.string().max(1000).optional(),
   family_history: z.string().max(2000).optional(),
