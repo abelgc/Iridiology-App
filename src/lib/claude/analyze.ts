@@ -11,7 +11,59 @@ export interface AnalysisError {
   message: string
 }
 
-function buildUserPrompt(request: AnalysisRequest, previousReportSummary: string | null, practitionerCorrections: string | null): string {
+const SYSTEM_LABELS: Record<string, string> = {
+  digestive: 'Digestive',
+  cardiovascular: 'Cardiovascular',
+  respiratory: 'Respiratory',
+  nervous: 'Nervous',
+  musculoskeletal: 'Musculoskeletal',
+  endocrine: 'Endocrine',
+  urinary: 'Urinary',
+  reproductive: 'Reproductive',
+  skin_lymphatic: 'Skin/Lymphatic',
+  sensory: 'Sensory',
+  mental_emotional: 'Mental/Emotional',
+  immune: 'Immune',
+}
+
+export function formatQuestionnaire(q: Record<string, unknown> | null | undefined): string {
+  if (!q) return 'None reported'
+
+  const lines: string[] = []
+
+  for (const [system, label] of Object.entries(SYSTEM_LABELS)) {
+    const section = q[system]
+    if (!section || typeof section !== 'object') continue
+    const positives = Object.entries(section as Record<string, unknown>)
+      .filter(([, v]) => v === true)
+      .map(([k]) => k.replace(/_/g, ' '))
+    if (positives.length > 0) {
+      lines.push(`${label}: ${positives.join(', ')}`)
+    }
+  }
+
+  const freeTexts: Array<[string, string]> = [
+    ['medications_supplements', 'Medications/supplements'],
+    ['known_allergies', 'Known allergies'],
+    ['past_surgeries', 'Past surgeries'],
+    ['family_history', 'Family history'],
+  ]
+  for (const [key, label] of freeTexts) {
+    const val = q[key]
+    if (typeof val === 'string' && val.trim()) {
+      lines.push(`${label}: ${val.trim()}`)
+    }
+  }
+
+  return lines.length > 0 ? lines.join('\n') : 'None reported'
+}
+
+function buildUserPrompt(
+  request: AnalysisRequest,
+  previousReportSummary: string | null,
+  practitionerCorrections: string | null,
+  healthQuestionnaire?: Record<string, unknown> | null,
+): string {
   const age = request.patientData.date_of_birth
     ? calculateAge(request.patientData.date_of_birth)
     : 'Not specified'
@@ -30,10 +82,13 @@ ${previousReportSummary || 'None'}
 PRACTITIONER CORRECTIONS (if any):
 ${practitionerCorrections || 'None'}
 
+PATIENT CLINICAL HISTORY (self-reported symptoms by body system):
+${formatQuestionnaire(healthQuestionnaire ?? null)}
+
 IMAGES:
 Right and left iris images of the patient are attached.
 
-Analyse both irises and generate the complete clinical report in the specified JSON format. Maintain consistency with previous findings where applicable — if your assessment differs, explain the change.`
+Analyse both irises and generate the complete clinical report in the specified JSON format. Apply the CLINICAL HISTORY INTEGRATION rules: confirm iris findings that match reported symptoms with explicit causal reasoning; flag unmatched iris findings as preclinical signs. Maintain consistency with previous findings where applicable — if your assessment differs, explain the change.`
 }
 
 async function parseWithRetry(
