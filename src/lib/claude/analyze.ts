@@ -57,7 +57,7 @@ export function formatQuestionnaire(q: Record<string, unknown> | null | undefine
   return lines.length > 0 ? lines.join('\n') : 'None reported'
 }
 
-function buildUserPrompt(
+export function buildUserPrompt(
   request: AnalysisRequest,
   previousReportSummary: string | null,
   practitionerCorrections: string | null,

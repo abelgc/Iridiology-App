@@ -1,5 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/server'
-import { analyzeIris } from '@/lib/claude/analyze'
+import { analyzeIrisDual } from '@/lib/claude/analyze-dual'
 import { AnalysisRequest } from '@/types/claude'
 import { NextRequest, NextResponse } from 'next/server'
 import { enhanceEmotionalFieldWithJyotish, shouldEnhanceWithJyotish } from '@/lib/claude/enhance-emotional-field'
@@ -36,9 +36,9 @@ export async function POST(request: NextRequest) {
     // Uses admin client (no cookies) since request context is gone after response
     const runAnalysis = async () => {
       const bg = createAdminClient()
-      console.log(`[analyze] session ${sessionId} — calling Claude...`)
+      console.log(`[analyze] session ${sessionId} — starting dual-model analysis...`)
       try {
-        const result = await analyzeIris({ sessionId, patientId, rightIrisBase64, leftIrisBase64, patientData })
+        const result = await analyzeIrisDual({ sessionId, patientId, rightIrisBase64, leftIrisBase64, patientData })
         if ('code' in result) {
           console.error(`\x1b[31m[analyze] session ${sessionId} — error: ${(result as any).code} ${(result as any).message}\x1b[0m`)
           await bg.from('sessions').update({ status: 'error' }).eq('id', sessionId)

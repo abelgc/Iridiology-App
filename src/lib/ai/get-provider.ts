@@ -11,15 +11,17 @@ export function getModelForTier(tier: PaymentTier): string {
   return tier === 'premium_19_90' ? SONNET_MODEL_ID : HAIKU_MODEL_ID
 }
 
-export async function getAIProvider(): Promise<AIProvider> {
+async function getSettings() {
   const supabase = createAdminClient()
   const { data } = await supabase
     .from('settings')
     .select('key, value')
     .in('key', ['active_provider', 'anthropic_api_key', 'openai_api_key', 'anthropic_model', 'openai_model'])
+  return Object.fromEntries((data ?? []).map((r) => [r.key, r.value ?? '']))
+}
 
-  const map = Object.fromEntries((data ?? []).map((r) => [r.key, r.value ?? '']))
-
+export async function getAIProvider(): Promise<AIProvider> {
+  const map = await getSettings()
   const activeProvider = map['active_provider'] ?? 'anthropic'
 
   if (activeProvider === 'openai') {
@@ -31,4 +33,22 @@ export async function getAIProvider(): Promise<AIProvider> {
   const key = map['anthropic_api_key'] || process.env.ANTHROPIC_API_KEY || ''
   const model = map['anthropic_model'] || 'claude-sonnet-4-6'
   return new AnthropicProvider(key, model)
+}
+
+export async function getBothProviders(): Promise<{
+  anthropic: AnthropicProvider
+  openai: OpenAIProvider
+  available: boolean
+} | null> {
+  const map = await getSettings()
+  const anthropicKey = map['anthropic_api_key'] || process.env.ANTHROPIC_API_KEY || ''
+  const openaiKey = map['openai_api_key'] || process.env.OPENAI_API_KEY || ''
+
+  if (!anthropicKey || !openaiKey) return null
+
+  return {
+    anthropic: new AnthropicProvider(anthropicKey, map['anthropic_model'] || 'claude-sonnet-4-6'),
+    openai: new OpenAIProvider(openaiKey, map['openai_model'] || 'gpt-4o'),
+    available: true,
+  }
 }
