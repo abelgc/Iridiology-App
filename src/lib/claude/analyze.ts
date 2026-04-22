@@ -73,7 +73,7 @@ export function buildUserPrompt(
 - Gender: ${request.patientData.gender || 'Not specified'}
 - Clinical history: ${request.patientData.general_history || 'Not specified'}
 - Current symptoms: ${request.patientData.symptoms || 'Not specified'}
-- Practitioner notes: ${request.patientData.practitioner_notes || 'None'}
+- Practitioner clinical hypothesis (verify against iris findings independently — do not restate or echo these words in the report; confirm, contradict, or nuance through what you observe): ${request.patientData.practitioner_notes || 'None'}
 
 PREVIOUS FINDINGS (if any):
 ${previousReportSummary || 'None'}
