@@ -11,7 +11,7 @@ export function getModelForTier(tier: PaymentTier): string {
   return tier === 'premium_19_90' ? SONNET_MODEL_ID : HAIKU_MODEL_ID
 }
 
-async function getSettings() {
+async function getSettings(): Promise<Record<string, string>> {
   const supabase = createAdminClient()
   const { data } = await supabase
     .from('settings')
@@ -38,9 +38,11 @@ export async function getAIProvider(): Promise<AIProvider> {
 export async function getBothProviders(): Promise<{
   anthropic: AnthropicProvider
   openai: OpenAIProvider
-  available: boolean
 } | null> {
   const map = await getSettings()
+
+  if (map['active_provider'] !== 'both') return null
+
   const anthropicKey = map['anthropic_api_key'] || process.env.ANTHROPIC_API_KEY || ''
   const openaiKey = map['openai_api_key'] || process.env.OPENAI_API_KEY || ''
 
@@ -49,6 +51,5 @@ export async function getBothProviders(): Promise<{
   return {
     anthropic: new AnthropicProvider(anthropicKey, map['anthropic_model'] || 'claude-sonnet-4-6'),
     openai: new OpenAIProvider(openaiKey, map['openai_model'] || 'gpt-4o'),
-    available: true,
   }
 }
