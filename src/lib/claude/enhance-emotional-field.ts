@@ -6,7 +6,7 @@ export interface JyotishEnhancementData {
   date_of_birth: string
   country_of_birth: string
   city_of_birth: string
-  time_of_day: 'morning' | 'evening'
+  time_of_day: string
 }
 
 interface ChakraRecommendation {
@@ -23,7 +23,8 @@ export function shouldEnhanceWithJyotish(data: any): boolean {
     typeof data.country_of_birth === 'string' &&
     data?.city_of_birth &&
     typeof data.city_of_birth === 'string' &&
-    (data?.time_of_day === 'morning' || data?.time_of_day === 'evening')
+    data?.time_of_day &&
+    typeof data.time_of_day === 'string'
   )
 }
 

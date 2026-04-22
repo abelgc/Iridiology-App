@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
               date_of_birth: patientData.date_of_birth!,
               country_of_birth: patientData.country_of_birth!,
               city_of_birth: patientData.city_of_birth!,
-              time_of_day: patientData.time_of_day as 'morning' | 'evening',
+              time_of_day: patientData.time_of_day!,
             },
           )
           console.log(`[analyze] session ${sessionId} — emotional field enhanced ✓`)

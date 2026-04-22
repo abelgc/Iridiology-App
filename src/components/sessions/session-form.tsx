@@ -21,6 +21,10 @@ interface PatientOption {
   date_of_birth: string | null
   gender: string | null
   general_history: string | null
+  notes: string | null
+  country_of_birth: string | null
+  city_of_birth: string | null
+  time_of_day: string | null
 }
 
 interface LastSessionInfo {
@@ -171,6 +175,9 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
         date_of_birth: patient.date_of_birth,
         gender: patient.gender,
         general_history: patient.general_history,
+        country_of_birth: patient.country_of_birth,
+        city_of_birth: patient.city_of_birth,
+        time_of_day: patient.time_of_day,
         symptoms: formData.symptoms || null,
         practitioner_notes: formData.practitionerNotes || null,
       }
@@ -221,7 +228,15 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
         </label>
         <select
           value={formData.patientId}
-          onChange={(e) => { const v = e.target.value; setFormData(prev => ({ ...prev, patientId: v })) }}
+          onChange={(e) => {
+            const v = e.target.value
+            const selected = patients.find((p) => p.id === v)
+            setFormData(prev => ({
+              ...prev,
+              patientId: v,
+              practitionerNotes: selected?.notes || '',
+            }))
+          }}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         >
           <option value="">Select a patient...</option>

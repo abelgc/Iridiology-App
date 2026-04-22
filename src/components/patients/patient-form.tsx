@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Patient } from '@/types/database'
@@ -30,8 +30,32 @@ interface PatientFormProps {
   isLoading?: boolean
 }
 
+function parseTimeString(val: string | null | undefined): { hour: string; minute: string; period: 'AM' | 'PM' } {
+  if (!val) return { hour: '', minute: '', period: 'AM' }
+  const [h, m] = val.split(':').map(Number)
+  const period = h >= 12 ? 'PM' : 'AM'
+  const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h
+  return { hour: String(hour12), minute: String(m).padStart(2, '0'), period }
+}
+
+function composeTimeString(hour: string, minute: string, period: 'AM' | 'PM'): string | null {
+  if (!hour || !minute) return null
+  let h = parseInt(hour)
+  if (period === 'AM') {
+    if (h === 12) h = 0
+  } else {
+    if (h !== 12) h += 12
+  }
+  return `${String(h).padStart(2, '0')}:${minute}:00`
+}
+
 export function PatientForm({ patient, onSubmit, isLoading }: PatientFormProps) {
   const [submitting, setSubmitting] = useState(false)
+
+  const initialTime = parseTimeString(patient?.time_of_day)
+  const [timeHour, setTimeHour] = useState(initialTime.hour)
+  const [timeMinute, setTimeMinute] = useState(initialTime.minute)
+  const [timePeriod, setTimePeriod] = useState<'AM' | 'PM'>(initialTime.period)
 
   const form = useForm<PatientCreateInput>({
     resolver: zodResolver(patientCreateSchema),
@@ -48,6 +72,10 @@ export function PatientForm({ patient, onSubmit, isLoading }: PatientFormProps) 
       notes: patient?.notes || '',
     },
   })
+
+  useEffect(() => {
+    form.setValue('time_of_day', composeTimeString(timeHour, timeMinute, timePeriod))
+  }, [timeHour, timeMinute, timePeriod])
 
   const handleSubmit = async (data: PatientCreateInput) => {
     setSubmitting(true)
@@ -119,27 +147,40 @@ export function PatientForm({ patient, onSubmit, isLoading }: PatientFormProps) 
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="time_of_day"
-          render={({ field }: any) => (
-            <FormItem>
-              <FormLabel>Time of Birth (optional)</FormLabel>
-              <FormControl>
-                <Select value={field.value || ''} onValueChange={field.onChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select time" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="morning">Morning</SelectItem>
-                    <SelectItem value="evening">Evening</SelectItem>
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <FormItem>
+          <FormLabel>Time of Birth (optional)</FormLabel>
+          <div className="flex gap-2">
+            <Select value={timeHour} onValueChange={(v) => setTimeHour(v ?? '')}>
+              <SelectTrigger className="w-20">
+                <SelectValue placeholder="H" />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 12 }, (_, i) => String(i + 1)).map((h) => (
+                  <SelectItem key={h} value={h}>{h}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={timeMinute} onValueChange={(v) => setTimeMinute(v ?? '')}>
+              <SelectTrigger className="w-20">
+                <SelectValue placeholder="MM" />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map((m) => (
+                  <SelectItem key={m} value={m}>{m}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={timePeriod} onValueChange={(v) => setTimePeriod((v ?? 'AM') as 'AM' | 'PM')}>
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="AM">AM</SelectItem>
+                <SelectItem value="PM">PM</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </FormItem>
 
         <FormField
           control={form.control}

@@ -8,7 +8,7 @@ export interface AnalysisRequest {
     date_of_birth: string | null
     country_of_birth?: string | null
     city_of_birth?: string | null
-    time_of_day?: 'morning' | 'evening' | null
+    time_of_day?: string | null
     gender: string | null
     general_history: string | null
     symptoms: string | null

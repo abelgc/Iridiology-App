@@ -6,7 +6,7 @@ export interface Patient {
   date_of_birth: string | null
   country_of_birth: string | null
   city_of_birth: string | null
-  time_of_day: 'morning' | 'evening' | null
+  time_of_day: string | null
   gender: string | null
   email: string | null
   phone: string | null

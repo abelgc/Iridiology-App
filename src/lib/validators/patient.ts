@@ -5,7 +5,7 @@ export const patientCreateSchema = z.object({
   date_of_birth: z.string().optional().nullable(),
   country_of_birth: z.string().optional().nullable(),
   city_of_birth: z.string().optional().nullable(),
-  time_of_day: z.enum(['morning', 'evening']).optional().nullable(),
+  time_of_day: z.string().optional().nullable(),
   gender: z.string().optional().nullable(),
   email: z.string().email('Invalid email').optional().nullable().or(z.literal('')),
   phone: z.string().optional().nullable(),
