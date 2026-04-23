@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, ScanEye, Settings, FileText } from 'lucide-react'
+import { LayoutDashboard, Users, ScanEye, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSidebar } from '@/lib/sidebar-state'
 
@@ -11,7 +11,6 @@ const navItems = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
   { label: 'Patients', href: '/patients', icon: Users },
   { label: 'New Session', href: '/sessions/new', icon: ScanEye },
-  { label: 'Reports', href: '/reports/select', icon: FileText },
   { label: 'Settings', href: '/settings', icon: Settings },
 ]
 
