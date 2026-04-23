@@ -2,7 +2,7 @@
 
 import { useLanguage } from '@/lib/i18n-context'
 
-const TUTORIAL_URL = 'https://forms.gle/gwdg4QCRKGbhJ5zk9'
+const TUTORIAL_URL = 'https://vimeo.com/819893248'
 
 export function UploadTutorial() {
   const { t } = useLanguage()

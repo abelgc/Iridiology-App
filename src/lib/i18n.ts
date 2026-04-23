@@ -40,7 +40,7 @@ export const translations = {
     uploadTutorialLinkLabel: 'View the photo tutorial',
     uploadRightEye: 'Right eye',
     uploadLeftEye: 'Left eye',
-    uploadAnalyzing: 'Analyzing your iris patterns...',
+    uploadAnalyzing: 'Please wait, we are analyzing your case',
     // report
     reportReady: 'Your report is ready',
     reportDownload: 'Download PDF',
@@ -199,7 +199,7 @@ export const translations = {
     uploadTutorialLinkLabel: 'Ver el tutorial de fotos',
     uploadRightEye: 'Ojo derecho',
     uploadLeftEye: 'Ojo izquierdo',
-    uploadAnalyzing: 'Analizando los patrones de tu iris...',
+    uploadAnalyzing: 'Espere un momento, estamos analizando su caso',
     reportReady: 'Tu informe está listo',
     reportDownload: 'Descargar PDF',
     reportEmail: 'Enviarme este informe por correo',
