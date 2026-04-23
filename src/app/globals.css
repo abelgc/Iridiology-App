@@ -102,6 +102,27 @@
   .input {
     @apply w-full rounded-md border px-3 py-2 bg-white;
   }
+
+  /* Tier selection cards — /client page */
+  .tier-card {
+    background: #f0ebe0;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 16px;
+    padding: 32px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: left;
+    width: 100%;
+  }
+  .tier-card:hover,
+  .tier-card.selected {
+    background: #f5a623;
+    border-color: transparent;
+  }
+  .tier-card:hover *,
+  .tier-card.selected * {
+    color: #ffffff;
+  }
 }
 
 @media print {
