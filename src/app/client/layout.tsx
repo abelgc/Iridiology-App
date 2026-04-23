@@ -1,7 +1,6 @@
 import { ReactNode } from 'react'
 import Image from 'next/image'
 import { LanguageProvider } from '@/lib/i18n-context'
-import { LanguageToggle } from '@/components/client/language-toggle'
 
 export const metadata = { title: 'Narasimha Solutions — Iridology Analysis' }
 
@@ -10,7 +9,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
     <LanguageProvider>
       <div className="min-h-screen" style={{ background: 'oklch(0.98 0.008 80)', color: 'oklch(0.22 0.04 50)' }}>
         <header
-          className="flex items-center justify-between px-6 py-4"
+          className="flex items-center px-6 py-4"
           style={{ background: 'oklch(0.25 0.06 175)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}
         >
           <div className="flex items-center gap-3">
@@ -34,7 +33,6 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
               </p>
             </div>
           </div>
-          <LanguageToggle />
         </header>
         <main className="max-w-2xl mx-auto px-4 py-8">{children}</main>
       </div>
