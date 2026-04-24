@@ -4,11 +4,13 @@ import type { Lang } from '@/types/client-analysis'
 const SUBJECTS: Record<Lang, string> = {
   en: 'Your Iridology Analysis Report',
   es: 'Tu Informe de Análisis de Iridología',
+  fr: 'Votre Rapport d\'Analyse d\'Iridologie',
 }
 
 const BODY_INTRO: Record<Lang, string> = {
   en: 'Your iridology report is ready. Click the link below to view or download it at any time:',
   es: 'Tu informe de iridología está listo. Pulsa el enlace de abajo para verlo o descargarlo en cualquier momento:',
+  fr: 'Votre rapport d\'iridologie est ci-joint à cet e-mail.',
 }
 
 export async function sendReportEmail(params: {
