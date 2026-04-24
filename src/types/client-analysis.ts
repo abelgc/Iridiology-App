@@ -1,4 +1,4 @@
-export type Lang = 'en' | 'es'
+export type Lang = 'en' | 'es' | 'fr'
 export type PaymentTier = 'basic_12' | 'premium_19_90'
 export type TimeOfDay = 'morning' | 'evening'
 export type ClientAnalysisStatus =

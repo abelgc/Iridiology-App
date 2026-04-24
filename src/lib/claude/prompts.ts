@@ -262,6 +262,24 @@ Respond with ONLY a valid JSON object (no additional text):
 
 Be specific and direct. Avoid generic advice. The emotion should be actionable and healing-focused.`
 
-export function getStandardAnalysisSystemPrompt(lang: 'en' | 'es'): string {
-  return lang === 'en' ? STANDARD_ANALYSIS_SYSTEM_PROMPT_EN : STANDARD_ANALYSIS_SYSTEM_PROMPT
+const LANGUAGE_NAMES: Record<string, string> = {
+  en: 'English',
+  es: 'Spanish (Español)',
+  fr: 'French (Français)',
+}
+
+function buildLanguageDirective(lang: string): string {
+  const languageName = LANGUAGE_NAMES[lang] ?? 'English'
+  return `LANGUAGE DIRECTIVE: You MUST write the ENTIRE report in ${languageName}. Do not use any other language under any circumstance. Never default to English unless the language is explicitly set to English. Write every section, every sentence, every word in ${languageName}.`
+}
+
+export function getStandardAnalysisSystemPrompt(lang: 'en' | 'es' | 'fr'): string {
+  const languageDirective = buildLanguageDirective(lang)
+  // Base prompt is STANDARD_ANALYSIS_SYSTEM_PROMPT_EN for all languages —
+  // the clinical logic is the same; only the output language changes.
+  const base = STANDARD_ANALYSIS_SYSTEM_PROMPT_EN
+  return base.replace(
+    'LANGUAGE: Write ALL report content exclusively in English, regardless of the patient\'s name, nationality, or any other context. JSON keys are identifiers only — do not infer language from them.',
+    languageDirective
+  )
 }

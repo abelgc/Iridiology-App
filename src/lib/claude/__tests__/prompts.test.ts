@@ -160,28 +160,30 @@ describe('Claude Prompts', () => {
   })
 
   describe('getStandardAnalysisSystemPrompt', () => {
-    it('returns Spanish prompt by default', () => {
+    it('includes a Spanish language directive when lang is es', () => {
       const prompt = getStandardAnalysisSystemPrompt('es')
-      expect(prompt).toBe(STANDARD_ANALYSIS_SYSTEM_PROMPT)
-      expect(prompt).toContain('Write in a clinical, structured narrative style')
+      expect(prompt).toContain('Spanish')
+      expect(prompt).not.toContain('exclusively in English')
     })
 
-    it('returns English prompt when language is en', () => {
+    it('includes a French language directive when lang is fr', () => {
+      const prompt = getStandardAnalysisSystemPrompt('fr')
+      expect(prompt).toContain('French')
+      expect(prompt).not.toContain('exclusively in English')
+    })
+
+    it('includes an English language directive when lang is en', () => {
       const prompt = getStandardAnalysisSystemPrompt('en')
-      expect(prompt).toContain('Write in a clinical, structured narrative style')
-      expect(prompt).toContain('section_1_general_terrain')
+      expect(prompt).toContain('English')
+      expect(prompt).not.toContain('exclusively in English')
     })
 
-    it('both prompts should have identical JSON structure keys', () => {
-      const esPrompt = getStandardAnalysisSystemPrompt('es')
-      const enPrompt = getStandardAnalysisSystemPrompt('en')
-
-      // Extract JSON keys from both prompts
-      const esKeys = esPrompt.match(/"section_\d+_[^"]+"/g) || []
-      const enKeys = enPrompt.match(/"section_\d+_[^"]+"/g) || []
-
-      expect(esKeys).toEqual(enKeys)
-      expect(esKeys.length).toBeGreaterThan(0)
+    it('never contains the hardcoded override phrase for any lang', () => {
+      for (const lang of ['en', 'es', 'fr'] as const) {
+        expect(getStandardAnalysisSystemPrompt(lang)).not.toContain(
+          'Write ALL report content exclusively in English'
+        )
+      }
     })
   })
 })
