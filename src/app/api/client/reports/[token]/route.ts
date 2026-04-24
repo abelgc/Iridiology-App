@@ -19,7 +19,7 @@ export async function GET(
       language,
       status,
       report_id,
-      reports:report_id ( id, report_content )
+      reports:report_id ( id, report_content, client_report_content )
     `)
     .eq('report_download_token', token)
     .single()
@@ -34,8 +34,11 @@ export async function GET(
     )
   }
 
+  const reports = data.reports as any
+  const report = reports.client_report_content ?? reports.report_content
+
   return NextResponse.json({
     language: data.language,
-    report: (data.reports as any).report_content,
+    report,
   })
 }
