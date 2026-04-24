@@ -40,6 +40,8 @@ vi.mock('@/lib/supabase/server', () => ({
       if (table === 'reports') {
         return {
           insert: () => ({ select: () => ({ single: insertReport }) }),
+          update: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockResolvedValue({ data: null, error: null }),
         }
       }
       throw new Error('unexpected table ' + table)
