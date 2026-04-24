@@ -7,7 +7,7 @@ describe('detectsCorrectLanguage', () => {
   })
 
   it('returns false when text language does not match expected', () => {
-    expect(detectsCorrectLanguage('El sistema digestivo muestra signos de estrés crónico y la función hepática está comprometida. Los riñones muestran debilidad.', 'en')).toBe(false)
+    expect(detectsCorrectLanguage('El sistema digestivo muestra signos de estrés crónico y la función hepática está comprometida.', 'en')).toBe(false)
   })
 
   it('returns true for Spanish text with es lang', () => {
