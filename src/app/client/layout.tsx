@@ -1,5 +1,6 @@
 import { ReactNode } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { LanguageProvider } from '@/lib/i18n-context'
 
 export const metadata = { title: 'Narasimha Solutions — Iridology Analysis' }
@@ -12,7 +13,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
           className="flex items-center px-6 py-4"
           style={{ background: 'oklch(0.25 0.06 175)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}
         >
-          <div className="flex items-center gap-3">
+          <Link href="/client" className="flex items-center gap-3">
             <Image
               src="/logo-solutions.png"
               alt="Narasimha Solutions"
@@ -32,7 +33,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
                 Iridology Analysis
               </p>
             </div>
-          </div>
+          </Link>
         </header>
         <main className="max-w-2xl mx-auto px-4 py-8">{children}</main>
       </div>
