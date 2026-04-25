@@ -19,33 +19,36 @@ export default function ForgotPasswordPage() {
     setGlobalError('')
     setIsLoading(true)
 
-    if (!email.trim()) {
-      setGlobalError('Email is required')
-      setIsLoading(false)
-      return
-    }
-
-    if (!email.includes('@')) {
-      setGlobalError('Invalid email address')
-      setIsLoading(false)
-      return
-    }
-
     try {
+      if (!email?.trim()) {
+        throw new Error('Email is required')
+      }
+
+      if (!email.includes('@')) {
+        throw new Error('Invalid email address')
+      }
+
       const supabase = createClient()
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const trimmedEmail = email.trim()
+      const redirectUrl = `${window.location.origin}/reset-password`
+
+      const { data, error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+        redirectTo: redirectUrl,
       })
 
       if (error) {
-        setGlobalError(error.message)
-        setIsLoading(false)
-        return
+        throw new Error(error.message || 'Failed to send recovery email')
+      }
+
+      if (!data) {
+        throw new Error('No response from server')
       }
 
       setSuccess(true)
     } catch (err) {
-      setGlobalError(err instanceof Error ? err.message : 'An unexpected error occurred')
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred'
+      setGlobalError(message)
+    } finally {
       setIsLoading(false)
     }
   }
@@ -123,6 +126,7 @@ export default function ForgotPasswordPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isLoading}
+              required
             />
           </div>
 
