@@ -53,7 +53,8 @@ Based on this birth data, recommend the primary chakra and main emotion to focus
 
     let chakraRecommendation: ChakraRecommendation
     try {
-      chakraRecommendation = JSON.parse(chakraResponse.text)
+      const cleaned = chakraResponse.text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim()
+      chakraRecommendation = JSON.parse(cleaned)
     } catch (parseError) {
       console.error('Failed to parse Jyotish chakra recommendation:', parseError)
       return reportContent
