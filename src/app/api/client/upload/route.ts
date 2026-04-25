@@ -146,11 +146,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Rewrite for client (4-agent pipeline) — runs in parallel with DB insert below
-    // Bug fix: Add timeout guard (30 seconds max)
     const clientReportPromise = Promise.race([
       rewriteReportForClient(finalReport, row.language),
       new Promise<ReportContent>((_, reject) =>
-        setTimeout(() => reject(new Error('rewrite_timeout_exceeded')), 30000)
+        setTimeout(() => reject(new Error('rewrite_timeout_exceeded')), 120000)
       ),
     ])
 
@@ -185,20 +184,22 @@ export async function POST(request: NextRequest) {
 
     // Generate PDF and email
     if (row.email) {
-      // Bug fix: Add timeout guard for PDF generation (10 seconds max)
       const pdfBuffer = await Promise.race([
         generateReportPdf(clientReportContent),
         new Promise<Buffer>((_, reject) =>
-          setTimeout(() => reject(new Error('pdf_generation_timeout')), 10000)
+          setTimeout(() => reject(new Error('pdf_generation_timeout')), 60000)
         ),
       ])
-      await sendReportEmail({
+      const emailResult = await sendReportEmail({
         to: row.email,
         lang: row.language,
         analysisId: row.id,
         paymentTier: row.payment_tier,
         pdfBuffer,
       })
+      if (!emailResult.ok) {
+        console.error('[upload] email failed:', emailResult.error)
+      }
     }
 
     return NextResponse.json(

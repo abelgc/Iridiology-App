@@ -29,9 +29,8 @@ export async function sendReportEmail(params: {
 }): Promise<{ ok: boolean; id?: string; error?: string }> {
   const apiKey = process.env.RESEND_API_KEY
   const from = process.env.RESEND_FROM_EMAIL
-  const baseUrl = process.env.CLIENT_APP_BASE_URL
 
-  if (!apiKey || !from || !baseUrl) {
+  if (!apiKey || !from) {
     return { ok: false, error: 'email_not_configured' }
   }
 
@@ -45,9 +44,8 @@ export async function sendReportEmail(params: {
     .eq('analysis_id', params.analysisId)
     .single()
 
-  if (existing) {
-    // Already attempted (either sent or failed) — return early
-    return { ok: existing.status === 'sent', id: existing.status === 'sent' ? 'already_sent' : 'already_attempted' }
+  if (existing?.status === 'sent') {
+    return { ok: true, id: 'already_sent' }
   }
 
   const subject = SUBJECTS[params.lang]
