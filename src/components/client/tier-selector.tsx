@@ -12,10 +12,7 @@ export function TierSelector() {
 
   function pick(tier: PaymentTier) {
     setSelected(tier)
-    if (typeof window !== 'undefined') {
-      window.sessionStorage.setItem('client_tier', tier)
-    }
-    setTimeout(() => router.push('/client/intake'), 200)
+    setTimeout(() => router.push(`/client/intake?tier=${tier}`), 200)
   }
 
   return (

@@ -1,25 +1,24 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense } from 'react'
+import { useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useLanguage } from '@/lib/i18n-context'
 import { IntakeForm } from '@/components/client/intake-form'
 import type { PaymentTier } from '@/types/client-analysis'
 import type { ClientIntakeInput } from '@/lib/validators/client-intake'
 
-export default function IntakePage() {
+function IntakeContent() {
   const { t } = useLanguage()
   const router = useRouter()
-  const [tier, setTier] = useState<PaymentTier | null>(null)
+  const searchParams = useSearchParams()
+  const tier = searchParams.get('tier') as PaymentTier | null
 
   useEffect(() => {
-    const stored = window.sessionStorage.getItem('client_tier') as PaymentTier | null
-    if (stored !== 'basic_12' && stored !== 'premium_19_90') {
+    if (tier !== 'basic_12' && tier !== 'premium_19_90') {
       router.replace('/client')
-      return
     }
-    setTier(stored)
-  }, [router])
+  }, [tier, router])
 
   async function handleSubmit(data: ClientIntakeInput) {
     const res = await fetch('/api/client/intake', {
@@ -32,15 +31,22 @@ export default function IntakePage() {
       return
     }
     const json = (await res.json()) as { report_download_token: string }
-    window.sessionStorage.setItem('client_token', json.report_download_token)
-    router.push('/client/intake/payment')
+    router.push(`/client/intake/payment?token=${json.report_download_token}`)
   }
 
-  if (!tier) return null
+  if (tier !== 'basic_12' && tier !== 'premium_19_90') return null
   return (
     <section>
       <h2 className="text-2xl font-semibold mb-6">{t('intakeTitle')}</h2>
       <IntakeForm tier={tier} onSubmit={handleSubmit} />
     </section>
+  )
+}
+
+export default function IntakePage() {
+  return (
+    <Suspense>
+      <IntakeContent />
+    </Suspense>
   )
 }

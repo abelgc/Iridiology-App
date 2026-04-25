@@ -1,24 +1,23 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense } from 'react'
+import { useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useLanguage } from '@/lib/i18n-context'
 import { UploadTutorial } from '@/components/client/upload-tutorial'
 import { IrisImageUpload } from '@/components/client/iris-image-upload'
 
-export default function UploadPage() {
+function UploadContent() {
   const { t } = useLanguage()
   const router = useRouter()
-  const [token, setToken] = useState<string | null>(null)
+  const searchParams = useSearchParams()
+  const token = searchParams.get('token')
 
   useEffect(() => {
-    const stored = window.sessionStorage.getItem('client_token')
-    if (!stored) {
+    if (!token) {
       router.replace('/client')
-      return
     }
-    setToken(stored)
-  }, [router])
+  }, [token, router])
 
   async function handleSubmit({ right, left }: { right: string; left: string }) {
     if (!token) return
@@ -33,7 +32,7 @@ export default function UploadPage() {
       }),
     })
     if (!res.ok) {
-      router.replace('/client/upload')
+      router.replace(`/client/upload?token=${token}`)
       alert(t('error'))
       return
     }
@@ -47,5 +46,13 @@ export default function UploadPage() {
       <UploadTutorial />
       <IrisImageUpload onSubmit={handleSubmit} />
     </section>
+  )
+}
+
+export default function UploadPage() {
+  return (
+    <Suspense>
+      <UploadContent />
+    </Suspense>
   )
 }

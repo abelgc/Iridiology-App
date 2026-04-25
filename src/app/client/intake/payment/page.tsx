@@ -1,23 +1,22 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useLanguage } from '@/lib/i18n-context'
 
-export default function MockPaymentPage() {
+function MockPaymentContent() {
   const { t } = useLanguage()
   const router = useRouter()
-  const [token, setToken] = useState<string | null>(null)
+  const searchParams = useSearchParams()
+  const token = searchParams.get('token')
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    const stored = window.sessionStorage.getItem('client_token')
-    if (!stored) {
+    if (!token) {
       router.replace('/client')
-      return
     }
-    setToken(stored)
-  }, [router])
+  }, [token, router])
 
   async function handleContinue() {
     if (!token) return
@@ -32,7 +31,7 @@ export default function MockPaymentPage() {
       alert(t('error'))
       return
     }
-    router.push('/client/upload')
+    router.push(`/client/upload?token=${token}`)
   }
 
   if (!token) return null
@@ -49,5 +48,13 @@ export default function MockPaymentPage() {
         {submitting ? t('loading') : t('continue')}
       </button>
     </section>
+  )
+}
+
+export default function MockPaymentPage() {
+  return (
+    <Suspense>
+      <MockPaymentContent />
+    </Suspense>
   )
 }
