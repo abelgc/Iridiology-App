@@ -1,4 +1,5 @@
 {
+  "model": "sonnet",
   "permissions": {
     "allow": [
       "Bash(npx vitest *)",
@@ -67,7 +68,15 @@
       "Skill(investigate)",
       "Bash(echo \"EXIT:$?\")",
       "Bash(find src/app/\\\\\\(app\\\\\\)/reports -type f)",
-      "Bash(ls \"src/app/\\(app\\)/reports/\")"
+      "Bash(ls \"src/app/\\(app\\)/reports/\")",
+      "Skill(review)",
+      "PowerShell(cd \"C:\\\\Engineering and development\\\\Iridiology-App\"; git diff origin/master -- src/components/client/client-report-viewer.tsx src/components/client/upload-tutorial.tsx src/lib/i18n.ts)",
+      "PowerShell(cd \"C:\\\\Engineering and development\\\\Iridiology-App\"; git diff origin/master -- src/app/\"\\(app\\)\"/reports/select/page.tsx src/components/layout/sidebar.tsx src/components/reports/report-tier-selector.tsx --stat)",
+      "Skill(claude-api)",
+      "Bash(node -e \"require\\('@react-pdf/renderer'\\); require\\('tinyld'\\); console.log\\('ok'\\)\")",
+      "Bash(node -e \"require\\('@react-pdf/renderer'\\); console.log\\('OK'\\)\")",
+      "Bash(/config *)",
+      "Skill(update-config)"
     ]
   }
 }

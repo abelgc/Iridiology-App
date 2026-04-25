@@ -112,8 +112,9 @@ async function parseWithRetry(
 
 export async function analyzeIris(
   request: AnalysisRequest,
-  language: 'en' | 'es' = 'es',
+  language: 'en' | 'es' | 'fr' = 'es',
   modelId?: string,
+  forceLanguage?: boolean,
 ): Promise<ReportContent | AnalysisError> {
   const provider = await getAIProvider()
 
@@ -132,7 +133,10 @@ export async function analyzeIris(
       request.health_questionnaire,
     )
 
-    const systemPrompt = getStandardAnalysisSystemPrompt(language)
+    let systemPrompt = getStandardAnalysisSystemPrompt(language as 'en' | 'es' | 'fr')
+    if (forceLanguage) {
+      systemPrompt = systemPrompt + '\n\nCRITICAL OVERRIDE: The ENTIRE response, every JSON value, every word MUST be written in the language specified above. Do not write a single word in any other language. This is a hard requirement.'
+    }
 
     // Call AI provider with vision
     const response = await provider.complete({
@@ -213,7 +217,10 @@ export async function analyzeIris(
             patientContext.practitionerCorrections,
             request.health_questionnaire,
           )
-          const systemPrompt = getStandardAnalysisSystemPrompt(language)
+          let systemPrompt = getStandardAnalysisSystemPrompt(language as 'en' | 'es' | 'fr')
+          if (forceLanguage) {
+            systemPrompt = systemPrompt + '\n\nCRITICAL OVERRIDE: The ENTIRE response, every JSON value, every word MUST be written in the language specified above. Do not write a single word in any other language. This is a hard requirement.'
+          }
 
           const retryResponse = await provider.complete({
             systemPrompt,
@@ -255,8 +262,9 @@ export async function analyze(options: {
     practitioner_notes: string
   }
   health_questionnaire?: Record<string, unknown> | null
-  language: 'en' | 'es'
+  language: 'en' | 'es' | 'fr'
   modelId?: string
+  forceLanguage?: boolean
 }): Promise<ReportContent | AnalysisError> {
   // Convert base64 data URLs to the format expected by analyzeIris
   // Strip the "data:image/...;base64," prefix
@@ -281,5 +289,5 @@ export async function analyze(options: {
     leftIrisBase64: extractBase64(options.images[1]),
   }
 
-  return analyzeIris(request, options.language, options.modelId)
+  return analyzeIris(request, options.language, options.modelId, options.forceLanguage)
 }
