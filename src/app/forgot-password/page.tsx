@@ -1,8 +1,5 @@
 'use client'
 
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { useState } from 'react'
@@ -11,41 +8,44 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 
-const forgotPasswordSchema = z.object({
-  email: z.string().email('Invalid email address'),
-})
-
-type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
-
 export default function ForgotPasswordPage() {
+  const [email, setEmail] = useState('')
   const [globalError, setGlobalError] = useState<string>('')
   const [success, setSuccess] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<ForgotPasswordFormData>({
-    resolver: zodResolver(forgotPasswordSchema),
-  })
-
-  const onSubmit = async (data: ForgotPasswordFormData) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     setGlobalError('')
     setIsLoading(true)
+
+    if (!email.trim()) {
+      setGlobalError('Email is required')
+      setIsLoading(false)
+      return
+    }
+
+    if (!email.includes('@')) {
+      setGlobalError('Invalid email address')
+      setIsLoading(false)
+      return
+    }
+
     try {
       const supabase = createClient()
-      const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       })
+
       if (error) {
         setGlobalError(error.message)
+        setIsLoading(false)
         return
       }
+
       setSuccess(true)
     } catch (err) {
-      setGlobalError('An unexpected error occurred')
-    } finally {
+      setGlobalError(err instanceof Error ? err.message : 'An unexpected error occurred')
       setIsLoading(false)
     }
   }
@@ -113,19 +113,17 @@ export default function ForgotPasswordPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1" style={{ color: 'oklch(0.40 0.04 60)' }}>Email</label>
             <Input
               type="email"
               placeholder="your@email.com"
               autoComplete="email"
-              {...register('email')}
-              aria-invalid={!!errors.email}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isLoading}
             />
-            {errors.email && (
-              <p className="text-sm mt-1" style={{ color: 'oklch(0.55 0.2 27)' }}>{errors.email.message}</p>
-            )}
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>
