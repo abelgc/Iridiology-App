@@ -46,6 +46,17 @@ function ResetPasswordContent() {
         setIsVerifying(false)
         return
       }
+
+      // Exchange the one-time code from the email link for a real login session.
+      // Without this step there is no active session and updateUser() will fail.
+      const supabase = createClient()
+      const { error } = await supabase.auth.exchangeCodeForSession(code)
+      if (error) {
+        setGlobalError('This reset link has expired or already been used. Please request a new one.')
+        setIsVerifying(false)
+        return
+      }
+
       setIsVerifying(false)
     }
 

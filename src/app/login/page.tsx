@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -20,7 +19,6 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
-  const router = useRouter()
   const [globalError, setGlobalError] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -45,7 +43,7 @@ export default function LoginPage() {
         setGlobalError(error.message)
         return
       }
-      router.push('/')
+      window.location.href = '/'
     } catch (err) {
       setGlobalError('An unexpected error occurred')
     } finally {
