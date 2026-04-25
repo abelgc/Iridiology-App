@@ -4,53 +4,78 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useState } from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 
-const loginSchema = z.object({
+const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
 })
 
-type LoginFormData = z.infer<typeof loginSchema>
+type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
 
-export default function LoginPage() {
-  const router = useRouter()
+export default function ForgotPasswordPage() {
   const [globalError, setGlobalError] = useState<string>('')
+  const [success, setSuccess] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<ForgotPasswordFormData>({
+    resolver: zodResolver(forgotPasswordSchema),
   })
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: ForgotPasswordFormData) => {
     setGlobalError('')
     setIsLoading(true)
     try {
       const supabase = createClient()
-      const { error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
+      const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
+        redirectTo: `${window.location.origin}/reset-password`,
       })
       if (error) {
         setGlobalError(error.message)
         return
       }
-      router.push('/')
+      setSuccess(true)
     } catch (err) {
       setGlobalError('An unexpected error occurred')
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (success) {
+    return (
+      <div
+        className="flex items-center justify-center min-h-screen"
+        style={{ background: 'oklch(0.25 0.06 175)' }}
+      >
+        <Card
+          className="w-full max-w-sm p-4 sm:p-8 mx-4 sm:mx-auto"
+          style={{ background: 'oklch(0.98 0.008 80)', border: '1px solid oklch(0.88 0.02 80)' }}
+        >
+          <div className="text-center">
+            <h2 className="text-xl font-bold mb-3" style={{ color: 'oklch(0.22 0.04 50)' }}>
+              Check your email
+            </h2>
+            <p className="mb-6" style={{ color: 'oklch(0.50 0.03 60)' }}>
+              We&apos;ve sent a password reset link to your email address. Click the link to continue.
+            </p>
+            <Link href="/login">
+              <Button variant="outline" className="w-full">
+                Back to Sign In
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -78,7 +103,7 @@ export default function LoginPage() {
             Narasimha Solutions
           </h1>
           <p className="text-sm mt-1" style={{ color: 'oklch(0.50 0.03 60)', letterSpacing: '0.04em' }}>
-            Iridology Analysis
+            Reset Password
           </p>
         </div>
 
@@ -103,29 +128,16 @@ export default function LoginPage() {
             )}
           </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-sm font-medium" style={{ color: 'oklch(0.40 0.04 60)' }}>Password</label>
-              <Link href="/forgot-password" className="text-sm hover:underline" style={{ color: 'oklch(0.50 0.08 270)' }}>
-                Forgot?
-              </Link>
-            </div>
-            <Input
-              type="password"
-              placeholder="••••••"
-              autoComplete="current-password"
-              {...register('password')}
-              aria-invalid={!!errors.password}
-            />
-            {errors.password && (
-              <p className="text-sm mt-1" style={{ color: 'oklch(0.55 0.2 27)' }}>{errors.password.message}</p>
-            )}
-          </div>
-
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Signing in…' : 'Sign In'}
+            {isLoading ? 'Sending…' : 'Send Recovery Link'}
           </Button>
         </form>
+
+        <div className="mt-6 text-center">
+          <Link href="/login" className="text-sm hover:underline" style={{ color: 'oklch(0.50 0.08 270)' }}>
+            Back to Sign In
+          </Link>
+        </div>
       </Card>
     </div>
   )

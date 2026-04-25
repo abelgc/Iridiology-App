@@ -1,5 +1,4 @@
 {
-  "model": "sonnet",
   "permissions": {
     "allow": [
       "Bash(npx vitest *)",
@@ -76,7 +75,9 @@
       "Bash(node -e \"require\\('@react-pdf/renderer'\\); require\\('tinyld'\\); console.log\\('ok'\\)\")",
       "Bash(node -e \"require\\('@react-pdf/renderer'\\); console.log\\('OK'\\)\")",
       "Bash(/config *)",
-      "Skill(update-config)"
+      "Skill(update-config)",
+      "Bash(vercel deploy *)"
     ]
-  }
+  },
+  "model": "sonnet"
 }
