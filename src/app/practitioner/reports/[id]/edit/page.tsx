@@ -59,7 +59,7 @@ export default function ReportEditPage({ params }: { params: Promise<{ id: strin
       }
 
       // Redirect back to view page
-      router.push(`/reports/${reportId}`)
+      router.push(`/practitioner/reports/${reportId}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save report')
     }

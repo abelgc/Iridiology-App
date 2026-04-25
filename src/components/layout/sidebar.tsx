@@ -8,10 +8,10 @@ import { cn } from '@/lib/utils'
 import { useSidebar } from '@/lib/sidebar-state'
 
 const navItems = [
-  { label: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { label: 'Patients', href: '/patients', icon: Users },
-  { label: 'New Session', href: '/sessions/new', icon: ScanEye },
-  { label: 'Settings', href: '/settings', icon: Settings },
+  { label: 'Dashboard', href: '/practitioner', icon: LayoutDashboard },
+  { label: 'Patients', href: '/practitioner/patients', icon: Users },
+  { label: 'New Session', href: '/practitioner/sessions/new', icon: ScanEye },
+  { label: 'Settings', href: '/practitioner/settings', icon: Settings },
 ]
 
 export function Sidebar() {

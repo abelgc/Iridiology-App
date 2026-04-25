@@ -31,7 +31,7 @@ export default function NewPatientPage() {
         title: 'Success',
         description: 'Patient created successfully',
       })
-      router.push(`/patients/${newPatient.id}`)
+      router.push(`/practitioner/patients/${newPatient.id}`)
     } catch (error) {
       toast({
         title: 'Error',

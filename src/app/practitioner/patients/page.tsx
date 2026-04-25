@@ -41,11 +41,11 @@ async function PatientsContent({ searchParams }: PatientsPageProps) {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Patients</h1>
         <Button asChild>
-          <Link href="/patients/new">New Patient</Link>
+          <Link href="/practitioner/patients/new">New Patient</Link>
         </Button>
       </div>
 
-      <form action="/patients" method="get" className="flex gap-2">
+      <form action="/practitioner/patients" method="get" className="flex gap-2">
         <Input
           type="text"
           name="search"

@@ -115,7 +115,7 @@ export default function DashboardPage() {
       </Card>
 
       {/* Quick Action */}
-      <Link href="/sessions/new">
+      <Link href="/practitioner/sessions/new">
         <Button size="lg">Start New Analysis Session</Button>
       </Link>
     </div>

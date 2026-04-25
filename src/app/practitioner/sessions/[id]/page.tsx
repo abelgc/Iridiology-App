@@ -237,7 +237,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
               <p className="text-sm text-green-800 mt-1">
                 The AI analysis has been completed and saved successfully.
               </p>
-              <Link href={`/reports/${report.id}`}>
+              <Link href={`/practitioner/reports/${report.id}`}>
                 <Button className="mt-4" variant="default">
                   View Report
                 </Button>
@@ -268,7 +268,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status: 'error' }),
                   })
-                  router.push('/sessions/new')
+                  router.push('/practitioner/sessions/new')
                 }}
               >
                 Cancel &amp; Start Again
@@ -291,7 +291,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
               </div>
             </div>
           </div>
-          <Button onClick={() => router.push('/sessions/new')} className="mt-4" variant="outline">
+          <Button onClick={() => router.push('/practitioner/sessions/new')} className="mt-4" variant="outline">
             Start New Session
           </Button>
         </Card>

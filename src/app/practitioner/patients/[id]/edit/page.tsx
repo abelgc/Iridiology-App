@@ -71,7 +71,7 @@ export default function PatientEditPage({ params }: PatientEditPageProps) {
         title: 'Success',
         description: 'Patient updated successfully',
       })
-      router.push(`/patients/${id}`)
+      router.push(`/practitioner/patients/${id}`)
     } catch (error) {
       toast({
         title: 'Error',
