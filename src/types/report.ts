@@ -11,6 +11,7 @@ export const REPORT_SECTION_KEYS = [
   'section_10_structural_integumentary',
   'section_11_detected_axes',
   'section_12_conclusion',
+  'section_13_strengths_of_the_body',
 ] as const
 
 export type ReportSectionKey = typeof REPORT_SECTION_KEYS[number]
@@ -30,4 +31,5 @@ export const REPORT_SECTION_LABELS: Record<ReportSectionKey, string> = {
   section_10_structural_integumentary: 'Structural and Integumentary System',
   section_11_detected_axes: 'Detected Axes',
   section_12_conclusion: 'Conclusion',
+  section_13_strengths_of_the_body: 'Strengths of the Body',
 }

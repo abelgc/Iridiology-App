@@ -29,6 +29,7 @@ const mockReport = {
   section_10_structural_integumentary: 's',
   section_11_detected_axes: 'a',
   section_12_conclusion: 'C',
+  section_13_strengths_of_the_body: 'S',
 }
 
 const selectSingle = vi.fn().mockResolvedValue({ data: analysisRow, error: null })
