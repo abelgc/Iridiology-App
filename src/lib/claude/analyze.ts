@@ -143,18 +143,17 @@ export async function analyzeIris(
       systemPrompt,
       userText: userPrompt,
       images,
-      maxTokens: 4096,
+      maxTokens: 8192,
       modelId,
     })
 
     // Check for token limit
     if (response.stopReason === 'max_tokens') {
-      // Retry with 50% more tokens
       const retryResponse = await provider.complete({
         systemPrompt,
         userText: userPrompt,
         images,
-        maxTokens: 6144, // 4096 * 1.5
+        maxTokens: 12288,
         modelId,
       })
 
@@ -174,7 +173,7 @@ export async function analyzeIris(
           systemPrompt,
           userText: strongerPrompt,
           images,
-          maxTokens: 6144,
+          maxTokens: 12288,
           modelId,
         })
 
@@ -194,7 +193,7 @@ export async function analyzeIris(
         systemPrompt,
         userText: strongerPrompt,
         images,
-        maxTokens: 4096,
+        maxTokens: 8192,
         modelId,
       })
 
@@ -226,7 +225,7 @@ export async function analyzeIris(
             systemPrompt,
             userText: userPrompt,
             images,
-            maxTokens: 4096,
+            maxTokens: 8192,
             modelId,
           })
 

@@ -1,17 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { clientUploadSchema } from '@/lib/validators/client-upload'
-import { analyze } from '@/lib/claude/analyze'
+import { analyzeIrisDual } from '@/lib/claude/analyze-dual'
 import { ReportContent } from '@/types/report'
+import type { AnalysisRequest } from '@/types/claude'
 import {
   shouldEnhanceWithJyotish,
   enhanceEmotionalFieldWithJyotish,
 } from '@/lib/claude/enhance-emotional-field'
 import { sendReportEmail } from '@/lib/client/email'
-import { getModelForTier } from '@/lib/ai/get-provider'
+import { getClientProviders } from '@/lib/ai/get-provider'
 import { detectsCorrectLanguage } from './language-check'
 import { rewriteReportForClient } from '@/lib/client/writing-pipeline'
 import { generateReportPdf } from '@/lib/client/pdf'
+
+function extractBase64(dataUrl: string): string {
+  const match = dataUrl.match(/^data:image\/\w+;base64,(.+)$/)
+  return match ? match[1] : dataUrl
+}
 
 export async function POST(request: NextRequest) {
   let body: unknown
@@ -50,14 +56,17 @@ export async function POST(request: NextRequest) {
     .eq('report_download_token', parsed.data.report_download_token)
 
   try {
-    const modelId = getModelForTier(row.payment_tier)
+    const clientProviders = await getClientProviders(row.payment_tier)
 
-    // Generate report (attempt 1)
-    let reportContent = await analyze({
-      images: [parsed.data.right_eye_base64, parsed.data.left_eye_base64],
-      patient: {
+    const analysisRequest: AnalysisRequest = {
+      sessionId: '',
+      patientId: '',
+      rightIrisBase64: extractBase64(parsed.data.right_eye_base64),
+      leftIrisBase64: extractBase64(parsed.data.left_eye_base64),
+      patientData: {
         full_name: row.email ?? 'Client',
         date_of_birth: row.date_of_birth,
+        gender: null,
         general_history: '',
         symptoms: row.main_complaint ?? '',
         practitioner_notes: row.current_medications
@@ -65,8 +74,11 @@ export async function POST(request: NextRequest) {
           : '',
       },
       health_questionnaire: (row.health_questionnaire as Record<string, unknown> | null) ?? null,
-      language: row.language,
-      modelId,
+    }
+
+    // Generate report (attempt 1)
+    let reportContent = await analyzeIrisDual(analysisRequest, row.language, {
+      providers: clientProviders,
     })
 
     if ('code' in reportContent) {
@@ -80,24 +92,11 @@ export async function POST(request: NextRequest) {
     )
 
     if (!languageOk) {
-      const retry = await analyze({
-        images: [parsed.data.right_eye_base64, parsed.data.left_eye_base64],
-        patient: {
-          full_name: row.email ?? 'Client',
-          date_of_birth: row.date_of_birth,
-          general_history: '',
-          symptoms: row.main_complaint ?? '',
-          practitioner_notes: row.current_medications
-            ? `Current medications: ${row.current_medications}`
-            : '',
-        },
-        health_questionnaire: (row.health_questionnaire as Record<string, unknown> | null) ?? null,
-        language: row.language,
-        modelId,
+      const retry = await analyzeIrisDual(analysisRequest, row.language, {
+        providers: clientProviders,
         forceLanguage: true,
       })
 
-      // Bug fix: Check if retry failed (returned error code)
       if ('code' in retry) {
         throw new Error(`Retry analysis also failed: ${retry.message}`)
       }
@@ -109,7 +108,6 @@ export async function POST(request: NextRequest) {
       if (retryOk) {
         reportContent = retry
       } else {
-        // Both attempts failed — flag for manual review, do not deliver
         await supabase
           .from('client_analyses')
           .update({ language_flag: true })

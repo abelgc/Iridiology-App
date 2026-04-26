@@ -16,6 +16,21 @@ const analysisRow = {
   report_download_token: '00000000-0000-4000-8000-000000000000',
 }
 
+const mockReport = {
+  section_1_general_terrain: 'g',
+  section_2_emotional_field: 'e',
+  section_3_cognitive_nervous: 'n',
+  section_4_immune_lymphatic: 'i',
+  section_5_endocrine_hormonal: 'h',
+  section_6_circulatory_cardiorespiratory: 'c',
+  section_7_hepatic: 'l',
+  section_8_digestive_intestinal: 'd',
+  section_9_renal_urinary: 'r',
+  section_10_structural_integumentary: 's',
+  section_11_detected_axes: 'a',
+  section_12_conclusion: 'C',
+}
+
 const selectSingle = vi.fn().mockResolvedValue({ data: analysisRow, error: null })
 const updateMock = vi.fn().mockResolvedValue({ data: null, error: null })
 const insertReport = vi.fn().mockResolvedValue({
@@ -49,25 +64,34 @@ vi.mock('@/lib/supabase/server', () => ({
   }),
 }))
 
-vi.mock('@/lib/claude/analyze', () => ({
-  analyze: vi.fn().mockResolvedValue({
-    section_1_terreno_general: 'g',
-    section_2_campo_emocional: 'e',
-    section_3_sistema_nervioso_cognitivo: 'n',
-    section_4_sistema_inmunologico_linfatico: 'i',
-    section_5_sistema_endocrino_hormonal: 'h',
-    section_6_sistema_circulatorio_cardiorrespiratorio: 'c',
-    section_7_sistema_hepatico: 'l',
-    section_8_sistema_digestivo_intestinal: 'd',
-    section_9_sistema_renal_urinario_reproductivo: 'r',
-    section_10_sistema_estructural_integumentario: 's',
-    section_11_conclusion: 'C',
+vi.mock('@/lib/claude/analyze-dual', () => ({
+  analyzeIrisDual: vi.fn().mockResolvedValue(mockReport),
+}))
+
+vi.mock('@/lib/ai/get-provider', () => ({
+  getClientProviders: vi.fn().mockResolvedValue({
+    anthropic: {},
+    openai: {},
   }),
 }))
+
+vi.mock('@/app/api/client/upload/language-check', () => ({
+  detectsCorrectLanguage: vi.fn().mockReturnValue(true),
+}))
+
 vi.mock('@/lib/claude/enhance-emotional-field', () => ({
-  shouldEnhanceWithJyotish: () => true,
+  shouldEnhanceWithJyotish: () => false,
   enhanceEmotionalFieldWithJyotish: vi.fn(async (r: unknown) => r),
 }))
+
+vi.mock('@/lib/client/writing-pipeline', () => ({
+  rewriteReportForClient: vi.fn().mockResolvedValue(mockReport),
+}))
+
+vi.mock('@/lib/client/pdf', () => ({
+  generateReportPdf: vi.fn().mockResolvedValue(Buffer.from('pdf')),
+}))
+
 vi.mock('@/lib/client/email', () => ({
   sendReportEmail: vi.fn().mockResolvedValue({ ok: true, id: 'mail-1' }),
 }))

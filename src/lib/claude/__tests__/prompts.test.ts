@@ -9,7 +9,7 @@ import {
 } from '../prompts'
 import { REPORT_SECTION_KEYS } from '@/types/report'
 import { reportContentSchema } from '@/lib/validators/report'
-import { getModelForTier } from '@/lib/ai/get-provider'
+import { TIER_MODELS } from '@/lib/ai/get-provider'
 
 describe('Claude Prompts', () => {
   describe('STANDARD_ANALYSIS_SYSTEM_PROMPT', () => {
@@ -149,13 +149,15 @@ describe('Claude Prompts', () => {
     })
   })
 
-  describe('getModelForTier', () => {
-    it('returns the haiku model id for basic tier', () => {
-      expect(getModelForTier('basic_12')).toMatch(/haiku/i)
+  describe('TIER_MODELS', () => {
+    it('maps basic_12 to haiku and gpt-4o-mini', () => {
+      expect(TIER_MODELS.basic_12.anthropic).toMatch(/haiku/i)
+      expect(TIER_MODELS.basic_12.openai).toBe('gpt-4o-mini')
     })
 
-    it('returns the sonnet model id for premium tier', () => {
-      expect(getModelForTier('premium_19_90')).toMatch(/sonnet/i)
+    it('maps premium_19_90 to sonnet and gpt-4o', () => {
+      expect(TIER_MODELS.premium_19_90.anthropic).toMatch(/sonnet/i)
+      expect(TIER_MODELS.premium_19_90.openai).toBe('gpt-4o')
     })
   })
 

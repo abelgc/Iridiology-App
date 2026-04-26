@@ -4,11 +4,9 @@ import { OpenAIProvider } from './openai-provider'
 import type { AIProvider } from './types'
 import type { PaymentTier } from '@/types/client-analysis'
 
-const HAIKU_MODEL_ID = 'claude-haiku-4-5-20251001'
-const SONNET_MODEL_ID = 'claude-sonnet-4-6'
-
-export function getModelForTier(tier: PaymentTier): string {
-  return tier === 'premium_19_90' ? SONNET_MODEL_ID : HAIKU_MODEL_ID
+export const TIER_MODELS: Record<PaymentTier, { anthropic: string; openai: string }> = {
+  premium_19_90: { anthropic: 'claude-sonnet-4-6', openai: 'gpt-4o' },
+  basic_12: { anthropic: 'claude-haiku-4-5-20251001', openai: 'gpt-4o-mini' },
 }
 
 async function getSettings(): Promise<Record<string, string>> {
@@ -51,5 +49,23 @@ export async function getBothProviders(): Promise<{
   return {
     anthropic: new AnthropicProvider(anthropicKey, map['anthropic_model'] || 'claude-sonnet-4-6'),
     openai: new OpenAIProvider(openaiKey, map['openai_model'] || 'gpt-4o'),
+  }
+}
+
+export async function getClientProviders(tier: PaymentTier): Promise<{
+  anthropic: AnthropicProvider
+  openai: OpenAIProvider
+}> {
+  const map = await getSettings()
+  const models = TIER_MODELS[tier]
+  return {
+    anthropic: new AnthropicProvider(
+      map['anthropic_api_key'] || process.env.ANTHROPIC_API_KEY || '',
+      models.anthropic,
+    ),
+    openai: new OpenAIProvider(
+      map['openai_api_key'] || process.env.OPENAI_API_KEY || '',
+      models.openai,
+    ),
   }
 }

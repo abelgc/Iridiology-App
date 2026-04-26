@@ -16,21 +16,47 @@ const mockDetectLanguage = vi.fn()
 const mockRewriteReport = vi.fn()
 const mockGeneratePdf = vi.fn()
 const mockSendEmail = vi.fn()
+
+const fullAnalysisRow = {
+  id: 'analysis-123',
+  status: 'paid',
+  language: 'es',
+  payment_tier: 'premium_19_90',
+  email: 'test@example.com',
+  date_of_birth: '1990-01-01',
+  country_of_birth: null,
+  city_of_birth: null,
+  time_of_day: null,
+  main_complaint: null,
+  current_medications: null,
+  health_questionnaire: null,
+  report_download_token: 'token-123',
+}
+
 const mockSupabase = {
   from: vi.fn().mockReturnThis(),
   select: vi.fn().mockReturnThis(),
   eq: vi.fn().mockReturnThis(),
-  insert: vi.fn().mockResolvedValue({ data: { id: 'report-123' }, error: null }),
+  insert: vi.fn().mockReturnThis(),
   update: vi.fn().mockReturnThis(),
-  single: vi.fn().mockResolvedValue({ data: { id: 'analysis-123' }, error: null }),
+  single: vi.fn().mockResolvedValue({ data: fullAnalysisRow, error: null }),
 }
 
-vi.mock('@/lib/claude/analyze', () => ({
-  analyze: mockAnalyze,
+vi.mock('@/lib/claude/analyze-dual', () => ({
+  analyzeIrisDual: mockAnalyze,
 }))
 
-vi.mock('./language-check', () => ({
+vi.mock('@/lib/ai/get-provider', () => ({
+  getClientProviders: vi.fn().mockResolvedValue({ anthropic: {}, openai: {} }),
+}))
+
+vi.mock('@/app/api/client/upload/language-check', () => ({
   detectsCorrectLanguage: mockDetectLanguage,
+}))
+
+vi.mock('@/lib/claude/enhance-emotional-field', () => ({
+  shouldEnhanceWithJyotish: vi.fn().mockReturnValue(false),
+  enhanceEmotionalFieldWithJyotish: vi.fn(async (r: unknown) => r),
 }))
 
 vi.mock('@/lib/client/writing-pipeline', () => ({
@@ -52,6 +78,12 @@ vi.mock('@/lib/supabase/server', () => ({
 describe('Upload Route - Bug Fixes', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Reset once-queues that bleed across tests (clearAllMocks keeps them)
+    mockAnalyze.mockReset()
+    mockDetectLanguage.mockReset()
+    // Re-initialize mocks that tests may override directly
+    mockSupabase.single = vi.fn().mockResolvedValue({ data: fullAnalysisRow, error: null })
+    mockSupabase.insert = vi.fn().mockReturnThis()
   })
 
   describe('Bug 1: Retry error code silent failure', () => {
@@ -65,9 +97,9 @@ describe('Upload Route - Bug Fixes', () => {
       const { POST } = await import('../route')
       const response = await POST({
         json: async () => ({
-          report_download_token: 'token-123',
-          left_eye_base64: 'base64',
-          right_eye_base64: 'base64',
+          report_download_token: '00000000-0000-4000-8000-000000000000',
+          left_eye_base64: 'data:image/jpeg;base64,AAA',
+          right_eye_base64: 'data:image/jpeg;base64,BBB',
         }),
       } as any)
 
@@ -101,9 +133,9 @@ describe('Upload Route - Bug Fixes', () => {
       const { POST } = await import('../route')
       const response = await POST({
         json: async () => ({
-          report_download_token: 'token-123',
-          left_eye_base64: 'base64',
-          right_eye_base64: 'base64',
+          report_download_token: '00000000-0000-4000-8000-000000000000',
+          left_eye_base64: 'data:image/jpeg;base64,AAA',
+          right_eye_base64: 'data:image/jpeg;base64,BBB',
         }),
       } as any)
 
@@ -314,6 +346,13 @@ describe('Upload Route - Bug Fixes', () => {
       mockSendEmail.mockResolvedValue({ ok: true, id: 'email-1' })
 
       const { POST } = await import('../route')
+      await POST({
+        json: async () => ({
+          report_download_token: '00000000-0000-4000-8000-000000000000',
+          right_eye_base64: 'data:image/jpeg;base64,BBB',
+          left_eye_base64: 'data:image/jpeg;base64,AAA',
+        }),
+      } as any)
 
       // Verify email is called with pdfBuffer parameter
       expect(mockSendEmail).toHaveBeenCalledWith(

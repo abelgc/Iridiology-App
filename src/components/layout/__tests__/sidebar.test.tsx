@@ -33,9 +33,9 @@ describe('Sidebar', () => {
     const patientsLink = screen.getByRole('link', { name: /patients/i })
     const newSessionLink = screen.getByRole('link', { name: /new session/i })
 
-    expect(dashboardLink).toHaveAttribute('href', '/')
-    expect(patientsLink).toHaveAttribute('href', '/patients')
-    expect(newSessionLink).toHaveAttribute('href', '/sessions/new')
+    expect(dashboardLink).toHaveAttribute('href', '/practitioner')
+    expect(patientsLink).toHaveAttribute('href', '/practitioner/patients')
+    expect(newSessionLink).toHaveAttribute('href', '/practitioner/sessions/new')
   })
 
   it('renders dashboard link with home href', () => {
@@ -46,6 +46,6 @@ describe('Sidebar', () => {
     )
 
     const dashboardLink = screen.getByRole('link', { name: /dashboard/i })
-    expect(dashboardLink).toHaveAttribute('href', '/')
+    expect(dashboardLink).toHaveAttribute('href', '/practitioner')
   })
 })
