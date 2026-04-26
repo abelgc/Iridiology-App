@@ -9,7 +9,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Card } from '@/components/ui/card'
 
 const resetPasswordSchema = z.object({
@@ -29,7 +29,6 @@ function ResetPasswordContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [isVerifying, setIsVerifying] = useState(true)
   const code = searchParams.get('code')
-  const type = searchParams.get('type')
 
   const {
     register,
@@ -41,7 +40,7 @@ function ResetPasswordContent() {
 
   useEffect(() => {
     const verifyCode = async () => {
-      if (!code || type !== 'recovery') {
+      if (!code) {
         setGlobalError('Invalid or missing recovery code')
         setIsVerifying(false)
         return
@@ -61,7 +60,7 @@ function ResetPasswordContent() {
     }
 
     verifyCode()
-  }, [code, type])
+  }, [code])
 
   const onSubmit = async (data: ResetPasswordFormData) => {
     setGlobalError('')
@@ -168,8 +167,7 @@ function ResetPasswordContent() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1" style={{ color: 'oklch(0.40 0.04 60)' }}>New Password</label>
-            <Input
-              type="password"
+            <PasswordInput
               placeholder="••••••"
               autoComplete="new-password"
               {...register('password')}
@@ -182,8 +180,7 @@ function ResetPasswordContent() {
 
           <div>
             <label className="block text-sm font-medium mb-1" style={{ color: 'oklch(0.40 0.04 60)' }}>Confirm Password</label>
-            <Input
-              type="password"
+            <PasswordInput
               placeholder="••••••"
               autoComplete="new-password"
               {...register('confirmPassword')}

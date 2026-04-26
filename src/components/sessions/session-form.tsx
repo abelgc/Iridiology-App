@@ -207,7 +207,7 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
 
       const { sessionId } = await response.json()
       // Analysis runs in background on server — safe to navigate away
-      router.push(`/sessions/${sessionId}`)
+      router.push(`/practitioner/sessions/${sessionId}`)
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'An error occurred')
       setIsSubmitting(false)

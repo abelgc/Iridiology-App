@@ -9,6 +9,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Card } from '@/components/ui/card'
 
 const loginSchema = z.object({
@@ -108,8 +109,7 @@ export default function LoginPage() {
                 Forgot?
               </Link>
             </div>
-            <Input
-              type="password"
+            <PasswordInput
               placeholder="••••••"
               autoComplete="current-password"
               {...register('password')}
