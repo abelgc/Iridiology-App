@@ -13,19 +13,21 @@ import { TIER_MODELS } from '@/lib/ai/get-provider'
 
 describe('Claude Prompts', () => {
   describe('STANDARD_ANALYSIS_SYSTEM_PROMPT', () => {
-    it('should contain core clinical logic phrases', () => {
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('functional dysregulation')
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('structural depletion')
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('structural evidence')
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('congestion')
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('autonomic dysregulation')
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('SEVERITY CALIBRATION')
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('hepatic burden')
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('autonomic tone')
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('intestinal permeability')
+    it('should contain body-first clinical writing directives', () => {
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Never describe the iris')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('metabolic processes')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('hormonal regulation')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('elimination pathways')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('nervous system behavior')
     })
 
-    it('should contain all 12 new section keys in JSON format', () => {
+    it('should prohibit iris anatomy language', () => {
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Never mention fibers')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('collarette')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('peripupillary zones')
+    })
+
+    it('should contain all 13 section keys in JSON format', () => {
       const jsonMatch = STANDARD_ANALYSIS_SYSTEM_PROMPT.match(/{\s*"section_\d+/g)
       expect(jsonMatch).not.toBeNull()
 
@@ -34,7 +36,7 @@ describe('Claude Prompts', () => {
       })
     })
 
-    it('should reference all 12 section names', () => {
+    it('should reference all 13 section names', () => {
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('General Terrain')
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Emotional Field')
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Cognitive')
@@ -47,12 +49,15 @@ describe('Claude Prompts', () => {
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Structural')
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Detected')
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Conclusion')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Strengths of the Body')
     })
 
-    it('should emphasize function over color', () => {
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Functional signs')
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Structural signs')
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Color alone')
+    it('should contain clinical history integration rules', () => {
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('CLINICAL HISTORY INTEGRATION')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('CONFIRMATION')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('PRECLINICAL SIGN')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('RESTRAINT')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('PRIORITISATION')
     })
   })
 
@@ -111,7 +116,7 @@ describe('Claude Prompts', () => {
   })
 
   describe('reportContentSchema', () => {
-    it('should validate correct 12-section objects', () => {
+    it('should validate correct 13-section objects', () => {
       const validReport: Record<string, string> = {}
       REPORT_SECTION_KEYS.forEach((key) => {
         validReport[key] = `Content for ${key}`
@@ -142,10 +147,11 @@ describe('Claude Prompts', () => {
       expect(result.success).toBe(false)
     })
 
-    it('should have all 12 section keys', () => {
-      expect(REPORT_SECTION_KEYS).toHaveLength(12)
+    it('should have all 13 section keys', () => {
+      expect(REPORT_SECTION_KEYS).toHaveLength(13)
       expect(REPORT_SECTION_KEYS[0]).toBe('section_1_general_terrain')
       expect(REPORT_SECTION_KEYS[11]).toBe('section_12_conclusion')
+      expect(REPORT_SECTION_KEYS[12]).toBe('section_13_strengths_of_the_body')
     })
   })
 
