@@ -159,6 +159,7 @@ describe('Upload Route - Bug Fixes', () => {
         section_10_structural_integumentary: 'text',
         section_11_detected_axes: 'text',
         section_12_conclusion: 'text',
+        section_13_strengths_of_the_body: 'text',
       })
       mockDetectLanguage.mockReturnValue(true)
 
@@ -200,6 +201,7 @@ describe('Upload Route - Bug Fixes', () => {
         section_10_structural_integumentary: 'text',
         section_11_detected_axes: 'text',
         section_12_conclusion: 'text',
+        section_13_strengths_of_the_body: 'text',
       })
       mockDetectLanguage.mockReturnValue(true)
       mockRewriteReport.mockResolvedValue({ /* report */ })
@@ -252,6 +254,7 @@ describe('Upload Route - Bug Fixes', () => {
         section_10_structural_integumentary: 'text',
         section_11_detected_axes: 'text',
         section_12_conclusion: 'text',
+        section_13_strengths_of_the_body: 'text',
       })
       mockDetectLanguage.mockReturnValue(true)
       mockRewriteReport.mockResolvedValue({})
@@ -289,6 +292,7 @@ describe('Upload Route - Bug Fixes', () => {
         section_10_structural_integumentary: 'Structural zone fibers intact.',
         section_11_detected_axes: 'Axis: liver and digestive system and skin elimination',
         section_12_conclusion: 'Overall constitutional weakness with hepatic burden.',
+        section_13_strengths_of_the_body: 'Cardiovascular reserve appears adequate.',
       }
 
       const clientReport = {
@@ -337,6 +341,7 @@ describe('Upload Route - Bug Fixes', () => {
         section_10_structural_integumentary: 'text',
         section_11_detected_axes: 'text',
         section_12_conclusion: 'text',
+        section_13_strengths_of_the_body: 'text',
       })
       mockDetectLanguage.mockReturnValue(true)
       mockRewriteReport.mockResolvedValue({})

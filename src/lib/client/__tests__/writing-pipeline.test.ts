@@ -32,14 +32,16 @@ const mockReport: ReportContent = {
   section_10_structural_integumentary: 'Structural zone fibers intact.',
   section_11_detected_axes: 'Axis: liver and digestive system and skin elimination',
   section_12_conclusion: 'Overall constitutional weakness with hepatic burden.',
+  section_13_strengths_of_the_body: 'Cardiovascular reserve appears adequate.',
 }
 
 describe('rewriteReportForClient', () => {
-  it('returns a ReportContent with the same 12 keys', async () => {
+  it('returns a ReportContent with the same 13 keys', async () => {
     const result = await rewriteReportForClient(mockReport, 'en')
-    expect(Object.keys(result)).toHaveLength(12)
+    expect(Object.keys(result)).toHaveLength(13)
     expect(result.section_1_general_terrain).toBeDefined()
     expect(result.section_12_conclusion).toBeDefined()
+    expect(result.section_13_strengths_of_the_body).toBeDefined()
   })
 
   it('returns non-empty strings for each section', async () => {
