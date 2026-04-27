@@ -79,7 +79,7 @@ export function SessionsTable({ sessions }: SessionsTableProps) {
                 <TableCell>
                   <div className="flex gap-2">
                     <Button asChild variant="outline" size="sm">
-                      <Link href={`/sessions/${session.id}`}>View</Link>
+                      <Link href={`/practitioner/sessions/${session.id}`}>View</Link>
                     </Button>
                     <Button
                       variant="destructive"
@@ -125,7 +125,7 @@ export function SessionsTable({ sessions }: SessionsTableProps) {
             </div>
             <div className="flex gap-2 pt-2">
               <Button asChild variant="outline" size="sm" className="flex-1">
-                <Link href={`/sessions/${session.id}`}>View</Link>
+                <Link href={`/practitioner/sessions/${session.id}`}>View</Link>
               </Button>
               <Button
                 variant="destructive"

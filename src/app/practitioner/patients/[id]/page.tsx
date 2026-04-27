@@ -47,7 +47,7 @@ export default async function PatientDetailPage({
             <Link href={`/patients/${id}/edit`}>Edit Patient</Link>
           </Button>
           <Button asChild>
-            <Link href={`/sessions/new?patientId=${id}`}>New Session</Link>
+            <Link href={`/practitioner/sessions/new?patientId=${id}`}>New Session</Link>
           </Button>
         </div>
       </div>
