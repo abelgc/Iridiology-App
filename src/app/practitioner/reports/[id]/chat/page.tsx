@@ -120,7 +120,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     <div className="max-w-4xl mx-auto py-8 px-4">
       {/* Header */}
       <div className="mb-8">
-        <Link href={`/reports/${reportId}`} className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-4">
+        <Link href={`/practitioner/reports/${reportId}`} className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-4">
           <ArrowLeft className="w-4 h-4" />
           Back to Report
         </Link>

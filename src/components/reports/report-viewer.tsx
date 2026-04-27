@@ -69,10 +69,10 @@ export function ReportViewer({ report, corrections = [] }: ReportViewerProps) {
   return (
     <div className="space-y-4 print:space-y-0">
       <div className="flex gap-2 mb-6 no-print items-center flex-wrap print:hidden">
-        <Link href={`/reports/${report.id}/edit`}>
+        <Link href={`/practitioner/reports/${report.id}/edit`}>
           <Button variant="default">Edit Report</Button>
         </Link>
-        <Link href={`/reports/${report.id}/chat`}>
+        <Link href={`/practitioner/reports/${report.id}/chat`}>
           <Button variant="outline">Chat</Button>
         </Link>
         <Button variant="outline" size="sm" onClick={handlePrint}>

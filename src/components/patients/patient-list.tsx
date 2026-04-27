@@ -61,7 +61,7 @@ export function PatientList({ patients }: PatientListProps) {
                     variant="outline"
                     size="sm"
                   >
-                    <Link href={`/patients/${patient.id}`}>View</Link>
+                    <Link href={`/practitioner/patients/${patient.id}`}>View</Link>
                   </Button>
                 </TableCell>
               </TableRow>
@@ -105,7 +105,7 @@ export function PatientList({ patients }: PatientListProps) {
                 size="sm"
                 className="w-full"
               >
-                <Link href={`/patients/${patient.id}`}>View</Link>
+                <Link href={`/practitioner/patients/${patient.id}`}>View</Link>
               </Button>
             </div>
           </div>

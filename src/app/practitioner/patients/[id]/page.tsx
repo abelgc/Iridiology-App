@@ -44,7 +44,7 @@ export default async function PatientDetailPage({
         <h1 className="text-3xl font-bold">{patient.full_name}</h1>
         <div className="flex gap-2">
           <Button asChild variant="outline">
-            <Link href={`/patients/${id}/edit`}>Edit Patient</Link>
+            <Link href={`/practitioner/patients/${id}/edit`}>Edit Patient</Link>
           </Button>
           <Button asChild>
             <Link href={`/practitioner/sessions/new?patientId=${id}`}>New Session</Link>
