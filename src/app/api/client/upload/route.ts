@@ -121,8 +121,9 @@ export async function POST(request: NextRequest) {
 
     let finalReport = reportContent as ReportContent
 
-    // Jyotish enhancement (optional)
+    // Jyotish enhancement (premium only, optional)
     if (
+      row.payment_tier === 'premium_19_90' &&
       shouldEnhanceWithJyotish({
         date_of_birth: row.date_of_birth,
         country_of_birth: row.country_of_birth,

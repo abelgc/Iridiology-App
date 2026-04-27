@@ -68,27 +68,31 @@ Based on this birth data, recommend the primary chakra and main emotion to focus
 
     // Second call: Blend chakra recommendation into emotional field
     const langInstruction = language === 'en' ? 'English' : 'Spanish'
-    const blendPrompt = `You are an expert iridologist blending Jyotish insights into an existing emotional field analysis.
 
-CURRENT EMOTIONAL FIELD SECTION:
+    const hepaticWords = (reportContent.section_7_hepatic ?? '').split(/\s+/).filter(Boolean).length
+    const digestiveWords = (reportContent.section_8_digestive_intestinal ?? '').split(/\s+/).filter(Boolean).length
+    const wordLimit = Math.min(hepaticWords, digestiveWords)
+
+    const blendPrompt = `CURRENT EMOTIONAL FIELD SECTION:
 ${reportContent.section_2_emotional_field}
 
-JYOTISH RECOMMENDATION:
-Chakra: ${chakraRecommendation.chakra}
-Emotion/Quality to Cultivate: ${chakraRecommendation.emotion}
-Reasoning: ${chakraRecommendation.reasoning}
+CHAKRA TO INTEGRATE:
+${chakraRecommendation.chakra} Chakra
+Emotional quality: ${chakraRecommendation.emotion}
 
-Enhance the emotional field analysis by thoughtfully integrating the Jyotish chakra recommendation. Your updated section should:
-1. Keep the original clinical iridology findings intact
-2. Add the chakra insight as a complementary healing perspective
-3. Suggest how cultivating the recommended emotion/quality can support the observed emotional patterns
-4. Maintain the same clinical, professional tone
-5. Write in plain prose paragraphs — no bullet points or symbols
+WORD COUNT LIMIT: ${wordLimit > 0 ? wordLimit : 120} words maximum (must not exceed the shorter of the hepatic or digestive sections).
 
-Respond with ONLY the enhanced emotional field text, no additional commentary. Write your response in ${langInstruction}.`
+Rewrite the emotional field section integrating the chakra insight. Rules:
+1. Keep the original clinical iridology findings intact.
+2. Translate the chakra insight into nervous system and emotional body language only — never mention Jyotish, astrology, planets, houses, or any astrological term. If a sentence cannot be expressed as a physiological or behavioral pattern, discard it.
+3. Include exactly this sentence once, verbatim format: "It is recommended to work on the ${chakraRecommendation.chakra} chakra and the inner work of ${chakraRecommendation.emotion}."
+4. Stay within the word count limit.
+5. Write in plain prose paragraphs — no bullet points or symbols.
+
+Respond with ONLY the rewritten emotional field text, no additional commentary. Write in ${langInstruction}.`
 
     const blendResponse = await provider.complete({
-      systemPrompt: `You are an expert clinical iridologist specializing in integrating Jyotish insights into iridology reports. Write in a clinical, professional tone using full paragraphs. Always respond in ${langInstruction}.`,
+      systemPrompt: `You are a clinical iridologist enhancing an emotional field section. Never mention Jyotish, astrology, planets, or houses. Translate all inputs into nervous system and emotional body language only. Write in a clinical, professional tone using full paragraphs. Always respond in ${langInstruction}.`,
       userText: blendPrompt,
       images: [],
       maxTokens: 1000,
