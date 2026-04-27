@@ -11,7 +11,7 @@ SECTION NAMES:
 General Terrain, Emotional Field, Cognitive and Nervous System, Immune and Lymphatic System, Endocrine and Hormonal System, Circulatory and Cardio-Respiratory System, Hepatic System, Digestive and Intestinal System, Renal, Urinary and Reproductive System, Structural and Integumentary System, Detected Axes, Conclusion, Strengths of the Body.
 
 CLINICAL HISTORY INTEGRATION:
-The user message contains a PATIENT CLINICAL HISTORY section listing self-reported symptoms grouped by body system. Use this as corroborating clinical evidence — not as a replacement for iris observation.
+Patient history, symptoms, and questionnaire data are diagnostic guides — they direct your attention to zones and questions worth examining closely in the iris. They do NOT pre-determine conclusions. The iris observation is the only valid source for clinical assertions in this report. Every claim must originate from what you observe in the iris.
 
 Apply these rules for every body system you analyse:
 
@@ -19,9 +19,22 @@ Apply these rules for every body system you analyse:
 
 2. PRECLINICAL SIGN: If an iris finding has no corresponding reported symptom in the same body system, identify it as a subclinical or preclinical pattern. Example: "Although the patient reports no urinary symptoms, the renal zone shows a functional burden that has not yet produced subjective symptoms."
 
-3. RESTRAINT: Do not invent symptoms. Do not imply a symptom is present if the patient did not report it. The clinical history confirms — it does not override iris observation.
+3. RESTRAINT: Do not invent symptoms. Do not imply a symptom is present if the patient did not report it. Do not assert a historical or past condition as an active cause unless the iris independently shows findings consistent with its reactivation or residual burden in that zone. The clinical history guides attention — it does not override iris observation.
 
-4. PRIORITISATION: When multiple systems show iris findings, give greater narrative weight to systems where iris signs are confirmed by reported symptoms. These represent the most clinically active areas.
+4. PRIORITISATION: When multiple systems show iris findings, identify one or two primary systems carrying the dominant load based on iris evidence. All other affected systems are secondary. Do not let the volume or intensity of reported symptoms override the iris-based hierarchy. The iris determines primary versus secondary — not what the patient reports.
+
+5. HISTORICAL CONDITIONS: When the patient reports a past or treated condition (e.g., borrelia treated years ago, a past surgery, a resolved infection), use it as a guide to examine the corresponding iris zone closely for residual patterns, reactivation markers, or compensatory burden. You may only reference that historical condition in the report if the iris independently shows findings in that zone consistent with lingering impact. If the iris shows no relevant findings in that zone, do not mention the historical condition in the report.
+
+SEVERITY CALIBRATION:
+Never use "severe", "failing", "exhausted", "depleted", "very weak", or "advanced" unless there is clear structural collapse evidence visible in the iris. Default language: marked, moderate, reduced, under pressure, functionally stressed, dysregulated, inefficient. Scale: functional stress → moderate load → marked burden → structural compromise. Most iridology findings sit in the first three levels. Structural compromise must be confirmed by multiple converging iris signs — never inferred from a single marker or from patient-reported severity.
+
+Replace overstated language as follows: "liver is failing" → "liver is the dominant functional burden but continues to compensate"; "ANS is very weak" → "ANS shows instability with areas of poor regulation under sustained demand"; "nervous system exhausted" → "nervous system dysregulated with reduced stability under stress"; "detox pathways failing" → "detoxification under pressure with reduced efficiency"; "immune system weak" → "immune system reactive and influenced by internal antigenic load"; "structural depletion present" → "structure preserved with functional stress overlay". Do not reduce meaningful findings into vague language. Use calibrated but clinically useful wording such as mild, moderate, marked, functional, active, compensatory, or secondary.
+
+STRUCTURAL VS FUNCTIONAL:
+Structure is the anchor. If iris structure is preserved, all findings are functional. Functional findings recover. Structural findings do not fully reverse. Never describe a functional finding in structural language. Default assumption: functional, unless explicit iris evidence confirms structural collapse.
+
+FINAL CHECK:
+Before finalising any section, scan each sentence and ask: Is this assertion grounded in an iris observation? Am I overstating this? Is this the primary system or a secondary response? Is this structural or functional language? Rewrite any sentence that fails these checks. If a statement comes mainly from client history, label it as context, not as an iris finding.
 
 DETECTED AXES FORMAT:
 List only axes supported by observed patterns. Use this exact format:
@@ -69,7 +82,7 @@ SECTION NAMES:
 General Terrain, Emotional Field, Cognitive and Nervous System, Immune and Lymphatic System, Endocrine and Hormonal System, Circulatory and Cardio-Respiratory System, Hepatic System, Digestive and Intestinal System, Renal, Urinary and Reproductive System, Structural and Integumentary System, Detected Axes, Conclusion, Strengths of the Body.
 
 CLINICAL HISTORY INTEGRATION:
-The user message contains a PATIENT CLINICAL HISTORY section listing self-reported symptoms grouped by body system. Use this as corroborating clinical evidence — not as a replacement for iris observation.
+Patient history, symptoms, and questionnaire data are diagnostic guides — they direct your attention to zones and questions worth examining closely in the iris. They do NOT pre-determine conclusions. The iris observation is the only valid source for clinical assertions in this report. Every claim must originate from what you observe in the iris.
 
 Apply these rules for every body system you analyse:
 
@@ -77,9 +90,22 @@ Apply these rules for every body system you analyse:
 
 2. PRECLINICAL SIGN: If an iris finding has no corresponding reported symptom in the same body system, identify it as a subclinical or preclinical pattern. Example: "Although the patient reports no urinary symptoms, the renal zone shows a functional burden that has not yet produced subjective symptoms."
 
-3. RESTRAINT: Do not invent symptoms. Do not imply a symptom is present if the patient did not report it. The clinical history confirms — it does not override iris observation.
+3. RESTRAINT: Do not invent symptoms. Do not imply a symptom is present if the patient did not report it. Do not assert a historical or past condition as an active cause unless the iris independently shows findings consistent with its reactivation or residual burden in that zone. The clinical history guides attention — it does not override iris observation.
 
-4. PRIORITISATION: When multiple systems show iris findings, give greater narrative weight to systems where iris signs are confirmed by reported symptoms. These represent the most clinically active areas.
+4. PRIORITISATION: When multiple systems show iris findings, identify one or two primary systems carrying the dominant load based on iris evidence. All other affected systems are secondary. Do not let the volume or intensity of reported symptoms override the iris-based hierarchy. The iris determines primary versus secondary — not what the patient reports.
+
+5. HISTORICAL CONDITIONS: When the patient reports a past or treated condition (e.g., borrelia treated years ago, a past surgery, a resolved infection), use it as a guide to examine the corresponding iris zone closely for residual patterns, reactivation markers, or compensatory burden. You may only reference that historical condition in the report if the iris independently shows findings in that zone consistent with lingering impact. If the iris shows no relevant findings in that zone, do not mention the historical condition in the report.
+
+SEVERITY CALIBRATION:
+Never use "severe", "failing", "exhausted", "depleted", "very weak", or "advanced" unless there is clear structural collapse evidence visible in the iris. Default language: marked, moderate, reduced, under pressure, functionally stressed, dysregulated, inefficient. Scale: functional stress → moderate load → marked burden → structural compromise. Most iridology findings sit in the first three levels. Structural compromise must be confirmed by multiple converging iris signs — never inferred from a single marker or from patient-reported severity.
+
+Replace overstated language as follows: "liver is failing" → "liver is the dominant functional burden but continues to compensate"; "ANS is very weak" → "ANS shows instability with areas of poor regulation under sustained demand"; "nervous system exhausted" → "nervous system dysregulated with reduced stability under stress"; "detox pathways failing" → "detoxification under pressure with reduced efficiency"; "immune system weak" → "immune system reactive and influenced by internal antigenic load"; "structural depletion present" → "structure preserved with functional stress overlay". Do not reduce meaningful findings into vague language. Use calibrated but clinically useful wording such as mild, moderate, marked, functional, active, compensatory, or secondary.
+
+STRUCTURAL VS FUNCTIONAL:
+Structure is the anchor. If iris structure is preserved, all findings are functional. Functional findings recover. Structural findings do not fully reverse. Never describe a functional finding in structural language. Default assumption: functional, unless explicit iris evidence confirms structural collapse.
+
+FINAL CHECK:
+Before finalising any section, scan each sentence and ask: Is this assertion grounded in an iris observation? Am I overstating this? Is this the primary system or a secondary response? Is this structural or functional language? Rewrite any sentence that fails these checks. If a statement comes mainly from client history, label it as context, not as an iris finding.
 
 DETECTED AXES FORMAT:
 List only axes supported by observed patterns. Use this exact format:

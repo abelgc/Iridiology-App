@@ -87,7 +87,7 @@ ${formatQuestionnaire(healthQuestionnaire ?? null)}
 IMAGES:
 Right and left iris images of the patient are attached.
 
-Analyse both irises and generate the complete clinical report in the specified JSON format. Apply the CLINICAL HISTORY INTEGRATION rules: confirm iris findings that match reported symptoms with explicit causal reasoning; flag unmatched iris findings as preclinical signs. Maintain consistency with previous findings where applicable — if your assessment differs, explain the change.`
+Analyse both irises and generate the complete clinical report in the specified JSON format. The iris is the primary source for clinical assertions. Client history may confirm, contextualize, or prioritize what is visible in the iris, but must not create findings that are not supported by the iris. Every claim in the report must originate from an iris observation. Apply the CLINICAL HISTORY INTEGRATION, SEVERITY CALIBRATION, and STRUCTURAL VS FUNCTIONAL rules throughout. Maintain consistency with previous findings where applicable — if your assessment differs, explain the change.`
 }
 
 async function parseWithRetry(
