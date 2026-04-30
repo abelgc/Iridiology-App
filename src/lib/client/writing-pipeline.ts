@@ -39,6 +39,7 @@ Do NOT interpret or editorialize. Extract only what is stated. Return valid JSON
 Convert this clinical iridology finding into plain language a non-doctor can understand.
 Focus on: what this means for the client's body or health experience.
 STRICTLY FORBIDDEN terms (remove all): iris, iridology, fiber, fibers, zone, zones, sector, sectors, pigment, pigmentation, lacunar, lacunae, stromal, collarette, rosette, constitution, constitutional, density, texture, formation, crypta, crypt, radii, solaris, pupillary, ciliary, observation, exam, analysis, assessment, indicator.
+Preserve any inter-system connections stated in the original. If the original links two body systems (e.g., liver and digestion), reflect that link in plain language (e.g., "your liver and digestive system are both working under strain"). These connections are clinically meaningful and must survive the translation.
 Write 2-3 sentences maximum. Return only the plain text, no JSON.`,
     JSON.stringify(structured)
   )
@@ -51,6 +52,7 @@ Apply these rules:
 - NO fiber descriptions (fiber density, fiber structure, iris zone numbers)
 - NO technical jargon a non-doctor would not understand
 - NO vague or hedging language (may, could suggest, might be, it is possible that, perhaps)
+- NO severity over-escalation: do not write "severely", "dangerously", "complete failure", "breakdown", "collapsed", or "destroyed" — use moderate, functional language (under strain, reduced capacity, working harder than usual)
 - Every sentence must carry direct interpretive value for the client
 - Maximum 2 sentences total
 - Tone: clinical but human — say what it means for the client, not what was observed
@@ -69,6 +71,8 @@ Check every sentence against these rules:
 3. Every sentence directly tells the client something about their health
 4. Maximum 2 sentences
 5. Tone is direct and human, not clinical
+6. No severity over-escalation: "severely", "dangerously", "failure", "breakdown", "collapsed" are forbidden — rewrite with moderate language
+7. If the original text connected two body systems, confirm that connection is still present in plain language
 For each sentence that FAILS: rewrite it to pass.
 For each sentence that PASSES: keep it exactly as-is.
 Return ONLY the final approved text. No commentary, no explanations.`,

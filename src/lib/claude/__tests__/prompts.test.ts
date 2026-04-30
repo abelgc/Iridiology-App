@@ -2,6 +2,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import {
   STANDARD_ANALYSIS_SYSTEM_PROMPT,
+  STANDARD_ANALYSIS_SYSTEM_PROMPT_EN,
   COMPARISON_ANALYSIS_SYSTEM_PROMPT,
   TECHNICAL_REVIEW_SYSTEM_PROMPT,
   buildChatSystemPrompt,
@@ -58,6 +59,19 @@ describe('Claude Prompts', () => {
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('PRECLINICAL SIGN')
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('RESTRAINT')
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('PRIORITISATION')
+    })
+
+    it('should prohibit mechanistic biochemical language', () => {
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT_EN).toContain('PROHIBITED MECHANISTIC LANGUAGE')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT_EN).toContain('Phase I detoxification')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT_EN).toContain('cytochrome P450')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT_EN).toContain('functional outcome')
+    })
+
+    it('should require inter-system connections', () => {
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT_EN).toContain('SYSTEM CONNECTIONS')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT_EN).toContain('liver and digestive system')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT_EN).toContain('Do not describe any system in isolation')
     })
   })
 
