@@ -5,19 +5,16 @@ import type { Lang } from '@/types/client-analysis'
 const SUBJECTS: Record<Lang, string> = {
   en: 'Your Iridology Analysis Report',
   es: 'Tu Informe de Análisis de Iridología',
-  fr: 'Votre Rapport d\'Analyse d\'Iridologie',
 }
 
 const BODY_INTRO: Record<Lang, string> = {
   en: 'Your iridology report is attached to this email as a PDF. You own this file and can save it at any time.',
   es: 'Tu informe de iridología está adjunto a este correo como PDF. Este archivo es tuyo y puedes guardarlo cuando quieras.',
-  fr: 'Votre rapport d\'iridologie est joint à cet e-mail en PDF. Ce fichier vous appartient et vous pouvez le sauvegarder à tout moment.',
 }
 
 const THANK_YOU_TEXT: Record<Lang, string> = {
   en: 'Thank you for your purchase.',
   es: 'Gracias por tu compra.',
-  fr: 'Merci pour votre achat.',
 }
 
 export async function sendReportEmail(params: {
