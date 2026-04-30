@@ -283,7 +283,6 @@ Be specific and direct. Avoid generic advice. The emotion should be actionable a
 const LANGUAGE_NAMES: Record<string, string> = {
   en: 'English',
   es: 'Spanish (Español)',
-  fr: 'French (Français)',
 }
 
 function buildLanguageDirective(lang: string): string {
@@ -291,7 +290,7 @@ function buildLanguageDirective(lang: string): string {
   return `LANGUAGE DIRECTIVE: You MUST write the ENTIRE report in ${languageName}. Do not use any other language under any circumstance. Never default to English unless the language is explicitly set to English. Write every section, every sentence, every word in ${languageName}.`
 }
 
-export function getStandardAnalysisSystemPrompt(lang: 'en' | 'es' | 'fr'): string {
+export function getStandardAnalysisSystemPrompt(lang: 'en' | 'es'): string {
   const languageDirective = buildLanguageDirective(lang)
   // Base prompt is STANDARD_ANALYSIS_SYSTEM_PROMPT_EN for all languages —
   // the clinical logic is the same; only the output language changes.

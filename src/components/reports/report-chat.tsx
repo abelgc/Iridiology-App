@@ -57,36 +57,39 @@ export function ReportChat({ reportId, patientName }: ReportChatProps) {
 
       // Handle SSE stream
       const reader = response.body?.getReader()
+      if (!reader) throw new Error('No response body')
       const decoder = new TextDecoder()
       let assistantContent = ''
 
-      while (reader) {
-        const { done, value } = await reader.read()
-        if (done) break
+      let done = false
+      while (!done) {
+        const result = await reader.read()
+        done = result.done
+        if (result.value) {
+          const chunk = decoder.decode(result.value)
+          const lines = chunk.split('\n')
 
-        const chunk = decoder.decode(value)
-        const lines = chunk.split('\n')
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6))
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              let data: { token?: string; error?: string; done?: boolean }
+              try {
+                data = JSON.parse(line.slice(6))
+              } catch {
+                continue
+              }
               if (data.token) {
                 assistantContent += data.token
-                // Update the last message (assistant message) in real-time
                 setMessages((prev) => {
                   const updated = [...prev]
-                  const lastMessage = updated[updated.length - 1]
-                  if (lastMessage && lastMessage.role === 'assistant') {
-                    lastMessage.content = assistantContent
+                  const last = updated[updated.length - 1]
+                  if (last && last.role === 'assistant') {
+                    last.content = assistantContent
                   }
                   return updated
                 })
               } else if (data.error) {
                 throw new Error(data.error)
               }
-            } catch {
-              // Skip invalid JSON
             }
           }
         }

@@ -54,6 +54,14 @@ export async function POST(request: NextRequest) {
       .filter(Boolean)
       .join('\n')
 
+    // Fetch API key from settings (DB takes precedence over env)
+    const { data: settingsData } = await supabase
+      .from('settings')
+      .select('key, value')
+      .eq('key', 'anthropic_api_key')
+      .single()
+    const apiKey = settingsData?.value || process.env.ANTHROPIC_API_KEY || ''
+
     // Stream response
     const encoder = new TextEncoder()
     const stream = new ReadableStream({
@@ -72,6 +80,7 @@ export async function POST(request: NextRequest) {
             },
             reportData.report_content,
             patientContext,
+            apiKey,
           )
 
           // Stream tokens from the generator

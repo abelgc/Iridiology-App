@@ -174,12 +174,6 @@ describe('Claude Prompts', () => {
       expect(prompt).not.toContain('exclusively in English')
     })
 
-    it('includes a French language directive when lang is fr', () => {
-      const prompt = getStandardAnalysisSystemPrompt('fr')
-      expect(prompt).toContain('French')
-      expect(prompt).not.toContain('exclusively in English')
-    })
-
     it('includes an English language directive when lang is en', () => {
       const prompt = getStandardAnalysisSystemPrompt('en')
       expect(prompt).toContain('English')
@@ -187,7 +181,7 @@ describe('Claude Prompts', () => {
     })
 
     it('never contains the hardcoded override phrase for any lang', () => {
-      for (const lang of ['en', 'es', 'fr'] as const) {
+      for (const lang of ['en', 'es'] as const) {
         expect(getStandardAnalysisSystemPrompt(lang)).not.toContain(
           'Write ALL report content exclusively in English'
         )

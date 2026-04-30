@@ -112,7 +112,7 @@ async function parseWithRetry(
 
 export async function analyzeIris(
   request: AnalysisRequest,
-  language: 'en' | 'es' | 'fr' = 'es',
+  language: 'en' | 'es' = 'en',
   modelId?: string,
   forceLanguage?: boolean,
 ): Promise<ReportContent | AnalysisError> {
@@ -133,7 +133,7 @@ export async function analyzeIris(
       request.health_questionnaire,
     )
 
-    let systemPrompt = getStandardAnalysisSystemPrompt(language as 'en' | 'es' | 'fr')
+    let systemPrompt = getStandardAnalysisSystemPrompt(language as 'en' | 'es')
     if (forceLanguage) {
       systemPrompt = systemPrompt + '\n\nCRITICAL OVERRIDE: The ENTIRE response, every JSON value, every word MUST be written in the language specified above. Do not write a single word in any other language. This is a hard requirement.'
     }
@@ -216,7 +216,7 @@ export async function analyzeIris(
             patientContext.practitionerCorrections,
             request.health_questionnaire,
           )
-          let systemPrompt = getStandardAnalysisSystemPrompt(language as 'en' | 'es' | 'fr')
+          let systemPrompt = getStandardAnalysisSystemPrompt(language as 'en' | 'es')
           if (forceLanguage) {
             systemPrompt = systemPrompt + '\n\nCRITICAL OVERRIDE: The ENTIRE response, every JSON value, every word MUST be written in the language specified above. Do not write a single word in any other language. This is a hard requirement.'
           }
@@ -261,7 +261,7 @@ export async function analyze(options: {
     practitioner_notes: string
   }
   health_questionnaire?: Record<string, unknown> | null
-  language: 'en' | 'es' | 'fr'
+  language: 'en' | 'es'
   modelId?: string
   forceLanguage?: boolean
 }): Promise<ReportContent | AnalysisError> {

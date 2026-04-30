@@ -16,7 +16,7 @@ export interface DualAnalysisOptions {
 
 export async function analyzeIrisDual(
   request: AnalysisRequest,
-  language: 'en' | 'es' | 'fr' = 'es',
+  language: 'en' | 'es' = 'en',
   options: DualAnalysisOptions = {},
 ): Promise<ReportContent | AnalysisError> {
   const { forceLanguage = false } = options
@@ -68,7 +68,7 @@ export async function analyzeIrisDual(
 
   console.log('[analyzeIrisDual] both complete, synthesising...')
 
-  const langLabel = language === 'en' ? 'English' : language === 'fr' ? 'French' : 'Spanish'
+  const langLabel = language === 'en' ? 'English' : 'Spanish'
 
   const synthesisPrompt = `You performed two independent iris analyses of the same patient. Produce the definitive clinical report.
 

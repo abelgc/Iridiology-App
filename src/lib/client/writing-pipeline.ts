@@ -35,7 +35,7 @@ Do NOT interpret or editorialize. Extract only what is stated. Return valid JSON
   // Agent 2: Translator — plain language for non-medical client
   const translatorOut = await callClaude(
     client,
-    `You are a health communicator writing for non-medical clients. Write in ${lang === 'es' ? 'Spanish' : lang === 'fr' ? 'French' : 'English'}.
+    `You are a health communicator writing for non-medical clients. Write in ${lang === 'es' ? 'Spanish' : 'English'}.
 Convert this clinical iridology finding into plain language a non-doctor can understand.
 Focus on: what this means for the client's body or health experience.
 STRICTLY FORBIDDEN terms (remove all): iris, iridology, fiber, fibers, zone, zones, sector, sectors, pigment, pigmentation, lacunar, lacunae, stromal, collarette, rosette, constitution, constitutional, density, texture, formation, crypta, crypt, radii, solaris, pupillary, ciliary, observation, exam, analysis, assessment, indicator.
@@ -46,7 +46,7 @@ Write 2-3 sentences maximum. Return only the plain text, no JSON.`,
   // Agent 3: Editor — enforce rules
   const editorOut = await callClaude(
     client,
-    `You are an editor enforcing strict communication rules for a client-facing health report. Write in ${lang === 'es' ? 'Spanish' : lang === 'fr' ? 'French' : 'English'}.
+    `You are an editor enforcing strict communication rules for a client-facing health report. Write in ${lang === 'es' ? 'Spanish' : 'English'}.
 Apply these rules:
 - NO fiber descriptions (fiber density, fiber structure, iris zone numbers)
 - NO technical jargon a non-doctor would not understand
@@ -62,7 +62,7 @@ Return ONLY the final text, nothing else.`,
   // Agent 4: QA — final gate
   const qaOut = await callClaude(
     client,
-    `You are a QA reviewer for a client-facing health report. Write in ${lang === 'es' ? 'Spanish' : lang === 'fr' ? 'French' : 'English'}.
+    `You are a QA reviewer for a client-facing health report. Write in ${lang === 'es' ? 'Spanish' : 'English'}.
 Check every sentence against these rules:
 1. No fiber/zone/sector/iris observation language
 2. No hedging words: may, might, could, possibly, perhaps, it seems

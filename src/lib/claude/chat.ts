@@ -1,41 +1,37 @@
-import { anthropic } from './client'
+import Anthropic from '@anthropic-ai/sdk'
 import { buildChatSystemPrompt } from './prompts'
 import { ReportContent } from '@/types/report'
-import { ChatRequest, ChatMessage } from '@/types/claude'
+import { ChatRequest } from '@/types/claude'
 
 export async function* chatAboutReport(
   request: ChatRequest,
   reportContent: ReportContent,
   patientContext: string,
+  apiKey?: string,
 ): AsyncGenerator<string> {
-  // Format the full report content for the system prompt
+  const client = new Anthropic({
+    apiKey: apiKey || process.env.ANTHROPIC_API_KEY,
+    timeout: 120000,
+  })
+
   const fullReportContent = Object.entries(reportContent)
     .map(([key, value]) => `**${key}:**\n${value}`)
     .join('\n\n')
 
   const systemPrompt = buildChatSystemPrompt(fullReportContent, patientContext)
 
-  // Build messages array including chat history and current message
-  const messages: Array<{
-    role: 'user' | 'assistant'
-    content: string
-  }> = [
-    ...request.chatHistory.map((msg) => ({
-      role: msg.role,
-      content: msg.content,
-    })),
-    {
-      role: 'user' as const,
-      content: request.message,
-    },
+  const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [
+    ...request.chatHistory
+      .filter((msg) => msg.content.trim() !== '')
+      .map((msg) => ({ role: msg.role, content: msg.content })),
+    { role: 'user' as const, content: request.message },
   ]
 
-  // Stream the response
-  const stream = await anthropic.messages.stream({
+  const stream = await client.messages.stream({
     model: 'claude-sonnet-4-6',
     max_tokens: 2048,
     system: systemPrompt,
-    messages: messages,
+    messages,
   })
 
   // Yield text chunks as they arrive

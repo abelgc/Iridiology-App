@@ -14,26 +14,28 @@ interface ReportViewerProps {
 }
 
 export function ReportViewer({ report, corrections = [] }: ReportViewerProps) {
+  const [localContent, setLocalContent] = useState<ReportContent>(report.report_content)
   const [translatedContent, setTranslatedContent] = useState<Partial<ReportContent> | null>(null)
   const [lang, setLang] = useState<'en' | 'es'>('en')
   const [isTranslating, setIsTranslating] = useState(false)
   const [translateError, setTranslateError] = useState<string | null>(null)
 
+  const [editingSection, setEditingSection] = useState<ReportSectionKey | null>(null)
+  const [editingText, setEditingText] = useState<string>('')
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+
   const correctionsBySection = corrections.reduce(
     (acc, correction) => {
       const key = correction.section_key as ReportSectionKey
-      if (!acc[key]) {
-        acc[key] = 0
-      }
+      if (!acc[key]) acc[key] = 0
       acc[key]++
       return acc
     },
     {} as Record<ReportSectionKey, number>,
   )
 
-  const handlePrint = () => {
-    window.print()
-  }
+  const handlePrint = () => window.print()
 
   const handleToggleLang = async () => {
     if (lang === 'en') {
@@ -62,9 +64,45 @@ export function ReportViewer({ report, corrections = [] }: ReportViewerProps) {
     }
   }
 
+  const handleEditSection = (key: ReportSectionKey) => {
+    setEditingSection(key)
+    setEditingText(displayContent[key] ?? '')
+    setSaveError(null)
+  }
+
+  const handleCancelEdit = () => {
+    setEditingSection(null)
+    setEditingText('')
+    setSaveError(null)
+  }
+
+  const handleSaveSection = async () => {
+    if (!editingSection) return
+    setIsSaving(true)
+    setSaveError(null)
+    const newContent = { ...localContent, [editingSection]: editingText }
+    try {
+      const res = await fetch(`/api/reports/${report.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ report_content: newContent }),
+      })
+      if (!res.ok) throw new Error('Failed to save')
+      setLocalContent(newContent)
+      // Invalidate translation cache since content changed
+      setTranslatedContent(null)
+      setEditingSection(null)
+      setEditingText('')
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   const displayContent = lang === 'es' && translatedContent
-    ? { ...report.report_content, ...translatedContent }
-    : report.report_content
+    ? { ...localContent, ...translatedContent }
+    : localContent
 
   return (
     <div className="space-y-4 print:space-y-0">
@@ -82,7 +120,7 @@ export function ReportViewer({ report, corrections = [] }: ReportViewerProps) {
         <div className="ml-auto flex items-center gap-1">
           <button
             onClick={lang === 'es' ? handleToggleLang : undefined}
-            disabled={isTranslating}
+            disabled={isTranslating || !!editingSection}
             className={`px-4 py-2.5 text-sm font-semibold rounded-l-md border transition-colors min-h-[44px] flex items-center justify-center ${
               lang === 'en'
                 ? 'bg-[oklch(0.68_0.12_65)] text-[oklch(0.22_0.04_50)] border-[oklch(0.68_0.12_65)]'
@@ -93,7 +131,7 @@ export function ReportViewer({ report, corrections = [] }: ReportViewerProps) {
           </button>
           <button
             onClick={lang === 'en' ? handleToggleLang : undefined}
-            disabled={isTranslating}
+            disabled={isTranslating || !!editingSection}
             className={`px-4 py-2.5 text-sm font-semibold rounded-r-md border-t border-b border-r transition-colors min-h-[44px] flex items-center justify-center ${
               lang === 'es'
                 ? 'bg-[oklch(0.68_0.12_65)] text-[oklch(0.22_0.04_50)] border-[oklch(0.68_0.12_65)]'
@@ -115,6 +153,14 @@ export function ReportViewer({ report, corrections = [] }: ReportViewerProps) {
             key={sectionKey}
             sectionKey={sectionKey}
             content={displayContent[sectionKey] ?? ''}
+            isEditing={editingSection === sectionKey}
+            editingContent={editingSection === sectionKey ? editingText : undefined}
+            onEdit={!editingSection ? () => handleEditSection(sectionKey) : undefined}
+            onContentChange={setEditingText}
+            onSave={handleSaveSection}
+            onCancel={handleCancelEdit}
+            isSaving={isSaving}
+            saveError={editingSection === sectionKey ? saveError : null}
             correctionCount={correctionsBySection[sectionKey] ?? 0}
           />
         ))}
