@@ -35,11 +35,36 @@ function IntakeContent() {
   }
 
   if (tier !== 'basic_12' && tier !== 'premium_19_90') return null
+
+  const isPremium = tier === 'premium_19_90'
+
   return (
-    <section>
-      <h2 className="text-2xl font-semibold mb-6">{t('intakeTitle')}</h2>
-      <IntakeForm tier={tier} onSubmit={handleSubmit} />
-    </section>
+    <>
+      {/* Hero */}
+      <section style={{ position: 'relative', padding: '32px 20px 24px', overflow: 'hidden', textAlign: 'center' }}>
+        <div style={{ position: 'relative', maxWidth: '720px', margin: '0 auto' }}>
+          <div className={`plan-pill${isPremium ? ' is-premium' : ''}`}>
+            <span className="plan-pill-badge">
+              {isPremium ? 'Premium · €19.90' : 'Essential · €12'}
+            </span>
+            <span>{t('intakePlanSuffix')}</span>
+          </div>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 'clamp(28px, 6vw, 40px)', lineHeight: 1.05, color: '#2a3520', letterSpacing: '-0.01em', marginBottom: '10px' }}>
+            {t('intakeHeroTitle')}{' '}
+            <span style={{ fontStyle: 'italic', color: '#a85428', fontWeight: 400 }}>
+              {t('intakeHeroAccent')}
+            </span>
+          </h1>
+          <p style={{ fontSize: '14.5px', color: '#5d4f3f', maxWidth: '480px', margin: '0 auto', lineHeight: 1.55 }}>
+            {t('intakeHeroLead')}
+          </p>
+        </div>
+      </section>
+      {/* Form */}
+      <div style={{ maxWidth: '760px', margin: '24px auto 40px', padding: '0 16px' }}>
+        <IntakeForm tier={tier} onSubmit={handleSubmit} />
+      </div>
+    </>
   )
 }
 
