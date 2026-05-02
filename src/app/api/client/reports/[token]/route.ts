@@ -18,6 +18,8 @@ export async function GET(
       report_download_token,
       language,
       status,
+      payment_tier,
+      report_delivered_at,
       report_id,
       reports:report_id ( id, report_content, client_report_content )
     `)
@@ -40,5 +42,7 @@ export async function GET(
   return NextResponse.json({
     language: data.language,
     report,
+    paymentTier: data.payment_tier,
+    deliveredAt: data.report_delivered_at ?? null,
   })
 }
