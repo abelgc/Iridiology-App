@@ -103,25 +103,60 @@
     @apply w-full rounded-md border px-3 py-2 bg-white;
   }
 
-  /* Tier selection cards — /client page */
-  .tier-card {
-    background: #f0ebe0;
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    border-radius: 16px;
-    padding: 32px;
-    cursor: pointer;
-    transition: all 0.25s ease;
-    text-align: left;
+  /* Client pricing page */
+  .client-card {
+    transition: transform 0.25s, box-shadow 0.25s;
+  }
+  .client-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(61, 74, 42, 0.12);
+  }
+  .cta-basic {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
+    padding: 14px 18px;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    background: transparent;
+    color: #3d4a2a;
+    border: 1.5px solid #3d4a2a;
+    transition: all 0.2s;
   }
-  .tier-card:hover,
-  .tier-card.selected {
-    background: #f5a623;
-    border-color: transparent;
+  .cta-basic:hover {
+    background: #3d4a2a;
+    color: #f4ead8;
   }
-  .tier-card:hover *,
-  .tier-card.selected * {
-    color: #ffffff;
+  .cta-premium {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 14px 18px;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    background: #c66a3d;
+    color: white;
+    border: none;
+    box-shadow: 0 6px 20px rgba(198, 106, 61, 0.35);
+    transition: all 0.2s;
+  }
+  .cta-premium:hover {
+    background: #a85428;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(198, 106, 61, 0.45);
   }
 }
 
