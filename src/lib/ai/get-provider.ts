@@ -6,7 +6,7 @@ import type { PaymentTier } from '@/types/client-analysis'
 
 export const TIER_MODELS: Record<PaymentTier, { anthropic: string; openai: string }> = {
   premium_19_90: { anthropic: 'claude-sonnet-4-6', openai: 'gpt-4o' },
-  basic_12: { anthropic: 'claude-haiku-4-5-20251001', openai: 'gpt-4o-mini' },
+  basic_12: { anthropic: 'claude-haiku-4-5-20251001', openai: 'gpt-4.1-mini' },
 }
 
 async function getSettings(): Promise<Record<string, string>> {
