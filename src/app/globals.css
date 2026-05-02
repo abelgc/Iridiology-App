@@ -376,6 +376,206 @@
     font-size: 10px;
   }
   .plan-pill.is-premium .plan-pill-badge { background: #3d4a2a; }
+
+  /* ── Upload screen ── */
+  .upload-progress-bar {
+    background: rgba(255,255,255,0.6);
+    border-bottom: 1px solid #d8c9ad;
+    padding: 14px 20px;
+  }
+  .upload-progress-inner {
+    max-width: 720px;
+    margin: 0 auto;
+    display: flex;
+  }
+  .upload-progress-step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+  .upload-progress-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #ffffff;
+  }
+  .upload-progress-dot.done { background: #c9943a; }
+  .upload-progress-dot.active { background: #3d4a2a; }
+  .upload-progress-dot.todo { background: #e0d8ce; color: #9c8272; }
+  .upload-progress-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #5d4f3f;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .upload-progress-label.active { font-weight: 600; color: #3d4a2a; }
+  .upload-tag {
+    display: inline-block;
+    background: #f8f0df;
+    border: 1px solid #d8c9ad;
+    color: #5d4f3f;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 99px;
+    margin-bottom: 14px;
+  }
+  .upload-card {
+    background: #f8f0df;
+    border: 1px solid #d8c9ad;
+    border-radius: 22px;
+    padding: clamp(20px, 4vw, 30px);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.5) inset, 0 8px 28px -18px rgba(61,74,42,0.22);
+  }
+  .upload-tutorial-card {
+    background: #ffffff;
+    border: 1px solid #d8c9ad;
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .upload-tutorial-icon {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #f4ead8;
+    border: 1px solid #d8c9ad;
+    color: #a85428;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .upload-zone {
+    position: relative;
+    border-radius: 16px;
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .upload-zone.empty {
+    border: 1.5px dashed #d8c9ad;
+    background: #f8f0df;
+  }
+  .upload-zone.filled {
+    border: 1.5px solid #5a6e3a;
+    background: #ffffff;
+    padding: 14px;
+  }
+  .upload-zone-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: #f4ead8;
+    border: 1px solid #d8c9ad;
+    color: #a85428;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .upload-zone-check {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #5a6e3a;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+  }
+  .upload-eye-grid {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+  .upload-tips-grid {
+    margin-top: 22px;
+    padding-top: 22px;
+    border-top: 1px solid #d8c9ad;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+  .upload-tip-check {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #f4ead8;
+    border: 1px solid #d8c9ad;
+    color: #5a6e3a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .upload-submit-bar {
+    margin-top: 22px;
+    padding-top: 22px;
+    border-top: 1px solid #d8c9ad;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+  .upload-submit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 13px 26px;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border: none;
+    transition: all 0.2s;
+  }
+  .upload-submit-btn.ready {
+    background: #c66a3d;
+    color: #ffffff;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(198,106,61,0.32);
+  }
+  .upload-submit-btn.ready:hover {
+    background: #a85428;
+    transform: translateY(-1px);
+  }
+  .upload-submit-btn.disabled {
+    background: #e0d8ce;
+    color: #9c8272;
+    cursor: not-allowed;
+  }
 }
 
 @media print {
