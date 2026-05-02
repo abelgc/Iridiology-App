@@ -6,7 +6,9 @@ import {
   StyleSheet,
 } from '@react-pdf/renderer'
 import type { ReportContent, ReportSectionKey } from '@/types/report'
-import { REPORT_SECTION_KEYS, REPORT_SECTION_LABELS } from '@/types/report'
+import { REPORT_SECTION_KEYS, REPORT_SECTION_I18N_KEYS } from '@/types/report'
+import { translations } from '@/lib/i18n'
+import type { Lang } from '@/lib/i18n'
 
 const styles = StyleSheet.create({
   page: {
@@ -50,20 +52,24 @@ const styles = StyleSheet.create({
 interface Props {
   report: ReportContent
   generatedAt: string
+  lang: Lang
 }
 
-export function ReportPdfDocument({ report, generatedAt }: Props) {
+export function ReportPdfDocument({ report, generatedAt, lang }: Props) {
+  const tl = (key: string): string =>
+    (translations[lang] as any)[key] ?? (translations.en as any)[key] ?? key
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
-          <Text style={styles.title}>Iridology Analysis Report</Text>
-          <Text style={styles.subtitle}>Generated: {generatedAt}</Text>
+          <Text style={styles.title}>{tl('pdfReportTitle')}</Text>
+          <Text style={styles.subtitle}>{tl('pdfGenerated')} {generatedAt}</Text>
         </View>
 
         {REPORT_SECTION_KEYS.map((key: ReportSectionKey) => (
           <View key={key} style={styles.section}>
-            <Text style={styles.sectionTitle}>{REPORT_SECTION_LABELS[key]}</Text>
+            <Text style={styles.sectionTitle}>{tl(REPORT_SECTION_I18N_KEYS[key])}</Text>
             <Text style={styles.sectionBody}>{report[key]}</Text>
           </View>
         ))}
