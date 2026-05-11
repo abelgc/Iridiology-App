@@ -83,99 +83,32 @@ export async function compareIris(request: ComparisonRequest): Promise<ReportCon
       patientContext.practitionerCorrections,
     )
 
-    // Call AI provider with vision (4 images)
     const response = await provider.complete({
       systemPrompt: COMPARISON_ANALYSIS_SYSTEM_PROMPT,
       userText: userPrompt,
       images,
-      maxTokens: 4096,
+      maxTokens: 8192,
     })
 
-    // Check for token limit
     if (response.stopReason === 'max_tokens') {
-      // Retry with 50% more tokens
-      const retryResponse = await provider.complete({
-        systemPrompt: COMPARISON_ANALYSIS_SYSTEM_PROMPT,
-        userText: userPrompt,
-        images,
-        maxTokens: 6144,
-      })
-
-      if (retryResponse.stopReason === 'max_tokens') {
-        return {
-          code: 'response_too_long',
-          message: 'Response still truncated after increasing token limit',
-        }
-      }
-
-      const parseResult = await parseWithRetry(retryResponse.text)
-      if ('code' in parseResult && parseResult.code === 'invalid_json') {
-        // Retry with stronger instruction
-        const strongerPrompt = `${userPrompt}\n\nIMPORTANT: Respond ONLY with valid JSON. No additional text.`
-
-        const finalResponse = await provider.complete({
-          systemPrompt: COMPARISON_ANALYSIS_SYSTEM_PROMPT,
-          userText: strongerPrompt,
-          images,
-          maxTokens: 6144,
-        })
-
-        const finalParseResult = await parseWithRetry(finalResponse.text, 2)
-        return finalParseResult as ReportContent | ComparisonError
-      }
-
-      return parseResult as ReportContent | ComparisonError
+      return { code: 'response_too_long', message: 'Response truncated — report too long for token limit' }
     }
 
     const parseResult = await parseWithRetry(response.text)
     if ('code' in parseResult && parseResult.code === 'invalid_json') {
-      // Retry with stronger instruction
-      const strongerPrompt = `${userPrompt}\n\nIMPORTANTE: Responde ÚNICAMENTE con JSON válido. Sin texto adicional.`
-
+      const strongerPrompt = `${userPrompt}\n\nIMPORTANT: Respond ONLY with valid JSON. No additional text.`
       const retryResponse = await provider.complete({
         systemPrompt: COMPARISON_ANALYSIS_SYSTEM_PROMPT,
         userText: strongerPrompt,
         images,
-        maxTokens: 4096,
+        maxTokens: 8192,
       })
-
       const retryParseResult = await parseWithRetry(retryResponse.text, 2)
       return retryParseResult as ReportContent | ComparisonError
     }
 
     return parseResult as ReportContent | ComparisonError
   } catch (error) {
-    if (error instanceof Error) {
-      if (error.message.includes('timeout') || error.message.includes('ETIMEDOUT')) {
-        // Retry once after 5 seconds
-        await new Promise((resolve) => setTimeout(resolve, 5000))
-
-        try {
-          const patientContext = await buildPatientContext(request.patientId)
-          const userPrompt = buildComparisonUserPrompt(
-            request,
-            patientContext.previousReportSummary,
-            patientContext.practitionerCorrections,
-          )
-
-          const retryResponse = await provider.complete({
-            systemPrompt: COMPARISON_ANALYSIS_SYSTEM_PROMPT,
-            userText: userPrompt,
-            images,
-            maxTokens: 4096,
-          })
-
-          const parseResult = await parseWithRetry(retryResponse.text)
-          return parseResult as ReportContent | ComparisonError
-        } catch {
-          return {
-            code: 'timeout',
-            message: 'Request timed out after retry',
-          }
-        }
-      }
-    }
-
     return {
       code: 'analysis_failed',
       message: error instanceof Error ? error.message : 'Unknown error during comparison',
