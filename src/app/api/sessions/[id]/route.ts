@@ -19,6 +19,7 @@ export async function GET(
         session_date,
         analysis_mode,
         status,
+        error_message,
         symptoms,
         practitioner_notes,
         patients:patient_id (

@@ -3,6 +3,7 @@ import { analyzeIrisDual } from '@/lib/claude/analyze-dual'
 import { AnalysisRequest } from '@/types/claude'
 import { NextRequest, NextResponse } from 'next/server'
 import { enhanceEmotionalFieldWithJyotish, shouldEnhanceWithJyotish } from '@/lib/claude/enhance-emotional-field'
+import { waitUntil } from '@vercel/functions'
 
 export async function POST(request: NextRequest) {
   const supabase = createAdminClient()
@@ -40,8 +41,9 @@ export async function POST(request: NextRequest) {
       try {
         const result = await analyzeIrisDual({ sessionId, patientId, rightIrisBase64, leftIrisBase64, patientData })
         if ('code' in result) {
-          console.error(`\x1b[31m[analyze] session ${sessionId} — error: ${(result as any).code} ${(result as any).message}\x1b[0m`)
-          await bg.from('sessions').update({ status: 'error' }).eq('id', sessionId)
+          const msg = `${(result as any).code}: ${(result as any).message}`
+          console.error(`\x1b[31m[analyze] session ${sessionId} — error: ${msg}\x1b[0m`)
+          await bg.from('sessions').update({ status: 'error', error_message: msg }).eq('id', sessionId)
           return
         }
 
@@ -68,19 +70,20 @@ export async function POST(request: NextRequest) {
           .insert({ session_id: sessionId, report_content: finalReport, report_version: 1, is_edited: false })
 
         if (reportError) {
-          await bg.from('sessions').update({ status: 'error' }).eq('id', sessionId)
+          await bg.from('sessions').update({ status: 'error', error_message: reportError.message }).eq('id', sessionId)
           return
         }
 
         await bg.from('sessions').update({ status: 'completed' }).eq('id', sessionId)
         console.log(`[analyze] session ${sessionId} — completed ✓`)
       } catch (err) {
-        console.error(`\x1b[31m[analyze] session ${sessionId} — caught exception: ${err}\x1b[0m`)
-        createAdminClient().from('sessions').update({ status: 'error' }).eq('id', sessionId)
+        const msg = err instanceof Error ? err.message : String(err)
+        console.error(`\x1b[31m[analyze] session ${sessionId} — caught exception: ${msg}\x1b[0m`)
+        await createAdminClient().from('sessions').update({ status: 'error', error_message: msg }).eq('id', sessionId)
       }
     }
 
-    runAnalysis() // intentionally not awaited
+    waitUntil(runAnalysis())
 
     return NextResponse.json({ sessionId })
   } catch (error) {

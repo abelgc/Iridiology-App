@@ -16,6 +16,7 @@ interface Session {
   session_date: string
   analysis_mode: string
   status: 'pending' | 'analyzing' | 'completed' | 'error'
+  error_message: string | null
   symptoms: string | null
   practitioner_notes: string | null
   patients: {
@@ -286,7 +287,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
               <div>
                 <p className="font-medium text-red-900">Analysis Failed</p>
                 <p className="text-sm text-red-800 mt-1">
-                  There was an error during the analysis. Please try again or contact support.
+                  {session.error_message ?? 'There was an error during the analysis. Please try again or contact support.'}
                 </p>
               </div>
             </div>

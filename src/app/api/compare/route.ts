@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { compareIris } from '@/lib/claude/compare'
 import { ComparisonRequest } from '@/types/claude'
 import { NextRequest, NextResponse } from 'next/server'
+import { waitUntil } from '@vercel/functions'
 
 export async function POST(request: NextRequest) {
   const supabase = createAdminClient()
@@ -49,7 +50,8 @@ export async function POST(request: NextRequest) {
         })
 
         if ('code' in result) {
-          await bg.from('sessions').update({ status: 'error' }).eq('id', sessionId)
+          const msg = `${(result as any).code}: ${(result as any).message}`
+          await bg.from('sessions').update({ status: 'error', error_message: msg }).eq('id', sessionId)
           return
         }
 
@@ -58,17 +60,18 @@ export async function POST(request: NextRequest) {
           .insert({ session_id: sessionId, report_content: result, report_version: 1, is_edited: false })
 
         if (reportError) {
-          await bg.from('sessions').update({ status: 'error' }).eq('id', sessionId)
+          await bg.from('sessions').update({ status: 'error', error_message: reportError.message }).eq('id', sessionId)
           return
         }
 
         await bg.from('sessions').update({ status: 'completed' }).eq('id', sessionId)
-      } catch {
-        createAdminClient().from('sessions').update({ status: 'error' }).eq('id', sessionId)
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        await createAdminClient().from('sessions').update({ status: 'error', error_message: msg }).eq('id', sessionId)
       }
     }
 
-    runAnalysis()
+    waitUntil(runAnalysis())
 
     return NextResponse.json({ sessionId })
   } catch (error) {
