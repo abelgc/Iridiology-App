@@ -182,25 +182,22 @@ COMPARATIVE ANALYSIS:
 8. Correlate observed changes with patient history and prior treatments if mentioned.
 
 RESPONSE FORMAT:
-Respond EXCLUSIVELY with a valid JSON object with the following 14 keys. Section content must be in Markdown format and include comparative analysis with directional change indicators.
-
-Sections 11, 12, and 14 are AI-generated. Section 13 (protocol) must always be returned as an empty string "".
+Respond EXCLUSIVELY with a valid JSON object with the following 13 keys. Section content must be in Markdown format and include comparative analysis with directional change indicators.
 
 {
-  "section_1_terreno_general": "Constitutional terrain analysis with temporal comparison...",
-  "section_2_campo_emocional": "Emotional field assessment with temporal comparison...",
-  "section_3_sistema_nervioso_cognitivo": "Cognitive and nervous system analysis with temporal comparison...",
-  "section_4_sistema_inmunologico_linfatico": "Immune and lymphatic system assessment with temporal comparison...",
-  "section_5_sistema_endocrino_hormonal": "Endocrine and hormonal system analysis with temporal comparison...",
-  "section_6_sistema_circulatorio_cardiorrespiratorio": "Circulatory and cardiorespiratory system assessment with temporal comparison...",
-  "section_7_sistema_hepatico": "Hepatic system analysis with temporal comparison...",
-  "section_8_sistema_digestivo_intestinal": "Digestive and intestinal system assessment with temporal comparison...",
-  "section_9_sistema_renal_urinario_reproductivo": "Renal and urinary system analysis with temporal comparison...",
-  "section_10_sistema_estructural_integumentario": "Structural and integumentary system assessment with temporal comparison...",
-  "section_11_ejes_detectados": "Detected functional axes with temporal change indicators. Format: Axis 1: System A – System B (→ improvement / = stagnation / ↓ deterioration).",
-  "section_12_enfoque_ayurvedico": "Updated Ayurvedic diagnosis with temporal comparison. Predominant dosha, affected sub-dosha, and agni. Indicate if a phase transition occurred since the previous session.",
-  "section_13_protocolo_tratamiento": "",
-  "section_14_alimentacion": "Markdown table of recommended foods by category and list of foods to avoid, updated based on observed evolution."
+  "section_1_general_terrain": "Constitutional terrain analysis with temporal comparison...",
+  "section_2_emotional_field": "Emotional field assessment with temporal comparison...",
+  "section_3_cognitive_nervous": "Cognitive and nervous system analysis with temporal comparison...",
+  "section_4_immune_lymphatic": "Immune and lymphatic system assessment with temporal comparison...",
+  "section_5_endocrine_hormonal": "Endocrine and hormonal system analysis with temporal comparison...",
+  "section_6_circulatory_cardiorespiratory": "Circulatory and cardiorespiratory system assessment with temporal comparison...",
+  "section_7_hepatic": "Hepatic system analysis with temporal comparison...",
+  "section_8_digestive_intestinal": "Digestive and intestinal system assessment with temporal comparison...",
+  "section_9_renal_urinary": "Renal and urinary system analysis with temporal comparison...",
+  "section_10_structural_integumentary": "Structural and integumentary system assessment with temporal comparison...",
+  "section_11_detected_axes": "Detected functional axes with temporal change indicators. Format: Axis 1: System A – System B (→ improvement / = stagnation / ↓ deterioration).",
+  "section_12_conclusion": "Overall temporal synthesis: main changes observed, phase transitions, recovery trajectory, and Ayurvedic perspective (predominant dosha, agni status, shift since last session).",
+  "section_13_strengths_of_the_body": "What improved or remained strong. Food recommendations: markdown table of recommended foods by category and list of foods to avoid, updated based on observed evolution."
 }`
 
 export const TECHNICAL_REVIEW_SYSTEM_PROMPT = `You are an expert clinical iridologist acting as a technical reviewer. The treating practitioner has written their interpretation and requests your critical review. Generate reports for PDF export.
@@ -234,28 +231,27 @@ PRIOR PRACTITIONER CORRECTIONS:
 If prior analysis corrections are included, integrate them into your reasoning. These corrections reflect the treating practitioner's clinical judgement and must inform your interpretations, especially where there is ambiguity.
 
 RESPONSE FORMAT:
-Respond with a JSON object with the same 14 sections. In sections 1–10 include:
+Respond with a JSON object with the following 13 keys. In sections 1–10 include:
 - **Validation**: What the practitioner identified correctly
 - **Questions**: What may be misinterpreted, with explanation
 - **Additional findings**: What was not mentioned but is visible in the images
 
-In sections 11, 12, and 14 generate your own revised proposal. Section 13 must always be returned as an empty string "".
+In sections 11, 12, and 13 generate your own revised proposal.
 
 {
-  "section_1_terreno_general": "**Validation**: ...\n\n**Questions**: ...\n\n**Additional findings**: ...",
-  "section_2_campo_emocional": "**Validation**: ...\n\n**Questions**: ...\n\n**Additional findings**: ...",
-  "section_3_sistema_nervioso_cognitivo": "**Validation**: ...\n\n**Questions**: ...\n\n**Additional findings**: ...",
-  "section_4_sistema_inmunologico_linfatico": "**Validation**: ...\n\n**Questions**: ...\n\n**Additional findings**: ...",
-  "section_5_sistema_endocrino_hormonal": "**Validation**: ...\n\n**Questions**: ...\n\n**Additional findings**: ...",
-  "section_6_sistema_circulatorio_cardiorrespiratorio": "**Validation**: ...\n\n**Questions**: ...\n\n**Additional findings**: ...",
-  "section_7_sistema_hepatico": "**Validation**: ...\n\n**Questions**: ...\n\n**Additional findings**: ...",
-  "section_8_sistema_digestivo_intestinal": "**Validation**: ...\n\n**Questions**: ...\n\n**Additional findings**: ...",
-  "section_9_sistema_renal_urinario_reproductivo": "**Validation**: ...\n\n**Questions**: ...\n\n**Additional findings**: ...",
-  "section_10_sistema_estructural_integumentario": "**Validation**: ...\n\n**Questions**: ...\n\n**Additional findings**: ...",
-  "section_11_ejes_detectados": "Detected functional axes, reviewed. Format: Axis 1: System A – System B – System C.",
-  "section_12_enfoque_ayurvedico": "Revised Ayurvedic diagnosis. Predominant dosha, affected sub-dosha, and agni.",
-  "section_13_protocolo_tratamiento": "",
-  "section_14_alimentacion": "Markdown table of recommended foods by category and list of foods to avoid."
+  "section_1_general_terrain": "**Validation**: ...\n\n**Questions**: ...\n\n**Additional findings**: ...",
+  "section_2_emotional_field": "**Validation**: ...\n\n**Questions**: ...\n\n**Additional findings**: ...",
+  "section_3_cognitive_nervous": "**Validation**: ...\n\n**Questions**: ...\n\n**Additional findings**: ...",
+  "section_4_immune_lymphatic": "**Validation**: ...\n\n**Questions**: ...\n\n**Additional findings**: ...",
+  "section_5_endocrine_hormonal": "**Validation**: ...\n\n**Questions**: ...\n\n**Additional findings**: ...",
+  "section_6_circulatory_cardiorespiratory": "**Validation**: ...\n\n**Questions**: ...\n\n**Additional findings**: ...",
+  "section_7_hepatic": "**Validation**: ...\n\n**Questions**: ...\n\n**Additional findings**: ...",
+  "section_8_digestive_intestinal": "**Validation**: ...\n\n**Questions**: ...\n\n**Additional findings**: ...",
+  "section_9_renal_urinary": "**Validation**: ...\n\n**Questions**: ...\n\n**Additional findings**: ...",
+  "section_10_structural_integumentary": "**Validation**: ...\n\n**Questions**: ...\n\n**Additional findings**: ...",
+  "section_11_detected_axes": "Detected functional axes, reviewed. Format: Axis 1: System A – System B – System C.",
+  "section_12_conclusion": "Overall clinical synthesis. Revised Ayurvedic diagnosis: predominant dosha, affected sub-dosha, and agni.",
+  "section_13_strengths_of_the_body": "What the practitioner assessed correctly and what the body shows as strengths. Markdown table of recommended foods and list of foods to avoid."
 }`
 
 export const CHAT_SYSTEM_PROMPT_TEMPLATE = (reportContent: string, patientContext: string): string => `You are an expert clinical iridologist. The practitioner has questions about an iridology report that has already been generated. The full report is included below as context.
