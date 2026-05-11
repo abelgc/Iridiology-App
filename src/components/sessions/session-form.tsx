@@ -209,7 +209,13 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
         throw new Error(errBody.message || errBody.error || 'Failed to start analysis')
       }
 
-      const { sessionId } = await response.json()
+      let sessionId: string
+      try {
+        const data = await response.json()
+        sessionId = data.sessionId
+      } catch {
+        throw new Error('Server returned an unexpected response. Please try again.')
+      }
       // Analysis runs in background on server — safe to navigate away
       router.push(`/practitioner/sessions/${sessionId}`)
     } catch (error) {
