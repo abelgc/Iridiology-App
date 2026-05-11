@@ -201,8 +201,12 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
       })
 
       if (!response.ok) {
-        const err = await response.json()
-        throw new Error(err.message || err.error || 'Failed to start analysis')
+        if (response.status === 413) {
+          throw new Error('Images are too large. Please use smaller photos and try again.')
+        }
+        let errBody: { message?: string; error?: string } = {}
+        try { errBody = await response.json() } catch { /* non-JSON body */ }
+        throw new Error(errBody.message || errBody.error || 'Failed to start analysis')
       }
 
       const { sessionId } = await response.json()

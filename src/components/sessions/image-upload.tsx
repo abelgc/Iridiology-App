@@ -54,19 +54,26 @@ export function ImageUpload({ label, value, onChange, required = false }: ImageU
       return
     }
 
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const result = e.target?.result as string
-      if (result) {
-        // Remove the data:image/...;base64, prefix to get just the base64 string
-        const base64 = result.split(',')[1] || result
-        onChange(base64)
+    const img = new Image()
+    const objectUrl = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl)
+      const MAX = 1024
+      let { width, height } = img
+      if (width > MAX || height > MAX) {
+        const scale = Math.min(MAX / width, MAX / height)
+        width = Math.round(width * scale)
+        height = Math.round(height * scale)
       }
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      canvas.getContext('2d')!.drawImage(img, 0, 0, width, height)
+      const base64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1]
+      onChange(base64)
     }
-    reader.onerror = () => {
-      setError('Failed to read file')
-    }
-    reader.readAsDataURL(file)
+    img.onerror = () => setError('Failed to read file')
+    img.src = objectUrl
   }
 
   const handleRemove = () => {
