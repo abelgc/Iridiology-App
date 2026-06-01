@@ -197,7 +197,7 @@ Respond EXCLUSIVELY with a valid JSON object with the following 13 keys. Section
   "section_10_structural_integumentary": "Structural and integumentary system assessment with temporal comparison...",
   "section_11_detected_axes": "Detected functional axes with temporal change indicators. Format: Axis 1: System A – System B (→ improvement / = stagnation / ↓ deterioration).",
   "section_12_conclusion": "Overall temporal synthesis: main changes observed, phase transitions, recovery trajectory, and Ayurvedic perspective (predominant dosha, agni status, shift since last session).",
-  "section_13_strengths_of_the_body": "What improved or remained strong. Food recommendations: markdown table of recommended foods by category and list of foods to avoid, updated based on observed evolution."
+  "section_13_strengths_of_the_body": "What improved or remained strong, with clinical specificity based on observed evolution."
 }`
 
 export const TECHNICAL_REVIEW_SYSTEM_PROMPT = `You are an expert clinical iridologist acting as a technical reviewer. The treating practitioner has written their interpretation and requests your critical review. Generate reports for PDF export.
@@ -251,7 +251,7 @@ In sections 11, 12, and 13 generate your own revised proposal.
   "section_10_structural_integumentary": "**Validation**: ...\n\n**Questions**: ...\n\n**Additional findings**: ...",
   "section_11_detected_axes": "Detected functional axes, reviewed. Format: Axis 1: System A – System B – System C.",
   "section_12_conclusion": "Overall clinical synthesis. Revised Ayurvedic diagnosis: predominant dosha, affected sub-dosha, and agni.",
-  "section_13_strengths_of_the_body": "What the practitioner assessed correctly and what the body shows as strengths. Markdown table of recommended foods and list of foods to avoid."
+  "section_13_strengths_of_the_body": "What the practitioner assessed correctly and what the body shows as strengths."
 }`
 
 export const CHAT_SYSTEM_PROMPT_TEMPLATE = (reportContent: string, patientContext: string): string => `You are an expert clinical iridologist. The practitioner has questions about an iridology report that has already been generated. The full report is included below as context.
