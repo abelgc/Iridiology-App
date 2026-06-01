@@ -3,6 +3,10 @@ import { compareIris } from '@/lib/claude/compare'
 import { ComparisonRequest } from '@/types/claude'
 import { NextRequest, NextResponse } from 'next/server'
 import { waitUntil } from '@vercel/functions'
+import { withTimeout } from '@/lib/utils'
+
+export const runtime = 'nodejs'
+export const maxDuration = 300
 
 export async function POST(request: NextRequest) {
   const supabase = createAdminClient()
@@ -41,13 +45,17 @@ export async function POST(request: NextRequest) {
     const runAnalysis = async () => {
       const bg = createAdminClient()
       try {
-        const result = await compareIris({
-          sessionId, patientId,
-          previousRightIrisBase64, previousLeftIrisBase64,
-          rightIrisBase64, leftIrisBase64,
-          previousSessionDate: '',
-          patientData,
-        })
+        const result = await withTimeout(
+          compareIris({
+            sessionId, patientId,
+            previousRightIrisBase64, previousLeftIrisBase64,
+            rightIrisBase64, leftIrisBase64,
+            previousSessionDate: '',
+            patientData,
+          }),
+          250_000,
+          'Analysis timed out after 250s',
+        )
 
         if ('code' in result) {
           const msg = `${(result as any).code}: ${(result as any).message}`

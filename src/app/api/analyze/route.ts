@@ -4,6 +4,10 @@ import { AnalysisRequest } from '@/types/claude'
 import { NextRequest, NextResponse } from 'next/server'
 import { enhanceEmotionalFieldWithJyotish, shouldEnhanceWithJyotish } from '@/lib/claude/enhance-emotional-field'
 import { waitUntil } from '@vercel/functions'
+import { withTimeout } from '@/lib/utils'
+
+export const runtime = 'nodejs'
+export const maxDuration = 300
 
 export async function POST(request: NextRequest) {
   const supabase = createAdminClient()
@@ -39,7 +43,11 @@ export async function POST(request: NextRequest) {
       const bg = createAdminClient()
       console.log(`[analyze] session ${sessionId} — starting dual-model analysis...`)
       try {
-        const result = await analyzeIrisDual({ sessionId, patientId, rightIrisBase64, leftIrisBase64, patientData })
+        const result = await withTimeout(
+          analyzeIrisDual({ sessionId, patientId, rightIrisBase64, leftIrisBase64, patientData }),
+          250_000,
+          'Analysis timed out after 250s',
+        )
         if ('code' in result) {
           const msg = `${(result as any).code}: ${(result as any).message}`
           console.error(`\x1b[31m[analyze] session ${sessionId} — error: ${msg}\x1b[0m`)

@@ -90,11 +90,14 @@ export async function PUT(
   try {
     const body = await request.json()
 
-    const { status } = body
+    const { status, error_message } = body
+
+    const update: { status: string; error_message?: string } = { status }
+    if (error_message !== undefined) update.error_message = error_message
 
     const { data, error } = await supabase
       .from('sessions')
-      .update({ status })
+      .update(update)
       .eq('id', id)
       .select()
       .single()

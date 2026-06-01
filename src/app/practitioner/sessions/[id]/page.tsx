@@ -44,6 +44,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
   const [report, setReport] = useState<Report | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [pollLimitReached, setPollLimitReached] = useState(false)
 
   useEffect(() => {
     params.then((p) => setSessionId(p.id))
@@ -78,11 +79,20 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
     fetchSession()
   }, [sessionId])
 
-  // Poll every 4 seconds while analysis is running
+  // Poll every 4 seconds while analysis is running (max ~5 min, then stop)
   useEffect(() => {
     if (!sessionId || !session || session.status !== 'analyzing') return
 
+    let polls = 0
+    const MAX_POLLS = 75 // 75 × 4s = 5 min, matches server maxDuration
+
     const interval = setInterval(async () => {
+      polls += 1
+      if (polls > MAX_POLLS) {
+        clearInterval(interval)
+        setPollLimitReached(true)
+        return
+      }
       try {
         const response = await fetch(`/api/sessions/${sessionId}`)
         if (!response.ok) return
@@ -259,6 +269,11 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
               <p className="text-sm text-blue-800 mt-1">
                 The AI is analysing the iris images. You can safely leave this page — the analysis continues in the background.
               </p>
+              {pollLimitReached && (
+                <p className="text-sm text-amber-700 mt-2">
+                  This is taking longer than usual and may have failed on the server. Cancel and start again, or reload to check once more.
+                </p>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -267,7 +282,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
                   await fetch(`/api/sessions/${session.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: 'error' }),
+                    body: JSON.stringify({ status: 'error', error_message: 'Cancelled by practitioner' }),
                   })
                   router.push('/practitioner/sessions/new')
                 }}
