@@ -11,6 +11,18 @@ export interface ComparisonError {
   message: string
 }
 
+export const COMPARISON_SYNTHESIS_INSTRUCTIONS = `=== SYNTHESIS INSTRUCTIONS ===
+1. Start from Analysis A. Its JSON structure, writing style, and comparative format (the improvement / stagnation / deterioration indicators per system) are correct.
+2. From Analysis B, extract ONLY specific, named clinical findings or directional changes that are absent or understated in Analysis A. Discard pure visual iris descriptions.
+3. Integrate extracted findings into the appropriate sections of Analysis A, phrased in your voice, preserving the directional change indicator for each system.
+4. Where both analyses agree on a change, state it with stronger confidence. Where they contradict, keep Analysis A's position and note the discrepancy in one clause.
+5. Every sentence must carry clinical value. Remove padding.
+6. Output ONLY the final JSON. No preamble, no commentary, no markdown fences.
+
+The reader is the practitioner and must NEVER see references to "Analysis A", "Analysis B", the model names, or any meta-commentary comparing the two source analyses. Never write phrases such as "Analysis B offered no contradiction". Produce one clean, integrated clinical report only.
+
+Prioritise meaningful change: lead with what changed, what worsened, what improved, what stabilized, and what became compensatory. Do not rewrite unchanged sections unnecessarily, and do NOT repeat "stable", "stagnant", or "no change" in every section — state the absence of meaningful change once, globally, in the conclusion.`
+
 function buildComparisonUserPrompt(
   request: ComparisonRequest,
   previousReportSummary: string | null,
@@ -142,13 +154,7 @@ ${claudeResult.value.text}
 === ANALYSIS B (GPT-4o — mine for bold clinical assertions only) ===
 ${openaiResult.value.text}
 
-=== SYNTHESIS INSTRUCTIONS ===
-1. Start from Analysis A. Its JSON structure, writing style, and comparative format (the improvement / stagnation / deterioration indicators per system) are correct.
-2. From Analysis B, extract ONLY specific, named clinical findings or directional changes that are absent or understated in Analysis A. Discard pure visual iris descriptions.
-3. Integrate extracted findings into the appropriate sections of Analysis A, phrased in your voice, preserving the directional change indicator for each system.
-4. Where both analyses agree on a change, state it with stronger confidence. Where they contradict, keep Analysis A's position and note the discrepancy in one clause.
-5. Every sentence must carry clinical value. Remove padding.
-6. Output ONLY the final JSON. No preamble, no commentary, no markdown fences.`
+${COMPARISON_SYNTHESIS_INSTRUCTIONS}`
 
     const synthesisResponse = await anthropic.complete({
       systemPrompt: `You are a senior clinical iridologist producing a definitive comparative iris analysis report (previous vs current session). Be direct. Every sentence must make a clinical claim.`,

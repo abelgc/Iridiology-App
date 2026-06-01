@@ -21,9 +21,9 @@ const ES_FLAG = (
   </svg>
 )
 
-const LANGS: { code: Lang; label: string; flag: React.ReactNode }[] = [
-  { code: 'en', label: 'EN', flag: UK_FLAG },
-  { code: 'es', label: 'ES', flag: ES_FLAG },
+const LANGS: { code: Lang; label: string; name: string; flag: React.ReactNode }[] = [
+  { code: 'en', label: 'EN', name: 'English', flag: UK_FLAG },
+  { code: 'es', label: 'ES', name: 'Español', flag: ES_FLAG },
 ]
 
 export function LanguageToggle() {
@@ -35,12 +35,13 @@ export function LanguageToggle() {
       role="group"
       aria-label="Language selector"
     >
-      {LANGS.map(({ code, label, flag }) => {
+      {LANGS.map(({ code, label, name, flag }) => {
         const active = lang === code
         return (
           <button
             key={code}
             type="button"
+            aria-label={name}
             aria-pressed={active}
             onClick={() => setLang(code)}
             style={{ background: active ? '#3d4a2a' : 'none', border: 'none', cursor: 'pointer', padding: '5px 10px', borderRadius: '99px', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: 'inherit', fontSize: '12px', fontWeight: 600, color: active ? '#f4ead8' : '#5d4f3f', transition: 'all 0.15s' }}

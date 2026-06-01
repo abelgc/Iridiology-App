@@ -15,17 +15,16 @@ import { TIER_MODELS } from '@/lib/ai/get-provider'
 describe('Claude Prompts', () => {
   describe('STANDARD_ANALYSIS_SYSTEM_PROMPT', () => {
     it('should contain body-first clinical writing directives', () => {
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Never describe the iris')
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('metabolic processes')
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('hormonal regulation')
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('elimination pathways')
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('nervous system behavior')
     })
 
-    it('should prohibit iris anatomy language', () => {
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Never mention fibers')
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('collarette')
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('peripupillary zones')
+    it('allows iris anatomy that supports interpretation', () => {
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('anatomy must always SUPPORT')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('INTERPRETATION DISCIPLINE')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).not.toContain('Never describe the iris')
     })
 
     it('should contain all 13 section keys in JSON format', () => {
@@ -93,6 +92,12 @@ describe('Claude Prompts', () => {
       expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('INTERPRETATION RULES')
       expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('COMPARATIVE ANALYSIS')
     })
+
+    it('contains interpretation discipline and comparison priority', () => {
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('INTERPRETATION DISCIPLINE')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('COMPARISON PRIORITY')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('do NOT repeat')
+    })
   })
 
   describe('TECHNICAL_REVIEW_SYSTEM_PROMPT', () => {
@@ -112,6 +117,11 @@ describe('Claude Prompts', () => {
       expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).toContain('STRUCTURAL EXTRACTION')
       expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).toContain('INTERPRETATION RULES')
       expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).toContain('colleague-to-colleague')
+    })
+
+    it('contains interpretation discipline', () => {
+      expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).toContain('INTERPRETATION DISCIPLINE')
+      expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).toContain('anatomy must SUPPORT the interpretation')
     })
   })
 
@@ -170,9 +180,9 @@ describe('Claude Prompts', () => {
   })
 
   describe('TIER_MODELS', () => {
-    it('maps basic_12 to haiku and gpt-4o-mini', () => {
+    it('maps basic_12 to haiku and gpt-4.1-mini', () => {
       expect(TIER_MODELS.basic_12.anthropic).toMatch(/haiku/i)
-      expect(TIER_MODELS.basic_12.openai).toBe('gpt-4o-mini')
+      expect(TIER_MODELS.basic_12.openai).toBe('gpt-4.1-mini')
     })
 
     it('maps premium_19_90 to sonnet and gpt-4o', () => {

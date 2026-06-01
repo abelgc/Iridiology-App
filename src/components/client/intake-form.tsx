@@ -292,14 +292,14 @@ function IntakeField({
   children: React.ReactNode
 }) {
   return (
-    <div className="intake-field">
+    <label className="intake-field">
       <span className="intake-label">
         {label}
         {optional && <span className="intake-label-opt">({optional})</span>}
       </span>
       {children}
       {error && <p style={{ color: '#b54a3a', fontSize: '12px', marginTop: '2px' }}>{error}</p>}
-    </div>
+    </label>
   )
 }
 

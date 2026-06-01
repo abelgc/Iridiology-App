@@ -88,7 +88,9 @@ ${openaiResult.value.text}
 4. Where both analyses agree on a finding, state it with stronger confidence.
 5. Where they contradict, keep Analysis A's position and note the discrepancy in one clause.
 6. Every sentence in the final report must carry clinical value. Remove padding.
-7. Output ONLY the final JSON. No preamble, no commentary, no markdown fences.`
+7. Output ONLY the final JSON. No preamble, no commentary, no markdown fences.
+
+The reader is the practitioner and must NEVER see references to "Analysis A", "Analysis B", the model names, or any meta-commentary comparing the two source analyses. Never write phrases such as "Analysis B offered no contradiction". Produce one clean, integrated clinical report only.`
 
   const synthesisResponse = await anthropic.complete({
     systemPrompt: `You are a senior clinical iridologist producing a definitive iris analysis report. Be direct. Every sentence must make a clinical claim. Write in ${langLabel}.`,

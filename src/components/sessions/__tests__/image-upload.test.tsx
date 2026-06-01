@@ -1,6 +1,30 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { vi } from 'vitest'
+import { vi, beforeAll, afterAll } from 'vitest'
 import { ImageUpload } from '../image-upload'
+
+// jsdom has no real image decoding or canvas. Mock the browser APIs the
+// component uses to compress images so the onChange pipeline can run.
+class MockImage {
+  onload: (() => void) | null = null
+  onerror: (() => void) | null = null
+  width = 100
+  height = 100
+  set src(_value: string) {
+    setTimeout(() => this.onload?.(), 0)
+  }
+}
+
+beforeAll(() => {
+  vi.stubGlobal('Image', MockImage)
+  URL.createObjectURL = vi.fn(() => 'blob:mock') as unknown as typeof URL.createObjectURL
+  URL.revokeObjectURL = vi.fn() as unknown as typeof URL.revokeObjectURL
+  HTMLCanvasElement.prototype.getContext = vi.fn(() => ({ drawImage: vi.fn() })) as unknown as HTMLCanvasElement['getContext']
+  HTMLCanvasElement.prototype.toDataURL = vi.fn(() => 'data:image/jpeg;base64,TESTBASE64')
+})
+
+afterAll(() => {
+  vi.unstubAllGlobals()
+})
 
 describe('ImageUpload', () => {
   it('renders the label', () => {
