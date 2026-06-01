@@ -45,6 +45,9 @@ export async function POST(request: NextRequest) {
 
     const runAnalysis = async () => {
       const bg = createAdminClient()
+      const startedAt = Date.now()
+      const elapsed = () => `${Math.round((Date.now() - startedAt) / 1000)}s`
+      console.log(`[review] session ${sessionId} — starting technical review...`)
       try {
         const result = await withTimeout(
           reviewIris({
@@ -59,6 +62,7 @@ export async function POST(request: NextRequest) {
 
         if ('code' in result) {
           const msg = `${(result as any).code}: ${(result as any).message}`
+          console.error(`\x1b[31m[review] session ${sessionId} — error after ${elapsed()}: ${msg}\x1b[0m`)
           await bg.from('sessions').update({ status: 'error', error_message: msg }).eq('id', sessionId)
           return
         }
@@ -68,13 +72,16 @@ export async function POST(request: NextRequest) {
           .insert({ session_id: sessionId, report_content: result, report_version: 1, is_edited: false })
 
         if (reportError) {
+          console.error(`\x1b[31m[review] session ${sessionId} — report insert failed after ${elapsed()}: ${reportError.message}\x1b[0m`)
           await bg.from('sessions').update({ status: 'error', error_message: reportError.message }).eq('id', sessionId)
           return
         }
 
         await bg.from('sessions').update({ status: 'completed' }).eq('id', sessionId)
+        console.log(`[review] session ${sessionId} — completed in ${elapsed()} ✓`)
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
+        console.error(`\x1b[31m[review] session ${sessionId} — caught exception after ${elapsed()}: ${msg}\x1b[0m`)
         await createAdminClient().from('sessions').update({ status: 'error', error_message: msg }).eq('id', sessionId)
       }
     }

@@ -1,4 +1,4 @@
-import { getAIProvider } from '@/lib/ai/get-provider'
+import { getAIProvider, getBothProviders } from '@/lib/ai/get-provider'
 import { COMPARISON_ANALYSIS_SYSTEM_PROMPT } from './prompts'
 import { buildPatientContext } from './context'
 import { parseReportResponse, type ParseError } from './parse'
@@ -65,8 +65,6 @@ async function parseWithRetry(
 }
 
 export async function compareIris(request: ComparisonRequest): Promise<ReportContent | ComparisonError> {
-  const provider = await getAIProvider()
-
   const images = [
     { data: request.previousRightIrisBase64, mediaType: 'image/jpeg' as const },
     { data: request.previousLeftIrisBase64, mediaType: 'image/jpeg' as const },
@@ -83,31 +81,91 @@ export async function compareIris(request: ComparisonRequest): Promise<ReportCon
       patientContext.practitionerCorrections,
     )
 
-    const response = await provider.complete({
-      systemPrompt: COMPARISON_ANALYSIS_SYSTEM_PROMPT,
-      userText: userPrompt,
-      images,
-      maxTokens: 8192,
-    })
+    const both = await getBothProviders()
 
-    if (response.stopReason === 'max_tokens') {
-      return { code: 'response_too_long', message: 'Response truncated — report too long for token limit' }
-    }
-
-    const parseResult = await parseWithRetry(response.text)
-    if ('code' in parseResult && parseResult.code === 'invalid_json') {
-      const strongerPrompt = `${userPrompt}\n\nIMPORTANT: Respond ONLY with valid JSON. No additional text.`
-      const retryResponse = await provider.complete({
+    // Single-provider path: active_provider is 'anthropic' or 'openai'.
+    if (!both) {
+      const provider = await getAIProvider()
+      const response = await provider.complete({
         systemPrompt: COMPARISON_ANALYSIS_SYSTEM_PROMPT,
-        userText: strongerPrompt,
+        userText: userPrompt,
         images,
         maxTokens: 8192,
       })
-      const retryParseResult = await parseWithRetry(retryResponse.text, 2)
-      return retryParseResult as ReportContent | ComparisonError
+
+      if (response.stopReason === 'max_tokens') {
+        return { code: 'response_too_long', message: 'Response truncated — report too long for token limit' }
+      }
+
+      const parseResult = await parseWithRetry(response.text)
+      if ('code' in parseResult && parseResult.code === 'invalid_json') {
+        const strongerPrompt = `${userPrompt}\n\nIMPORTANT: Respond ONLY with valid JSON. No additional text.`
+        const retryResponse = await provider.complete({
+          systemPrompt: COMPARISON_ANALYSIS_SYSTEM_PROMPT,
+          userText: strongerPrompt,
+          images,
+          maxTokens: 8192,
+        })
+        const retryParseResult = await parseWithRetry(retryResponse.text, 2)
+        return retryParseResult as ReportContent | ComparisonError
+      }
+
+      return parseResult as ReportContent | ComparisonError
     }
 
-    return parseResult as ReportContent | ComparisonError
+    // Dual-provider path: active_provider is 'both'. Run Claude + GPT in
+    // parallel on the comparison, then synthesise into one definitive report —
+    // same pattern as the standard dual analysis.
+    const { anthropic, openai } = both
+
+    const [claudeResult, openaiResult] = await Promise.allSettled([
+      anthropic.complete({ systemPrompt: COMPARISON_ANALYSIS_SYSTEM_PROMPT, userText: userPrompt, images, maxTokens: 8192 }),
+      openai.complete({ systemPrompt: COMPARISON_ANALYSIS_SYSTEM_PROMPT, userText: userPrompt, images, maxTokens: 8192 }),
+    ])
+
+    if (claudeResult.status === 'rejected') {
+      return { code: 'analysis_failed', message: claudeResult.reason?.message ?? 'Claude comparison failed' }
+    }
+
+    if (openaiResult.status === 'rejected') {
+      // GPT failed — fall back to the Claude-only comparison rather than error out.
+      const parsed = parseReportResponse(claudeResult.value.text)
+      if ('code' in parsed) return { code: 'analysis_failed', message: parsed.message }
+      return parsed
+    }
+
+    const synthesisPrompt = `You performed two independent COMPARATIVE iris analyses of the same patient (previous session vs current session). Produce the definitive comparative clinical report.
+
+=== ANALYSIS A (YOUR OWN — structural and stylistic foundation) ===
+${claudeResult.value.text}
+
+=== ANALYSIS B (GPT-4o — mine for bold clinical assertions only) ===
+${openaiResult.value.text}
+
+=== SYNTHESIS INSTRUCTIONS ===
+1. Start from Analysis A. Its JSON structure, writing style, and comparative format (the improvement / stagnation / deterioration indicators per system) are correct.
+2. From Analysis B, extract ONLY specific, named clinical findings or directional changes that are absent or understated in Analysis A. Discard pure visual iris descriptions.
+3. Integrate extracted findings into the appropriate sections of Analysis A, phrased in your voice, preserving the directional change indicator for each system.
+4. Where both analyses agree on a change, state it with stronger confidence. Where they contradict, keep Analysis A's position and note the discrepancy in one clause.
+5. Every sentence must carry clinical value. Remove padding.
+6. Output ONLY the final JSON. No preamble, no commentary, no markdown fences.`
+
+    const synthesisResponse = await anthropic.complete({
+      systemPrompt: `You are a senior clinical iridologist producing a definitive comparative iris analysis report (previous vs current session). Be direct. Every sentence must make a clinical claim.`,
+      userText: synthesisPrompt,
+      images: [],
+      maxTokens: 8192,
+    })
+
+    const parsed = parseReportResponse(synthesisResponse.text)
+    if ('code' in parsed) {
+      // Synthesis parse failed — fall back to the Claude-only comparison.
+      const claudeParsed = parseReportResponse(claudeResult.value.text)
+      if ('code' in claudeParsed) return { code: 'analysis_failed', message: claudeParsed.message }
+      return claudeParsed
+    }
+
+    return parsed
   } catch (error) {
     return {
       code: 'analysis_failed',

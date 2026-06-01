@@ -6,13 +6,18 @@ export class OpenAIProvider implements AIProvider {
   private model: string
 
   constructor(apiKey: string, model = 'gpt-4o') {
-    this.client = new OpenAI({ apiKey, timeout: 100000, maxRetries: 1 })
+    // No SDK retries (each retry would re-run a long generation and blow the
+    // function budget). Streaming below keeps long generations alive, so the
+    // timeout only guards against a truly stalled connection.
+    this.client = new OpenAI({ apiKey, timeout: 200000, maxRetries: 0 })
     this.model = model
   }
 
   async complete(request: CompletionRequest): Promise<CompletionResponse> {
     const modelToUse = request.modelId || this.model
-    const response = await this.client.chat.completions.create({
+
+    // Stream the response so a long report is not cut off by a request timeout.
+    const stream = await this.client.chat.completions.create({
       model: modelToUse,
       max_completion_tokens: request.maxTokens,
       messages: [
@@ -30,12 +35,20 @@ export class OpenAIProvider implements AIProvider {
           ],
         },
       ],
+      stream: true,
     })
 
-    const choice = response.choices[0]
+    let text = ''
+    let finishReason: string | null = null
+    for await (const chunk of stream) {
+      const choice = chunk.choices[0]
+      text += choice?.delta?.content ?? ''
+      if (choice?.finish_reason) finishReason = choice.finish_reason
+    }
+
     return {
-      text: choice?.message?.content ?? '',
-      stopReason: choice?.finish_reason === 'length' ? 'max_tokens' : 'end_turn',
+      text,
+      stopReason: finishReason === 'length' ? 'max_tokens' : 'end_turn',
     }
   }
 }
