@@ -12,16 +12,22 @@ export interface ComparisonError {
 }
 
 export const COMPARISON_SYNTHESIS_INSTRUCTIONS = `=== SYNTHESIS INSTRUCTIONS ===
-1. Start from Analysis A. Its JSON structure, writing style, and comparative format (the improvement / stagnation / deterioration indicators per system) are correct.
+1. Start from Analysis A. Its JSON structure, writing style, and comparative format are the foundation.
 2. From Analysis B, extract ONLY specific, named clinical findings or directional changes that are absent or understated in Analysis A. Discard pure visual iris descriptions.
-3. Integrate extracted findings into the appropriate sections of Analysis A, phrased in your voice, preserving the directional change indicator for each system.
+3. Integrate extracted findings into the appropriate sections of Analysis A, phrased in your voice.
 4. Where both analyses agree on a change, state it with stronger confidence. Where they contradict, keep Analysis A's position and note the discrepancy in one clause.
 5. Every sentence must carry clinical value. Remove padding.
 6. Output ONLY the final JSON. No preamble, no commentary, no markdown fences.
 
+TWO-AXIS SYNTHESIS: For every section, confirm you evaluated the structural axis (fibres, lacunae, crypts, contraction rings, constitution) and the functional and burden axis (overlay, congestion, density, brightness, compression, circulatory openness, nervous tension, autonomic compression, respiratory clarity, hepatic burden, energetic distribution) independently. If the functional and burden axis improved, state it clearly even when structural weakness persists.
+
+SYSTEM STATUS LABELS: Each section must carry one of: Structurally stable, functionally improving. Structurally stable, burden reduced. Structurally stable, compensated. Structurally stable, unchanged. Structurally weaker. Functionally worse. Improving structurally and functionally. Use "unchanged" only when both axes are genuinely unchanged.
+
+LANGUAGE DISCIPLINE: Avoid "no improvement", "no regeneration", "unchanged", "structurally maintained", "structurally entrenched", "stagnation", "no detectable shift", "holding pattern", "not recovering" unless both axes are genuinely unchanged. When mild improvement exists use: "mild decompression", "partial reduction of burden", "slight clearing tendency", "improved regulation", "reduced overlay density", "softer congestion pattern", "stabilization with mild improvement", "functional improvement despite persistent structural weakness".
+
 The reader is the practitioner and must NEVER see references to "Analysis A", "Analysis B", the model names, or any meta-commentary comparing the two source analyses. Never write phrases such as "Analysis B offered no contradiction". Produce one clean, integrated clinical report only.
 
-Prioritise meaningful change: lead with what changed, what worsened, what improved, what stabilized, and what became compensatory. Do not rewrite unchanged sections unnecessarily, and do NOT repeat "stable", "stagnant", or "no change" in every section — state the absence of meaningful change once, globally, in the conclusion.`
+Prioritise meaningful change: lead with what changed, what worsened, what improved, what stabilized, and what became compensatory. Do not rewrite unchanged sections unnecessarily, and do NOT repeat "stable", "stagnant", or "no change" in every section — state the absence of meaningful change once, globally, in the conclusion, only when both axes are truly unchanged.`
 
 function buildComparisonUserPrompt(
   request: ComparisonRequest,

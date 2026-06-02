@@ -93,10 +93,49 @@ describe('Claude Prompts', () => {
       expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('COMPARATIVE ANALYSIS')
     })
 
-    it('contains interpretation discipline and comparison priority', () => {
+    it('contains interpretation discipline and interpretive priority', () => {
       expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('INTERPRETATION DISCIPLINE')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('COMPARISON PRIORITY')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('INTERPRETIVE PRIORITY')
       expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('do NOT repeat')
+    })
+
+    it('defines two axes of change with structural and functional axes', () => {
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('TWO AXES OF CHANGE')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('STRUCTURAL AXIS')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('FUNCTIONAL AND BURDEN AXIS')
+    })
+
+    it('states the core rule about improvement without structural change', () => {
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('CORE RULE')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('improve clinically without visible fibre regeneration')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('functional and burden axis improved, the system improved')
+    })
+
+    it('defines system status labels', () => {
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('SYSTEM STATUS LABELS')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Structurally stable, functionally improving')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Structurally stable, burden reduced')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Improving structurally and functionally')
+    })
+
+    it('contains the active comparison checklist', () => {
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('ACTIVE COMPARISON CHECKLIST')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('reduction of dark overlay')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('reduced hepatic burden')
+    })
+
+    it('enforces language discipline with prohibited negatives and calibrated alternatives', () => {
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('LANGUAGE DISCIPLINE')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('no detectable shift')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('mild decompression')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('partial reduction of burden')
+    })
+
+    it('contains axes section logic and conclusion logic', () => {
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('AXES SECTION LOGIC')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('systemic evolution')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('CONCLUSION LOGIC')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('functional improvement without structural rebuilding')
     })
   })
 
