@@ -72,6 +72,19 @@ describe('Claude Prompts', () => {
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT_EN).toContain('liver and digestive system')
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT_EN).toContain('Do not describe any system in isolation')
     })
+
+    it('contains structural pattern detection and territory mapping pre-analysis phase', () => {
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('PRE-ANALYSIS REASONING: STRUCTURAL PATTERN DETECTION AND TERRITORY MAPPING')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('STEP 1 — INVENTORY ALL IRIS PATTERNS')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('STEP 2 — TERRITORY MAPPING')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('STEP 3 — PATTERN-GROUNDED SECTION WRITING')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Pattern and location → Territory → System function → Clinical meaning')
+    })
+
+    it('section hierarchy leads with iris pattern and territory', () => {
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Key iris pattern(s) and territory')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('drawn from your pre-analysis inventory')
+    })
   })
 
   describe('COMPARISON_ANALYSIS_SYSTEM_PROMPT', () => {
@@ -137,6 +150,13 @@ describe('Claude Prompts', () => {
       expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('CONCLUSION LOGIC')
       expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('functional improvement without structural rebuilding')
     })
+
+    it('contains structural pattern detection for comparative analysis', () => {
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('PRE-ANALYSIS REASONING: STRUCTURAL PATTERN DETECTION AND TERRITORY MAPPING')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('STEP 1 — INVENTORY ALL IRIS PATTERNS IN BOTH IMAGE SETS')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('STEP 3 — COMPARATIVE PATTERN-GROUNDED CONCLUSIONS')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Pattern change → Territory → System change direction → Clinical meaning')
+    })
   })
 
   describe('TECHNICAL_REVIEW_SYSTEM_PROMPT', () => {
@@ -161,6 +181,13 @@ describe('Claude Prompts', () => {
     it('contains interpretation discipline', () => {
       expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).toContain('INTERPRETATION DISCIPLINE')
       expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).toContain('anatomy must SUPPORT the interpretation')
+    })
+
+    it('contains structural pattern detection for independent review', () => {
+      expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).toContain('PRE-ANALYSIS REASONING: STRUCTURAL PATTERN DETECTION AND TERRITORY MAPPING')
+      expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).toContain('STEP 1 — INDEPENDENT PATTERN INVENTORY')
+      expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).toContain('STEP 3 — PATTERN-GROUNDED REVIEW')
+      expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).toContain('A review finding without a cited iris pattern and territory is an opinion, not a clinical observation')
     })
   })
 
