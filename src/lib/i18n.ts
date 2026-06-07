@@ -114,7 +114,7 @@ export const translations = {
     // upload
     uploadTitle: 'Upload your iris photos',
     uploadTutorialHeading: 'How to take the photos',
-    uploadTutorialLinkLabel: 'View the photo tutorial',
+    uploadTutorialInstruction: 'Follow the video instructions for both eyes — right eye first, then left.',
     uploadRightEye: 'Right eye',
     uploadLeftEye: 'Left eye',
     uploadTag: 'Step 3 of 3',
@@ -376,7 +376,7 @@ export const translations = {
     paymentMockBody: 'El pago está deshabilitado mientras probamos el flujo. Pulsa continuar para proceder.',
     uploadTitle: 'Sube tus fotos del iris',
     uploadTutorialHeading: 'Cómo tomar las fotos',
-    uploadTutorialLinkLabel: 'Ver el tutorial de fotos',
+    uploadTutorialInstruction: 'Sigue las instrucciones del video para ambos ojos — primero el derecho, luego el izquierdo.',
     uploadRightEye: 'Ojo derecho',
     uploadLeftEye: 'Ojo izquierdo',
     uploadTag: 'Paso 3 de 3',
