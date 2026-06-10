@@ -6,24 +6,19 @@ describe('COMPARISON_SYNTHESIS_INSTRUCTIONS', () => {
   it('forbids leaking Analysis A/B meta-commentary and prioritises change', () => {
     expect(COMPARISON_SYNTHESIS_INSTRUCTIONS).toContain('must NEVER see references to "Analysis A"')
     expect(COMPARISON_SYNTHESIS_INSTRUCTIONS).toContain('offered no contradiction')
-    expect(COMPARISON_SYNTHESIS_INSTRUCTIONS).toContain('what changed')
+    expect(COMPARISON_SYNTHESIS_INSTRUCTIONS).toContain('lead with what changed')
   })
 
-  it('includes two-axis synthesis instruction', () => {
-    expect(COMPARISON_SYNTHESIS_INSTRUCTIONS).toContain('TWO-AXIS SYNTHESIS')
-    expect(COMPARISON_SYNTHESIS_INSTRUCTIONS).toContain('structural axis')
+  it('keeps the report an evolution report with the 7 comparison keys', () => {
+    expect(COMPARISON_SYNTHESIS_INSTRUCTIONS).toContain('EVOLUTION STRUCTURE')
+    expect(COMPARISON_SYNTHESIS_INSTRUCTIONS).toContain('evolution report, not a system report')
+    expect(COMPARISON_SYNTHESIS_INSTRUCTIONS).toContain('7 comparison keys')
+  })
+
+  it('keeps the two-axis instruction and language discipline', () => {
+    expect(COMPARISON_SYNTHESIS_INSTRUCTIONS).toContain('TWO AXES')
     expect(COMPARISON_SYNTHESIS_INSTRUCTIONS).toContain('functional and burden axis')
-  })
-
-  it('includes system status labels in synthesis', () => {
-    expect(COMPARISON_SYNTHESIS_INSTRUCTIONS).toContain('SYSTEM STATUS LABELS')
-    expect(COMPARISON_SYNTHESIS_INSTRUCTIONS).toContain('Structurally stable, functionally improving')
-    expect(COMPARISON_SYNTHESIS_INSTRUCTIONS).toContain('Improving structurally and functionally')
-  })
-
-  it('includes language discipline in synthesis', () => {
     expect(COMPARISON_SYNTHESIS_INSTRUCTIONS).toContain('LANGUAGE DISCIPLINE')
-    expect(COMPARISON_SYNTHESIS_INSTRUCTIONS).toContain('no detectable shift')
     expect(COMPARISON_SYNTHESIS_INSTRUCTIONS).toContain('mild decompression')
     expect(COMPARISON_SYNTHESIS_INSTRUCTIONS).toContain('functional improvement despite persistent structural weakness')
   })

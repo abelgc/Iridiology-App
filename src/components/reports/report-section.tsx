@@ -2,13 +2,13 @@
 
 import React, { useState } from 'react'
 import { ChevronDown, AlertCircle, Edit2, Loader2 } from 'lucide-react'
-import { REPORT_SECTION_LABELS, type ReportSectionKey } from '@/types/report'
+import { getSectionLabel } from '@/types/report'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { MarkdownRenderer } from '@/components/shared/markdown-renderer'
 
 interface ReportSectionProps {
-  sectionKey: ReportSectionKey
+  sectionKey: string
   content: string
   isEditing?: boolean
   editingContent?: string
@@ -35,7 +35,7 @@ export function ReportSection({
   correctionCount = 0,
 }: ReportSectionProps) {
   const [isExpanded, setIsExpanded] = useState(true)
-  const label = REPORT_SECTION_LABELS[sectionKey]
+  const label = getSectionLabel(sectionKey)
   const hasQualityWarning = content.includes('Hallazgo limitado por calidad de imagen')
 
   return (

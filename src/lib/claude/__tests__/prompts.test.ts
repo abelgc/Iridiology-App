@@ -88,74 +88,36 @@ describe('Claude Prompts', () => {
   })
 
   describe('COMPARISON_ANALYSIS_SYSTEM_PROMPT', () => {
-    it('should contain comparison-specific temporal analysis rules', () => {
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('previous state')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('current state')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('direction of change')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('phase transitions')
+    it('frames comparison as an evolution report, not a system report', () => {
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('CORE PRINCIPLE')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('evolution report, not a follow-up practitioner report')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('what changed between the previous and current images')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('The comparison drives the report')
     })
 
-    it('should emphasize temporal comparison in base requirements', () => {
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('temporal comparative')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Prioritise FUNCTION')
+    it('follows detect -> classify -> interpret, in that order', () => {
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('STEP 1 — DETECT CHANGES BEFORE TOUCHING SYSTEMS')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('STEP 2 — CLASSIFY EVERY FINDING')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('STEP 3 — INTERPRET ONLY AFTER CLASSIFYING')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('A. Clear improvements')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('E. Deteriorations')
     })
 
-    it('should contain structural extraction and interpretation rules', () => {
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('STRUCTURAL EXTRACTION')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('INTERPRETATION RULES')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('COMPARATIVE ANALYSIS')
+    it('keeps the structural-vs-functional rule and the priority order', () => {
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('STRUCTURAL VS FUNCTIONAL')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Do not require structural regeneration before acknowledging improvement')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('PRIORITY ORDER')
     })
 
-    it('contains interpretation discipline and interpretive priority', () => {
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('INTERPRETATION DISCIPLINE')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('INTERPRETIVE PRIORITY')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('do NOT repeat')
-    })
-
-    it('defines two axes of change with structural and functional axes', () => {
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('TWO AXES OF CHANGE')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('STRUCTURAL AXIS')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('FUNCTIONAL AND BURDEN AXIS')
-    })
-
-    it('states the core rule about improvement without structural change', () => {
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('CORE RULE')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('improve clinically without visible fibre regeneration')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('functional and burden axis improved, the system improved')
-    })
-
-    it('defines system status labels', () => {
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('SYSTEM STATUS LABELS')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Structurally stable, functionally improving')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Structurally stable, burden reduced')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Improving structurally and functionally')
-    })
-
-    it('contains the active comparison checklist', () => {
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('ACTIVE COMPARISON CHECKLIST')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('reduction of dark overlay')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('reduced hepatic burden')
-    })
-
-    it('enforces language discipline with prohibited negatives and calibrated alternatives', () => {
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('LANGUAGE DISCIPLINE')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('no detectable shift')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('mild decompression')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('partial reduction of burden')
-    })
-
-    it('contains axes section logic and conclusion logic', () => {
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('AXES SECTION LOGIC')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('systemic evolution')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('CONCLUSION LOGIC')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('functional improvement without structural rebuilding')
-    })
-
-    it('contains structural pattern detection for comparative analysis', () => {
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('PRE-ANALYSIS REASONING: STRUCTURAL PATTERN DETECTION AND TERRITORY MAPPING')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('STEP 1 — INVENTORY ALL IRIS PATTERNS IN BOTH IMAGE SETS')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('STEP 3 — COMPARATIVE PATTERN-GROUNDED CONCLUSIONS')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Pattern change → Territory → System change direction → Clinical meaning')
+    it('emits the 7 evolution keys and none of the 13 system keys', () => {
+      const compKeys = [
+        'comp_1_major_changes', 'comp_2_burden_reduction', 'comp_3_stable_constitutional',
+        'comp_4_new_findings', 'comp_5_continued_attention', 'comp_6_system_interpretation',
+        'comp_7_clinical_priorities',
+      ]
+      compKeys.forEach((k) => expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain(`"${k}"`))
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).not.toContain('"section_1_general_terrain"')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).not.toContain('"section_7_hepatic"')
     })
   })
 

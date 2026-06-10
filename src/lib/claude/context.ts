@@ -1,5 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/server'
-import { ReportContent, REPORT_SECTION_KEYS } from '@/types/report'
+import { isComparisonReport } from '@/types/comparison-report'
 
 export interface PatientContext {
   previousReportSummary: string | null
@@ -31,11 +31,17 @@ export async function buildPatientContext(patientId: string): Promise<PatientCon
       .single()
 
     if (reportData) {
-      const content = reportData.report_content as ReportContent
+      const content = reportData.report_content as Record<string, string>
       const parts: string[] = []
-      if (content.section_1_general_terrain) parts.push(`General Terrain:\n${content.section_1_general_terrain}`)
-      if (content.section_11_detected_axes) parts.push(`Detected Axes:\n${content.section_11_detected_axes}`)
-      if (content.section_12_conclusion) parts.push(`Conclusion:\n${content.section_12_conclusion}`)
+      if (isComparisonReport(content)) {
+        if (content.comp_1_major_changes) parts.push(`Major Changes:\n${content.comp_1_major_changes}`)
+        if (content.comp_6_system_interpretation) parts.push(`System Interpretation:\n${content.comp_6_system_interpretation}`)
+        if (content.comp_7_clinical_priorities) parts.push(`Clinical Priorities:\n${content.comp_7_clinical_priorities}`)
+      } else {
+        if (content.section_1_general_terrain) parts.push(`General Terrain:\n${content.section_1_general_terrain}`)
+        if (content.section_11_detected_axes) parts.push(`Detected Axes:\n${content.section_11_detected_axes}`)
+        if (content.section_12_conclusion) parts.push(`Conclusion:\n${content.section_12_conclusion}`)
+      }
       previousReportSummary = parts.length > 0 ? parts.join('\n\n') : null
     }
   }

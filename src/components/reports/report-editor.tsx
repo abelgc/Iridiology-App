@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { MarkdownRenderer } from '@/components/shared/markdown-renderer'
-import { REPORT_SECTION_KEYS, REPORT_SECTION_LABELS, type ReportContent, type ReportSectionKey } from '@/types/report'
+import { getOrderedSectionKeys, getSectionLabel, type ReportContent } from '@/types/report'
 import type { Report } from '@/types/database'
 
 interface ReportEditorProps {
@@ -14,8 +14,8 @@ interface ReportEditorProps {
 export function ReportEditor({ report, onSave }: ReportEditorProps) {
   const [content, setContent] = useState<ReportContent>(report.report_content)
   const [isLoading, setIsLoading] = useState(false)
-  const [editingSection, setEditingSection] = useState<ReportSectionKey | null>(
-    REPORT_SECTION_KEYS[0],
+  const [editingSection, setEditingSection] = useState<string | null>(
+    getOrderedSectionKeys(report.report_content)[0] ?? null,
   )
 
   const currentSection = editingSection
@@ -55,7 +55,7 @@ export function ReportEditor({ report, onSave }: ReportEditorProps) {
         <div className="space-y-4">
           <h2 className="text-lg font-semibold">Sections</h2>
           <div className="space-y-2 border rounded-lg p-4 bg-gray-50 dark:bg-gray-900 max-h-80 md:max-h-96 overflow-y-auto">
-            {REPORT_SECTION_KEYS.map((sectionKey) => (
+            {getOrderedSectionKeys(content).map((sectionKey) => (
               <button
                 key={sectionKey}
                 onClick={() => setEditingSection(sectionKey)}
@@ -65,7 +65,7 @@ export function ReportEditor({ report, onSave }: ReportEditorProps) {
                     : 'bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
-                {REPORT_SECTION_LABELS[sectionKey]}
+                {getSectionLabel(sectionKey)}
               </button>
             ))}
           </div>
@@ -76,7 +76,7 @@ export function ReportEditor({ report, onSave }: ReportEditorProps) {
           {currentSection && (
             <>
               <div>
-                <h3 className="text-lg font-semibold mb-2">{REPORT_SECTION_LABELS[currentSection]}</h3>
+                <h3 className="text-lg font-semibold mb-2">{getSectionLabel(currentSection)}</h3>
                 <textarea
                   value={currentContent}
                   onChange={(e) => handleSectionChange(e.target.value)}

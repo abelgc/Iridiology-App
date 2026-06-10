@@ -1,8 +1,9 @@
 import { getAIProvider, getBothProviders } from '@/lib/ai/get-provider'
 import { COMPARISON_ANALYSIS_SYSTEM_PROMPT } from './prompts'
 import { buildPatientContext } from './context'
-import { parseReportResponse, type ParseError } from './parse'
-import { ReportContent } from '@/types/report'
+import { type ParseError } from './parse'
+import { parseComparisonResponse } from './parse-comparison'
+import { ComparisonReportContent } from '@/types/comparison-report'
 import { ComparisonRequest } from '@/types/claude'
 import { calculateAge } from '@/lib/utils'
 
@@ -12,22 +13,22 @@ export interface ComparisonError {
 }
 
 export const COMPARISON_SYNTHESIS_INSTRUCTIONS = `=== SYNTHESIS INSTRUCTIONS ===
-1. Start from Analysis A. Its JSON structure, writing style, and comparative format are the foundation.
-2. From Analysis B, extract ONLY specific, named clinical findings or directional changes that are absent or understated in Analysis A. Discard pure visual iris descriptions.
-3. Integrate extracted findings into the appropriate sections of Analysis A, phrased in your voice.
+1. Start from Analysis A. Its JSON structure (the 7-key evolution format), writing style, and change-first ordering are the foundation.
+2. From Analysis B, extract ONLY specific, named directional changes or clinical assertions that are absent or understated in Analysis A. Discard pure visual iris descriptions.
+3. Integrate extracted findings into the appropriate evolution sections of Analysis A, phrased in your voice.
 4. Where both analyses agree on a change, state it with stronger confidence. Where they contradict, keep Analysis A's position and note the discrepancy in one clause.
 5. Every sentence must carry clinical value. Remove padding.
-6. Output ONLY the final JSON. No preamble, no commentary, no markdown fences.
+6. Output ONLY the final JSON with the 7 comparison keys. No preamble, no commentary, no markdown fences.
 
-TWO-AXIS SYNTHESIS: For every section, confirm you evaluated the structural axis (fibres, lacunae, crypts, contraction rings, constitution) and the functional and burden axis (overlay, congestion, density, brightness, compression, circulatory openness, nervous tension, autonomic compression, respiratory clarity, hepatic burden, energetic distribution) independently. If the functional and burden axis improved, state it clearly even when structural weakness persists.
+EVOLUTION STRUCTURE: The report must remain an evolution report, not a system report. The comparison drives the report; system interpretation only explains the comparison. Lead every section with what changed. Never spend more than one sentence re-describing constitutional findings already documented last session unless they changed.
 
-SYSTEM STATUS LABELS: Each section must carry one of: Structurally stable, functionally improving. Structurally stable, burden reduced. Structurally stable, compensated. Structurally stable, unchanged. Structurally weaker. Functionally worse. Improving structurally and functionally. Use "unchanged" only when both axes are genuinely unchanged.
+TWO AXES: For every change, evaluate the structural axis (fibres, lacunae, crypts, contraction rings, constitution — slow to change) and the functional and burden axis (overlay, congestion, density, brightness, compression, circulatory openness, nervous tension, hepatic burden — the expected site of progress) independently. If the functional and burden axis improved, state it clearly even when structural weakness persists.
 
-LANGUAGE DISCIPLINE: Avoid "no improvement", "no regeneration", "unchanged", "structurally maintained", "structurally entrenched", "stagnation", "no detectable shift", "holding pattern", "not recovering" unless both axes are genuinely unchanged. When mild improvement exists use: "mild decompression", "partial reduction of burden", "slight clearing tendency", "improved regulation", "reduced overlay density", "softer congestion pattern", "stabilization with mild improvement", "functional improvement despite persistent structural weakness".
+LANGUAGE DISCIPLINE: Avoid "no improvement", "no detectable shift", "unchanged", and "stagnation" unless both axes are genuinely unchanged. When mild improvement exists use: "mild decompression", "partial reduction of burden", "slight clearing tendency", "reduced overlay density", "softer congestion pattern", "functional improvement despite persistent structural weakness".
 
-The reader is the practitioner and must NEVER see references to "Analysis A", "Analysis B", the model names, or any meta-commentary comparing the two source analyses. Never write phrases such as "Analysis B offered no contradiction". Produce one clean, integrated clinical report only.
+The reader is the practitioner and must NEVER see references to "Analysis A", "Analysis B", the model names, or any meta-commentary comparing the two source analyses. Never write phrases such as "Analysis B offered no contradiction". Produce one clean, integrated evolution report only.
 
-Prioritise meaningful change: lead with what changed, what worsened, what improved, what stabilized, and what became compensatory. Do not rewrite unchanged sections unnecessarily, and do NOT repeat "stable", "stagnant", or "no change" in every section — state the absence of meaningful change once, globally, in the conclusion, only when both axes are truly unchanged.`
+Prioritise meaningful change: lead with what changed, what reduced in burden, what is new, what is stable, and what still requires continued attention.`
 
 function buildComparisonUserPrompt(
   request: ComparisonRequest,
@@ -66,8 +67,8 @@ Compare the previous images with the current ones to detect changes, evolution, 
 async function parseWithRetry(
   responseText: string,
   attempt: number = 1,
-): Promise<ReportContent | ParseError | ComparisonError> {
-  const result = parseReportResponse(responseText)
+): Promise<ComparisonReportContent | ParseError | ComparisonError> {
+  const result = parseComparisonResponse(responseText)
 
   if ('code' in result) {
     if (result.code === 'invalid_json' && attempt === 1) {
@@ -82,7 +83,7 @@ async function parseWithRetry(
   return result
 }
 
-export async function compareIris(request: ComparisonRequest): Promise<ReportContent | ComparisonError> {
+export async function compareIris(request: ComparisonRequest): Promise<ComparisonReportContent | ComparisonError> {
   const images = [
     { data: request.previousRightIrisBase64, mediaType: 'image/jpeg' as const },
     { data: request.previousLeftIrisBase64, mediaType: 'image/jpeg' as const },
@@ -125,10 +126,10 @@ export async function compareIris(request: ComparisonRequest): Promise<ReportCon
           maxTokens: 8192,
         })
         const retryParseResult = await parseWithRetry(retryResponse.text, 2)
-        return retryParseResult as ReportContent | ComparisonError
+        return retryParseResult as ComparisonReportContent | ComparisonError
       }
 
-      return parseResult as ReportContent | ComparisonError
+      return parseResult as ComparisonReportContent | ComparisonError
     }
 
     // Dual-provider path: active_provider is 'both'. Run Claude + GPT in
@@ -147,7 +148,7 @@ export async function compareIris(request: ComparisonRequest): Promise<ReportCon
 
     if (openaiResult.status === 'rejected') {
       // GPT failed — fall back to the Claude-only comparison rather than error out.
-      const parsed = parseReportResponse(claudeResult.value.text)
+      const parsed = parseComparisonResponse(claudeResult.value.text)
       if ('code' in parsed) return { code: 'analysis_failed', message: parsed.message }
       return parsed
     }
@@ -169,10 +170,10 @@ ${COMPARISON_SYNTHESIS_INSTRUCTIONS}`
       maxTokens: 8192,
     })
 
-    const parsed = parseReportResponse(synthesisResponse.text)
+    const parsed = parseComparisonResponse(synthesisResponse.text)
     if ('code' in parsed) {
       // Synthesis parse failed — fall back to the Claude-only comparison.
-      const claudeParsed = parseReportResponse(claudeResult.value.text)
+      const claudeParsed = parseComparisonResponse(claudeResult.value.text)
       if ('code' in claudeParsed) return { code: 'analysis_failed', message: claudeParsed.message }
       return claudeParsed
     }

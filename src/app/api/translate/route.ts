@@ -1,6 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { getAIProvider } from '@/lib/ai/get-provider'
-import { REPORT_SECTION_KEYS, type ReportContent } from '@/types/report'
+import { type ReportContent } from '@/types/report'
 import { NextRequest, NextResponse } from 'next/server'
 
 const TRANSLATE_SYSTEM_PROMPT = `You are a medical translator specialising in iridology reports. Translate English iridology report content into Spanish.
@@ -28,9 +28,9 @@ export async function POST(request: NextRequest) {
 
     const content = report.report_content as ReportContent
 
-    // Build a compact JSON with only non-empty sections
-    const toTranslate: Partial<ReportContent> = {}
-    for (const key of REPORT_SECTION_KEYS) {
+    // Build a compact JSON with the report's own section keys (standard or comparison)
+    const toTranslate: Record<string, string> = {}
+    for (const key of Object.keys(content)) {
       toTranslate[key] = content[key] || ''
     }
 

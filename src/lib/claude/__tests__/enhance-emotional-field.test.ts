@@ -33,7 +33,7 @@ function createMockReport(overrides: Partial<ReportContent> = {}): ReportContent
     section_12_conclusion: 'Overall assessment suggests a moderately healthy individual with areas for optimization in stress management.',
   }
 
-  return { ...mockReport, ...overrides }
+  return { ...mockReport, ...overrides } as ReportContent
 }
 
 // Helper function to create astrology data with valid values

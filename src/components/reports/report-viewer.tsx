@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { Printer, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ReportSection } from './report-section'
-import { REPORT_SECTION_KEYS, type ReportSectionKey, type ReportContent } from '@/types/report'
+import { getOrderedSectionKeys, type ReportContent } from '@/types/report'
 import type { Report, ReportCorrection } from '@/types/database'
 import Link from 'next/link'
 
@@ -20,19 +20,19 @@ export function ReportViewer({ report, corrections = [] }: ReportViewerProps) {
   const [isTranslating, setIsTranslating] = useState(false)
   const [translateError, setTranslateError] = useState<string | null>(null)
 
-  const [editingSection, setEditingSection] = useState<ReportSectionKey | null>(null)
+  const [editingSection, setEditingSection] = useState<string | null>(null)
   const [editingText, setEditingText] = useState<string>('')
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
   const correctionsBySection = corrections.reduce(
     (acc, correction) => {
-      const key = correction.section_key as ReportSectionKey
+      const key = correction.section_key
       if (!acc[key]) acc[key] = 0
       acc[key]++
       return acc
     },
-    {} as Record<ReportSectionKey, number>,
+    {} as Record<string, number>,
   )
 
   const handlePrint = () => window.print()
@@ -64,7 +64,7 @@ export function ReportViewer({ report, corrections = [] }: ReportViewerProps) {
     }
   }
 
-  const handleEditSection = (key: ReportSectionKey) => {
+  const handleEditSection = (key: string) => {
     setEditingSection(key)
     setEditingText(displayContent[key] ?? '')
     setSaveError(null)
@@ -148,7 +148,7 @@ export function ReportViewer({ report, corrections = [] }: ReportViewerProps) {
       )}
 
       <div className="space-y-2">
-        {REPORT_SECTION_KEYS.map((sectionKey) => (
+        {getOrderedSectionKeys(localContent).map((sectionKey) => (
           <ReportSection
             key={sectionKey}
             sectionKey={sectionKey}
