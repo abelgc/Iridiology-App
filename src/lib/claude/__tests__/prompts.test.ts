@@ -111,8 +111,8 @@ describe('Claude Prompts', () => {
 
     it('emits the 7 evolution keys and none of the 13 system keys', () => {
       const compKeys = [
-        'comp_1_major_changes', 'comp_2_burden_reduction', 'comp_3_stable_constitutional',
-        'comp_4_new_findings', 'comp_5_continued_attention', 'comp_6_system_interpretation',
+        'comp_1_summary', 'comp_2_improved', 'comp_3_new',
+        'comp_4_continued', 'comp_5_stable', 'comp_6_detected_axes',
         'comp_7_clinical_priorities',
       ]
       compKeys.forEach((k) => expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain(`"${k}"`))

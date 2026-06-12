@@ -28,7 +28,7 @@ LANGUAGE DISCIPLINE: Avoid "no improvement", "no detectable shift", "unchanged",
 
 The reader is the practitioner and must NEVER see references to "Analysis A", "Analysis B", the model names, or any meta-commentary comparing the two source analyses. Never write phrases such as "Analysis B offered no contradiction". Produce one clean, integrated evolution report only.
 
-Prioritise meaningful change: lead with what changed, what reduced in burden, what is new, what is stable, and what still requires continued attention.`
+SINGLE-DESCRIPTION DISCIPLINE: Describe each finding once, in its home classification section (Areas of Improvement, New Findings, Still Requiring Attention, or Stable Findings), chosen by its dominant change-vector. Summary, Detected Axes (notation: "Axis: a and b and c — Phase"), and Clinical Priorities (territory then action) reference findings by territory name only and never re-describe them. Prioritise meaningful change: lead with what changed, what reduced in burden, what is new, what is stable, and what still requires continued attention.`
 
 function buildComparisonUserPrompt(
   request: ComparisonRequest,
