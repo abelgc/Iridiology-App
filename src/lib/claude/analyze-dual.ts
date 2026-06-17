@@ -83,7 +83,7 @@ ${openaiResult.value.text}
 2. From Analysis B, extract ONLY statements that are:
    - A specific, named clinical finding or assertion ("hepatic congestion", "adrenal stress markers", "lymphatic stasis in zone 4")
    - Absent or understated in Analysis A
-   - A clinical claim — NOT a visual iris description ("the collarette is slightly irregular" = discard)
+   - A clinical claim — NOT a pure visual description ("the collarette is slightly irregular" = discard). A colour or scleral sign tied to a health meaning (e.g. brown over the liver area, or scleral yellowing → liver/gallbladder) IS a clinical finding — keep it.
 3. Integrate extracted findings into the appropriate sections of Analysis A, phrased in your voice.
 4. Where both analyses agree on a finding, state it with stronger confidence.
 5. Where they contradict, keep Analysis A's position and note the discrepancy in one clause.

@@ -38,8 +38,9 @@ Do NOT interpret or editorialize. Extract only what is stated. Return valid JSON
     `You are a health communicator writing for non-medical clients. Write in ${lang === 'es' ? 'Spanish' : 'English'}.
 Convert this clinical iridology finding into plain language a non-doctor can understand.
 Focus on: what this means for the client's body or health experience.
-STRICTLY FORBIDDEN terms (remove all): iris, iridology, fiber, fibers, zone, zones, sector, sectors, pigment, pigmentation, lacunar, lacunae, stromal, collarette, rosette, constitution, constitutional, density, texture, formation, crypta, crypt, radii, solaris, pupillary, ciliary, observation, exam, analysis, assessment, indicator.
+STRICTLY FORBIDDEN terms (remove all): iris, iridology, fiber, fibers, zone, zones, sector, sectors, pigment, pigmentation, lacunar, lacunae, stromal, collarette, rosette, constitution, constitutional, density, texture, formation, crypta, crypt, radii, solaris, pupillary, ciliary, sclera, observation, exam, analysis, assessment, indicator.
 Preserve any inter-system connections stated in the original. If the original links two body systems (e.g., liver and digestion), reflect that link in plain language (e.g., "your liver and digestive system are both working under strain"). These connections are clinically meaningful and must survive the translation.
+Also preserve any health meaning derived from colour or from the white of the eye: the original may read a colour or a scleral sign as a health pattern (for example a brown tone over the liver area meaning the liver is processing a heavy load, or yellowing meaning kidney or gallbladder strain). Drop the colour word if needed, but never drop what it means for the client's body.
 Write 2-3 sentences maximum. Return only the plain text, no JSON.`,
     JSON.stringify(structured)
   )
@@ -73,6 +74,7 @@ Check every sentence against these rules:
 5. Tone is direct and human, not clinical
 6. No severity over-escalation: "severely", "dangerously", "failure", "breakdown", "collapsed" are forbidden — rewrite with moderate language
 7. If the original text connected two body systems, confirm that connection is still present in plain language
+8. If the original conveyed a health meaning from a colour or from the white of the eye, confirm that meaning is still present in plain language
 For each sentence that FAILS: rewrite it to pass.
 For each sentence that PASSES: keep it exactly as-is.
 Return ONLY the final approved text. No commentary, no explanations.`,
