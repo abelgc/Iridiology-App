@@ -5,6 +5,7 @@ import {
   STANDARD_ANALYSIS_SYSTEM_PROMPT_EN,
   COMPARISON_ANALYSIS_SYSTEM_PROMPT,
   TECHNICAL_REVIEW_SYSTEM_PROMPT,
+  IRIDOLOGY_COLOUR_FIBRE_SCLERA_GUIDE,
   buildChatSystemPrompt,
   getStandardAnalysisSystemPrompt,
 } from '../prompts'
@@ -13,6 +14,24 @@ import { reportContentSchema } from '@/lib/validators/report'
 import { TIER_MODELS } from '@/lib/ai/get-provider'
 
 describe('Claude Prompts', () => {
+  describe('IRIDOLOGY_COLOUR_FIBRE_SCLERA_GUIDE', () => {
+    it('encodes colour associations, sclera, the meaning law, and the safety boundary', () => {
+      const g = IRIDOLOGY_COLOUR_FIBRE_SCLERA_GUIDE
+      expect(g).toContain('COLOUR AND FIBRE GUIDE')
+      expect(g).toContain('SCLERA')
+      expect(g).toContain('chicken-fat')
+      expect(g).toContain('Brown')
+      expect(g).toContain('Fluorescent orange')
+      expect(g).toContain('SAFETY BOUNDARY')
+      expect(g).toContain('medical referral')
+      // The meaning law:
+      expect(g).toContain('never name a colour without')
+      // Examples, not a closed list — the AI must interpret any colour it sees:
+      expect(g).toContain('not a fixed or exhaustive list')
+      expect(g).toContain('ANY colour')
+    })
+  })
+
   describe('STANDARD_ANALYSIS_SYSTEM_PROMPT', () => {
     it('should contain body-first clinical writing directives', () => {
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('metabolic processes')
@@ -85,6 +104,12 @@ describe('Claude Prompts', () => {
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Key iris pattern(s) and territory')
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('drawn from your pre-analysis inventory')
     })
+
+    it('integrates the colour, sclera, and meaning guide', () => {
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('COLOUR AND FIBRE GUIDE')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('SCLERA')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('never name a colour without')
+    })
   })
 
   describe('COMPARISON_ANALYSIS_SYSTEM_PROMPT', () => {
@@ -119,6 +144,19 @@ describe('Claude Prompts', () => {
       expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).not.toContain('"section_1_general_terrain"')
       expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).not.toContain('"section_7_hepatic"')
     })
+
+    it('reads iris+sclera colour as evidence, not forbidden', () => {
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('COLOUR AND FIBRE GUIDE')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('SCLERA')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).not.toContain('Do not mention iris colour tones')
+    })
+
+    it('bans the image-quality excuse and forces a change direction', () => {
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('NEVER AN EXCUSE')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('new baseline')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('CHANGE CALIBRATION')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('magnification')
+    })
   })
 
   describe('TECHNICAL_REVIEW_SYSTEM_PROMPT', () => {
@@ -150,6 +188,13 @@ describe('Claude Prompts', () => {
       expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).toContain('STEP 1 — INDEPENDENT PATTERN INVENTORY')
       expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).toContain('STEP 3 — PATTERN-GROUNDED REVIEW')
       expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).toContain('A review finding without a cited iris pattern and territory is an opinion, not a clinical observation')
+    })
+
+    it('reads colour+sclera as supporting evidence, not forbidden', () => {
+      expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).toContain('COLOUR AND FIBRE GUIDE')
+      expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).toContain('SCLERA')
+      expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).not.toContain('Do not mention iris colour tones')
+      expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).not.toContain('Prioritise reading these structures over any chromatic observation')
     })
   })
 

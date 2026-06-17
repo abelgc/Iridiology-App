@@ -22,4 +22,10 @@ describe('COMPARISON_SYNTHESIS_INSTRUCTIONS', () => {
     expect(COMPARISON_SYNTHESIS_INSTRUCTIONS).toContain('mild decompression')
     expect(COMPARISON_SYNTHESIS_INSTRUCTIONS).toContain('functional improvement despite persistent structural weakness')
   })
+
+  it('bans the image excuse and reads colour + sclera', () => {
+    expect(COMPARISON_SYNTHESIS_INSTRUCTIONS).toContain('never frame the current session as a new baseline')
+    expect(COMPARISON_SYNTHESIS_INSTRUCTIONS).toContain('sclera')
+    expect(COMPARISON_SYNTHESIS_INSTRUCTIONS).toContain('better or worse')
+  })
 })
