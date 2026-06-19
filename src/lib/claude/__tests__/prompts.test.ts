@@ -6,6 +6,7 @@ import {
   COMPARISON_ANALYSIS_SYSTEM_PROMPT,
   TECHNICAL_REVIEW_SYSTEM_PROMPT,
   IRIDOLOGY_COLOUR_FIBRE_SCLERA_GUIDE,
+  IRIDOLOGY_IRIS_TERRITORY_MAP,
   buildChatSystemPrompt,
   getStandardAnalysisSystemPrompt,
 } from '../prompts'
@@ -14,6 +15,33 @@ import { reportContentSchema } from '@/lib/validators/report'
 import { TIER_MODELS } from '@/lib/ai/get-provider'
 
 describe('Claude Prompts', () => {
+  describe('IRIDOLOGY_IRIS_TERRITORY_MAP', () => {
+    it('maps clock positions for both irises with specific territories', () => {
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('RIGHT IRIS')
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('LEFT IRIS')
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('12 o\'clock')
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('Liver')
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('Heart')
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('pituitary')
+    })
+
+    it('names ANS wreath arc territories with cranial/pituitary depth', () => {
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('ANS WREATH ARC TERRITORIES')
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('Upper arc')
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('hypothalamus')
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('jaw')
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('cerebral circulation')
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('Lower arc')
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('sciatic')
+    })
+
+    it('describes zone rings from centre outward', () => {
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('Pupillary zone')
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('Collarette')
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('Limbus')
+    })
+  })
+
   describe('IRIDOLOGY_COLOUR_FIBRE_SCLERA_GUIDE', () => {
     it('encodes colour associations, sclera, the meaning law, and the safety boundary', () => {
       const g = IRIDOLOGY_COLOUR_FIBRE_SCLERA_GUIDE
@@ -158,6 +186,13 @@ describe('Claude Prompts', () => {
       expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('COLOUR AND FIBRE GUIDE')
       expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('SCLERA')
       expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).not.toContain('Do not mention iris colour tones')
+    })
+
+    it('embeds the iris territory map for zone interpretation depth', () => {
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('IRIS TERRITORY MAP')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('pituitary')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('ANS WREATH ARC TERRITORIES')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('jaw')
     })
   })
 

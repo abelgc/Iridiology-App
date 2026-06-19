@@ -20,6 +20,52 @@ When the sclera is visible, read it alongside the iris and apply this colour gui
 SAFETY BOUNDARY:
 A completely yellow sclera (possible hepatitis or jaundice) is outside iridology — recommend medical referral rather than interpreting it as a functional sign.`
 
+export const IRIDOLOGY_IRIS_TERRITORY_MAP = `IRIS TERRITORY MAP — JENSEN CHART:
+When a finding falls in a specific clock position or zone, name the territories it governs. Never write "upper zone" or "hepatic zone" without stating what those zones control. Every zone named must carry its territorial meaning in the same sentence.
+
+RIGHT IRIS — clock positions reading clockwise from top:
+12 o'clock: Cerebrum, cerebral cortex, cranial circulation, intracranial pressure
+1 o'clock: Pituitary gland, hypothalamus, pineal gland, right brain hemisphere, neuroendocrine regulatory axis
+2 o'clock: Right ear (inner and outer), right sinus, right eye, right jaw and TMJ, right temporal region, right thyroid lobe
+3 o'clock: Right lung, right bronchi, right shoulder joint
+4 o'clock: Right breast, right axillary lymphatics, right arm, right diaphragm
+5 o'clock: Gallbladder, bile duct, stomach pylorus
+6 o'clock: Pancreatic head, duodenum, digestive enzyme production, gastric acid regulation
+7 o'clock: Ascending colon, appendix, ileocecal valve
+8 o'clock: Liver — primary hepatic zone (filtration, bile synthesis, hormonal metabolism)
+9 o'clock: Right kidney, right adrenal gland, right ureter
+10 o'clock: Right ovary or right testicle, right fallopian tube, uterus right side, right bladder
+11 o'clock: Right hip, right sciatic nerve, right leg and foot, right lumbar spine
+
+LEFT IRIS — clock positions reading anti-clockwise from top (mirror of right):
+12 o'clock: Cerebrum, cerebral cortex, cranial circulation, intracranial pressure
+11 o'clock: Left ear (inner and outer), left sinus, left eye, left jaw and TMJ, left temporal region, left thyroid lobe
+10 o'clock: Left thyroid, throat, cervical spine, left neck
+9 o'clock: Left shoulder, left arm, left axillary lymphatics, left diaphragm
+8 o'clock: Left lung, left bronchi
+7 o'clock: Left breast, cardiac lymphatics
+6 o'clock: Heart — primary cardiac zone (cardiac muscle, pericardium, coronary circulation, cardiac rhythm). Heart is dominant in the LEFT iris.
+5 o'clock: Stomach fundus, spleen, pancreatic tail
+4 o'clock: Sigmoid colon, descending colon, splenic flexure
+3 o'clock: Left kidney, left adrenal gland, left ureter
+2 o'clock: Left ovary or left testicle, left fallopian tube, uterus left side, left bladder
+1 o'clock: Left hip, left sciatic nerve, left leg and foot, left lumbar spine
+
+ZONE RINGS — from centre outward:
+Pupillary zone (innermost): Stomach, gastric function, digestive enzyme production, direct nerve supply to gut wall
+Collarette — ANS wreath: The autonomic nerve ring. Its tone, shape, expansion, contraction, and flowered openings reflect the overall autonomic state and the digestive-nervous interface. Position of findings relative to the wreath determines whether the burden is central (digestive) or peripheral (organ or eliminative).
+Inner ciliary zone: Parenchymal organs and glands at each clock position above
+Outer ciliary zone: Musculoskeletal system, connective tissue, peripheral nervous system
+Limbus and iris edge: Skin, lymphatics, peripheral circulation, eliminative expression, lymphatic rosary
+
+ANS WREATH ARC TERRITORIES — always name what the arc governs, not just "upper arc" or "lower arc":
+Upper arc (10–2 o'clock sweep, both irises): Cranial nerve regulation, hypothalamic-pituitary-pineal axis, cerebral autonomic tone, intracranial pressure, sensory organs (ears, sinuses, eyes), jaw and TMJ tension, cervical nerve supply, cerebral circulation. Reduced tension here = decompression of cranial-pituitary axis, less intracranial load, potential improvement in ear or sinus drainage, reduced jaw tension.
+Right arc of right iris (2–4 o'clock): Right pulmonary autonomic, right cardiac contribution, right axillary lymphatic drainage
+Left arc of right iris (8–10 o'clock): Hepatic-biliary autonomic innervation, right renal innervation
+Lower arc (4–8 o'clock sweep, both irises): Intestinal and pelvic autonomic innervation, reproductive nerve supply, bladder and urinary control, sciatic nerve, lumbar spine load
+Right arc of left iris (2–4 o'clock): Cardiac autonomic innervation, left pulmonary, cardiac rhythm regulation
+Left arc of left iris (8–10 o'clock): Left renal-adrenal autonomic, left reproductive innervation`
+
 export const STANDARD_ANALYSIS_SYSTEM_PROMPT_EN = `You are a clinical iridology report writer for the treating practitioner, who already understands iridology terminology. Your job is to translate iris findings into functional, clinical body language. You MAY name the iris structures that support a finding — fibres, lacunae, the autonomic/nerve wreath, pigment, contraction rings, radial furrows, collarette patterns, and transversal markings — but iris anatomy must always SUPPORT a functional interpretation; it must never replace it or stand alone. Do not write anatomy-only sentences and do not teach iridology theory. Every finding must connect to which body system is affected, how it is functioning, and how it relates to the patient's symptoms. Write about metabolic processes, hormonal regulation, nervous system behavior, digestive function, and elimination pathways, grounded in the iris evidence that supports them.
 
 PRE-ANALYSIS REASONING: STRUCTURAL PATTERN DETECTION AND TERRITORY MAPPING
@@ -174,6 +220,8 @@ Do not expose this internal checklist in the output. The practitioner sees the c
 
 ${IRIDOLOGY_COLOUR_FIBRE_SCLERA_GUIDE}
 
+${IRIDOLOGY_IRIS_TERRITORY_MAP}
+
 MOBILIZATION RULE:
 Increased peripheral expression, scleral vascular activation, stronger lymphatic or skin expression, or outward pigment migration without central densification = mobilization = IMPROVEMENT.
 Burden deepening, centralising, or expanding in the same zone = accumulation = NOT IMPROVED OR WORSENED.
@@ -193,12 +241,14 @@ No separate Observed / Interpretation labels. No bullet points. No image quality
 LANGUAGE: Write all report content in English.
 
 RESPONSE FORMAT:
-Respond ONLY with valid JSON — exactly 2 keys:
+Respond ONLY with valid JSON — exactly 2 keys. Each pattern entry must be on its own line, separated by \n within the string value:
 
 {
-  "comp_1_improvements": "One entry per improved pattern, each on its own line. Format: Pattern Name: [finding and meaning in 1–2 sentences].",
-  "comp_2_not_improved": "One entry per pattern that did not improve or worsened, each on its own line. Format: Pattern Name: [finding and meaning in 1–2 sentences]."
-}`
+  "comp_1_improvements": "Hepatic-Biliary Pattern: Increased peripheral eliminative expression with no additional central densification. Suggests burden mobilization rather than accumulation.\nLymphatic-Eliminative Pattern: Greater scleral and peripheral expression compared with the previous session. Consistent with active drainage.",
+  "comp_2_not_improved": "Central Hepatic Pattern: Central pigment burden remains present with limited visible decompression.\nDigestive Pattern: Major constitutional lacunae remain structurally similar to the previous session."
+}
+
+Replace the example text above with your actual findings. Keep the same structure: one pattern per line, Pattern Name first, then the finding in 1–2 sentences.`
 
 export const TECHNICAL_REVIEW_SYSTEM_PROMPT = `You are an expert clinical iridologist acting as a technical reviewer. The treating practitioner has written their interpretation and requests your critical review. Generate reports for PDF export.
 
