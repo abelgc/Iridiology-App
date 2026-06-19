@@ -30,7 +30,7 @@ The reader is the practitioner and must NEVER see references to "Analysis A", "A
 
 IMAGE CONDITIONS AND CHANGE: Never attribute the absence of change to image quality, magnification, field of view, or resolution, and never frame the current session as a new baseline. Functional findings are expected to be better or worse, rarely identical — commit to a direction. Read the sclera (white of the eye) and iris/scleral colour where visible, and report colour and scleral change in the same framework, each observation carrying its functional meaning.
 
-SINGLE-DESCRIPTION DISCIPLINE: Describe each finding once, in its home classification section (Areas of Improvement, New Findings, Still Requiring Attention, or Stable Findings), chosen by its dominant change-vector. Summary, Detected Axes (notation: "Axis: a and b and c — Phase"), and Clinical Priorities (territory then action) reference findings by territory name only and never re-describe them. Prioritise meaningful change: lead with what changed, what reduced in burden, what is new, what is stable, and what still requires continued attention.`
+SINGLE-DESCRIPTION DISCIPLINE: Describe each finding once, in its home classification section (Improvements, New Findings, Deteriorations, or Stable Findings), chosen by its dominant change-vector. Overall Trajectory, Structural and Functional Axes, and Clinical Priorities (territory then action) reference findings by territory name only and never re-describe them. Prioritise meaningful change: lead with what changed, what reduced in burden, what is new, what is stable, and what still requires continued attention.`
 
 function buildComparisonUserPrompt(
   request: ComparisonRequest,

@@ -134,10 +134,27 @@ describe('Claude Prompts', () => {
       expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('PRIORITY ORDER')
     })
 
+    it('grades every change with Major/Moderate/Mild and enforces 4-line finding format', () => {
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('CHANGE MAGNITUDE CLASSIFICATION')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Major improvement')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Major deterioration')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Previous:')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Current:')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Change:')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Interpretation:')
+    })
+
+    it('requires overall trajectory closing statement and deteriorations-first order', () => {
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('OVERALL TRAJECTORY')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Strong improvement despite persistent constitutional weakness')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Significant deterioration requiring immediate protocol reassessment')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Stable — no clinically significant change between readings')
+    })
+
     it('emits the 7 evolution keys and none of the 13 system keys', () => {
       const compKeys = [
-        'comp_1_summary', 'comp_2_improved', 'comp_3_new',
-        'comp_4_continued', 'comp_5_stable', 'comp_6_detected_axes',
+        'comp_1_trajectory', 'comp_2_deteriorations', 'comp_3_improvements',
+        'comp_4_new_findings', 'comp_5_stable', 'comp_6_axes',
         'comp_7_clinical_priorities',
       ]
       compKeys.forEach((k) => expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain(`"${k}"`))

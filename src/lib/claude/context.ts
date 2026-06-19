@@ -34,9 +34,9 @@ export async function buildPatientContext(patientId: string): Promise<PatientCon
       const content = reportData.report_content as Record<string, string>
       const parts: string[] = []
       if (isComparisonReport(content)) {
-        const summary = content.comp_1_summary ?? content.comp_1_major_changes
+        const summary = content.comp_1_trajectory ?? content.comp_1_summary ?? content.comp_1_major_changes
         if (summary) parts.push(`Summary:\n${summary}`)
-        const axes = content.comp_6_detected_axes ?? content.comp_6_system_interpretation
+        const axes = content.comp_6_axes ?? content.comp_6_detected_axes ?? content.comp_6_system_interpretation
         if (axes) parts.push(`Detected Axes:\n${axes}`)
         if (content.comp_7_clinical_priorities) parts.push(`Clinical Priorities:\n${content.comp_7_clinical_priorities}`)
       } else {

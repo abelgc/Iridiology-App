@@ -9,7 +9,7 @@ import { comparisonReportContentSchema } from '@/lib/validators/comparison-repor
 describe('comparison evolution schema', () => {
   it('has exactly the 7 evolution keys, none of them system-named', () => {
     expect(COMPARISON_REPORT_SECTION_KEYS).toHaveLength(7)
-    expect(COMPARISON_REPORT_SECTION_KEYS[0]).toBe('comp_1_summary')
+    expect(COMPARISON_REPORT_SECTION_KEYS[0]).toBe('comp_1_trajectory')
     COMPARISON_REPORT_SECTION_KEYS.forEach((k) => expect(k).not.toMatch(/^section_/))
   })
 
@@ -20,7 +20,7 @@ describe('comparison evolution schema', () => {
   })
 
   it('rejects a missing section and rejects empty values', () => {
-    expect(comparisonReportContentSchema.safeParse({ comp_1_summary: 'x' }).success).toBe(false)
+    expect(comparisonReportContentSchema.safeParse({ comp_1_trajectory: 'x' }).success).toBe(false)
     const empties: Record<string, string> = {}
     COMPARISON_REPORT_SECTION_KEYS.forEach((k) => (empties[k] = ''))
     expect(comparisonReportContentSchema.safeParse(empties).success).toBe(false)
@@ -32,7 +32,7 @@ describe('comparison evolution schema', () => {
   })
 
   it('detects comparison vs standard reports by shape', () => {
-    expect(isComparisonReport({ comp_1_summary: 'x' })).toBe(true)
+    expect(isComparisonReport({ comp_1_trajectory: 'x' })).toBe(true)
     expect(isComparisonReport({ comp_1_major_changes: 'x' })).toBe(true)
     expect(isComparisonReport({ section_1_general_terrain: 'x' })).toBe(false)
   })
