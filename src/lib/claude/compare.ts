@@ -13,24 +13,16 @@ export interface ComparisonError {
 }
 
 export const COMPARISON_SYNTHESIS_INSTRUCTIONS = `=== SYNTHESIS INSTRUCTIONS ===
-1. Start from Analysis A. Its JSON structure (the 7-key evolution format), writing style, and change-first ordering are the foundation.
-2. From Analysis B, extract ONLY specific, named directional changes or clinical assertions that are absent or understated in Analysis A. Discard pure visual iris descriptions.
-3. Integrate extracted findings into the appropriate evolution sections of Analysis A, phrased in your voice.
-4. Where both analyses agree on a change, state it with stronger confidence. Where they contradict, keep Analysis A's position and note the discrepancy in one clause.
-5. Every sentence must carry clinical value. Remove padding.
-6. Output ONLY the final JSON with the 7 comparison keys. No preamble, no commentary, no markdown fences.
+1. You have two independent practitioner progress reviews of the same patient. Use Analysis A as the foundation.
+2. From Analysis B, extract only findings about patterns absent from or stronger than in Analysis A. Discard descriptions without a directional change.
+3. Merge into Analysis A's two-section structure, in your voice as an iridologist.
+4. Each entry must follow this format: Pattern Name: [what changed and what it means — 1–2 sentences].
+5. Remove anything that does not directly address improvement or persistent burden.
+6. Output ONLY the final JSON with the 2 keys. No preamble, no commentary, no markdown fences.
 
-EVOLUTION STRUCTURE: The report must remain an evolution report, not a system report. The comparison drives the report; system interpretation only explains the comparison. Lead every section with what changed. Never spend more than one sentence re-describing constitutional findings already documented last session unless they changed.
-
-TWO AXES: For every change, evaluate the structural axis (fibres, lacunae, crypts, contraction rings, constitution — slow to change) and the functional and burden axis (overlay, congestion, density, brightness, compression, circulatory openness, nervous tension, hepatic burden — the expected site of progress) independently. If the functional and burden axis improved, state it clearly even when structural weakness persists.
-
-LANGUAGE DISCIPLINE: Avoid "no improvement", "no detectable shift", "unchanged", and "stagnation" unless both axes are genuinely unchanged. When mild improvement exists use: "mild decompression", "partial reduction of burden", "slight clearing tendency", "reduced overlay density", "softer congestion pattern", "functional improvement despite persistent structural weakness".
-
-The reader is the practitioner and must NEVER see references to "Analysis A", "Analysis B", the model names, or any meta-commentary comparing the two source analyses. Never write phrases such as "Analysis B offered no contradiction". Produce one clean, integrated evolution report only.
-
-IMAGE CONDITIONS AND CHANGE: Never attribute the absence of change to image quality, magnification, field of view, or resolution, and never frame the current session as a new baseline. Functional findings are expected to be better or worse, rarely identical — commit to a direction. Read the sclera (white of the eye) and iris/scleral colour where visible, and report colour and scleral change in the same framework, each observation carrying its functional meaning.
-
-SINGLE-DESCRIPTION DISCIPLINE: Describe each finding once, in its home classification section (Improvements, New Findings, Deteriorations, or Stable Findings), chosen by its dominant change-vector. Overall Trajectory, Structural and Functional Axes, and Clinical Priorities (territory then action) reference findings by territory name only and never re-describe them. Prioritise meaningful change: lead with what changed, what reduced in burden, what is new, what is stable, and what still requires continued attention.`
+MOBILIZATION: Increased peripheral expression or scleral activation without central densification = mobilization = comp_1_improvements.
+IMAGE REFERENCE: Never write "images 1–2", "images 3–4", or refer to images by number. Use "previous session", "current session", "previous right eye", "previous left eye", "current right eye", "current left eye".
+Never reference "Analysis A", "Analysis B", or the synthesis process. Produce one clean integrated progress review only.`
 
 function buildComparisonUserPrompt(
   request: ComparisonRequest,

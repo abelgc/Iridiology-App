@@ -113,66 +113,51 @@ describe('Claude Prompts', () => {
   })
 
   describe('COMPARISON_ANALYSIS_SYSTEM_PROMPT', () => {
-    it('frames comparison as an evolution report, not a system report', () => {
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('CORE PRINCIPLE')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('evolution report, not a follow-up practitioner report')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('what changed between the previous and current images')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('The comparison drives the report')
+    it('frames comparison as a practitioner progress review', () => {
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('progress review')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('practitioner progress note')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('not a new iris analysis')
     })
 
-    it('follows detect -> classify -> interpret, in that order', () => {
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('STEP 1 — DETECT CHANGES BEFORE TOUCHING SYSTEMS')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('STEP 2 — CLASSIFY EVERY FINDING')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('STEP 3 — INTERPRET ONLY AFTER CLASSIFYING')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('A. Clear improvements')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('E. Deteriorations')
+    it('evaluates iridological patterns internally before writing', () => {
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('INTERNAL EVALUATION')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Hepatic-Biliary Pattern')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Lymphatic-Eliminative Pattern')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Autonomic Nervous System Pattern')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Do not expose this internal checklist in the output')
     })
 
-    it('keeps the structural-vs-functional rule and the priority order', () => {
+    it('classifies mobilization as improvement not worsening', () => {
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('MOBILIZATION RULE')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('mobilization = IMPROVEMENT')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('peripheral expression')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('scleral vascular activation')
+    })
+
+    it('distinguishes structural from functional change velocity', () => {
       expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('STRUCTURAL VS FUNCTIONAL')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Do not require structural regeneration before acknowledging improvement')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('PRIORITY ORDER')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Functional patterns')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('stability is expected, not a failure')
     })
 
-    it('grades every change with Major/Moderate/Mild and enforces 4-line finding format', () => {
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('CHANGE MAGNITUDE CLASSIFICATION')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Major improvement')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Major deterioration')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Previous:')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Current:')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Change:')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Interpretation:')
-    })
-
-    it('requires overall trajectory closing statement and deteriorations-first order', () => {
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('OVERALL TRAJECTORY')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Strong improvement despite persistent constitutional weakness')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Significant deterioration requiring immediate protocol reassessment')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Stable — no clinically significant change between readings')
-    })
-
-    it('emits the 7 evolution keys and none of the 13 system keys', () => {
-      const compKeys = [
-        'comp_1_trajectory', 'comp_2_deteriorations', 'comp_3_improvements',
-        'comp_4_new_findings', 'comp_5_stable', 'comp_6_axes',
-        'comp_7_clinical_priorities',
-      ]
-      compKeys.forEach((k) => expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain(`"${k}"`))
+    it('emits exactly 2 progress keys and none of the old schema keys', () => {
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('"comp_1_improvements"')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('"comp_2_not_improved"')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).not.toContain('"comp_1_trajectory"')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).not.toContain('"comp_2_deteriorations"')
       expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).not.toContain('"section_1_general_terrain"')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).not.toContain('"section_7_hepatic"')
     })
 
-    it('reads iris+sclera colour as evidence, not forbidden', () => {
+    it('bans image-number references and requires natural clinical language', () => {
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('IMAGE REFERENCE')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('previous right eye')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('current right eye')
+    })
+
+    it('reads iris and sclera colour as evidence', () => {
       expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('COLOUR AND FIBRE GUIDE')
       expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('SCLERA')
       expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).not.toContain('Do not mention iris colour tones')
-    })
-
-    it('bans the image-quality excuse and forces a change direction', () => {
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('NEVER AN EXCUSE')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('new baseline')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('CHANGE CALIBRATION')
-      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('magnification')
     })
   })
 

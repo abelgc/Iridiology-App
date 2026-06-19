@@ -3,13 +3,8 @@
 // secondary. Nothing here is imported by the standard or review report paths.
 
 export const COMPARISON_REPORT_SECTION_KEYS = [
-  'comp_1_trajectory',
-  'comp_2_deteriorations',
-  'comp_3_improvements',
-  'comp_4_new_findings',
-  'comp_5_stable',
-  'comp_6_axes',
-  'comp_7_clinical_priorities',
+  'comp_1_improvements',
+  'comp_2_not_improved',
 ] as const
 
 export type ComparisonReportSectionKey = typeof COMPARISON_REPORT_SECTION_KEYS[number]
@@ -17,13 +12,8 @@ export type ComparisonReportSectionKey = typeof COMPARISON_REPORT_SECTION_KEYS[n
 export type ComparisonReportContent = Record<ComparisonReportSectionKey, string>
 
 export const COMPARISON_REPORT_SECTION_LABELS: Record<ComparisonReportSectionKey, string> = {
-  comp_1_trajectory: 'Overall Trajectory',
-  comp_2_deteriorations: 'Deteriorations',
-  comp_3_improvements: 'Improvements',
-  comp_4_new_findings: 'New Findings',
-  comp_5_stable: 'Stable Findings',
-  comp_6_axes: 'Structural and Functional Axes',
-  comp_7_clinical_priorities: 'Clinical Priorities',
+  comp_1_improvements: 'Improvements',
+  comp_2_not_improved: 'Not Improved or Worsened',
 }
 
 // A report stored in the reports table is a comparison (evolution) report when it

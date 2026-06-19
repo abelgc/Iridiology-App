@@ -34,11 +34,16 @@ export async function buildPatientContext(patientId: string): Promise<PatientCon
       const content = reportData.report_content as Record<string, string>
       const parts: string[] = []
       if (isComparisonReport(content)) {
-        const summary = content.comp_1_trajectory ?? content.comp_1_summary ?? content.comp_1_major_changes
-        if (summary) parts.push(`Summary:\n${summary}`)
-        const axes = content.comp_6_axes ?? content.comp_6_detected_axes ?? content.comp_6_system_interpretation
-        if (axes) parts.push(`Detected Axes:\n${axes}`)
-        if (content.comp_7_clinical_priorities) parts.push(`Clinical Priorities:\n${content.comp_7_clinical_priorities}`)
+        if (content.comp_1_improvements) parts.push(`Previous improvements:\n${content.comp_1_improvements}`)
+        if (content.comp_2_not_improved) parts.push(`Previous persistent burden:\n${content.comp_2_not_improved}`)
+        // backward compat: old 7-key stored reports
+        if (!content.comp_1_improvements && !content.comp_2_not_improved) {
+          const summary = content.comp_1_trajectory ?? content.comp_1_summary ?? content.comp_1_major_changes
+          const axes = content.comp_6_axes ?? content.comp_6_detected_axes ?? content.comp_6_system_interpretation
+          if (summary) parts.push(`Summary:\n${summary}`)
+          if (axes) parts.push(`Detected Axes:\n${axes}`)
+          if (content.comp_7_clinical_priorities) parts.push(`Clinical Priorities:\n${content.comp_7_clinical_priorities}`)
+        }
       } else {
         if (content.section_1_general_terrain) parts.push(`General Terrain:\n${content.section_1_general_terrain}`)
         if (content.section_11_detected_axes) parts.push(`Detected Axes:\n${content.section_11_detected_axes}`)
