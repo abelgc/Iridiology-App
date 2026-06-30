@@ -47,22 +47,24 @@ function UploadContent() {
 
   async function handleSubmit({ right, left }: { right: string; left: string }) {
     if (!token) return
-    router.push('/client/upload/processing')
-    const res = await fetch('/api/client/upload', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        report_download_token: token,
-        right_eye_base64: right,
-        left_eye_base64: left,
-      }),
-    })
-    if (!res.ok) {
-      router.replace(`/client/upload?token=${token}`)
+    try {
+      const res = await fetch('/api/client/upload', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          report_download_token: token,
+          right_eye_base64: right,
+          left_eye_base64: left,
+        }),
+      })
+      if (!res.ok) {
+        alert(t('error'))
+        return
+      }
+      router.replace(`/client/report/${token}`)
+    } catch {
       alert(t('error'))
-      return
     }
-    router.replace(`/client/report/${token}`)
   }
 
   if (!token) return null
