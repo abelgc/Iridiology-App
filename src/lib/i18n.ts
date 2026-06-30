@@ -133,6 +133,13 @@ export const translations = {
     uploadTip3: 'Stay focused — wait for the camera to lock',
     uploadTip4: 'No glasses or contact reflections',
     uploadAnalyzing: 'Please wait, we are analyzing your case',
+    // analysis splash
+    splashTitle: 'We\'re reading your iris',
+    splashNote: 'This usually takes under a minute. Please keep this window open.',
+    splashMsg0: 'Mapping the fibres of your iris…',
+    splashMsg1: 'Reading colour and structure…',
+    splashMsg2: 'Interpreting your emotional field…',
+    splashMsg3: 'Composing your personal reading…',
     // report
     reportReady: 'Your report is ready',
     reportDownload: 'Download PDF',
@@ -395,6 +402,13 @@ export const translations = {
     uploadTip3: 'Enfoque nítido — espera que la cámara enfoque',
     uploadTip4: 'Sin gafas ni reflejos de lentillas',
     uploadAnalyzing: 'Espere un momento, estamos analizando su caso',
+    // analysis splash
+    splashTitle: 'Estamos leyendo tu iris',
+    splashNote: 'Esto suele tardar menos de un minuto. Mantén esta ventana abierta.',
+    splashMsg0: 'Mapeando las fibras de tu iris…',
+    splashMsg1: 'Leyendo color y estructura…',
+    splashMsg2: 'Interpretando tu campo emocional…',
+    splashMsg3: 'Componiendo tu lectura personal…',
     reportReady: 'Tu informe está listo',
     reportDownload: 'Descargar PDF',
     reportEmail: 'Enviarme este informe por correo',

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useLanguage } from '@/lib/i18n-context'
 import { ClientReportViewer } from '@/components/client/client-report-viewer'
+import { AnalysisSplash } from '@/components/client/analysis-splash'
 
 function formatDeliveredAt(deliveredAt: string | null, lang: 'en' | 'es'): string {
   if (!deliveredAt) return ''
@@ -75,12 +76,7 @@ export default function ClientReportPage() {
       <p>{t('loading')}</p>
     </div>
   )
-  if (state.kind === 'pending') return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 300, gap: 16, color: '#5d4f3f', textAlign: 'center' }}>
-      <div style={{ width: 40, height: 40, border: '3px solid #d8c9ad', borderTopColor: '#3d4a2a', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-      <p style={{ fontSize: 15, maxWidth: 380 }}>{t('uploadAnalyzing')}</p>
-    </div>
-  )
+  if (state.kind === 'pending') return <AnalysisSplash />
   if (state.kind === 'error') return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300, color: '#a85428' }}>
       <p>{t('error')}</p>
