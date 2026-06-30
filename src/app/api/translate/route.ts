@@ -3,16 +3,18 @@ import { getAIProvider } from '@/lib/ai/get-provider'
 import { type ReportContent } from '@/types/report'
 import { NextRequest, NextResponse } from 'next/server'
 
-const TRANSLATE_SYSTEM_PROMPT = `You are a medical translator specialising in iridology reports. Translate English iridology report content into Spanish.
+const LANG_NAMES: Record<string, string> = { es: 'Spanish', de: 'German' }
+
+export async function POST(request: NextRequest) {
+  try {
+    const { reportId, targetLang = 'es' } = await request.json()
+    const targetLangName = LANG_NAMES[targetLang] ?? 'Spanish'
+    const TRANSLATE_SYSTEM_PROMPT = `You are a medical translator specialising in iridology reports. Translate English iridology report content into ${targetLangName}.
 
 RULES:
 - Translate ONLY the values in the JSON, never the keys.
 - Preserve all Markdown formatting (**, ##, tables, bullet points).
 - Return ONLY a valid JSON object with the same keys. No extra text.`
-
-export async function POST(request: NextRequest) {
-  try {
-    const { reportId } = await request.json()
     if (!reportId) return NextResponse.json({ error: 'reportId required' }, { status: 400 })
 
     const supabase = createAdminClient()

@@ -31,10 +31,25 @@ const ES_FLAG = (
   </svg>
 )
 
+const DE_FLAG = (
+  <svg viewBox="0 0 18 14" preserveAspectRatio="none" width="18" height="14" style={{ borderRadius: '2px', flexShrink: 0, boxShadow: '0 0 0 1px rgba(0,0,0,0.08)' }}>
+    <rect width="18" height="4.67" fill="#000000" />
+    <rect y="4.67" width="18" height="4.67" fill="#DD0000" />
+    <rect y="9.33" width="18" height="4.67" fill="#FFCE00" />
+  </svg>
+)
+
+const VIEWER_LANGS = [
+  { code: 'en' as const, label: 'EN', flag: UK_FLAG },
+  { code: 'es' as const, label: 'ES', flag: ES_FLAG },
+  { code: 'de' as const, label: 'DE', flag: DE_FLAG },
+]
+
 export function ReportViewer({ report, corrections = [] }: ReportViewerProps) {
   const [localContent, setLocalContent] = useState<ReportContent>(report.report_content)
-  const [translatedContent, setTranslatedContent] = useState<Partial<ReportContent> | null>(null)
-  const [lang, setLang] = useState<'en' | 'es'>('en')
+  const [translatedCache, setTranslatedCache] = useState<Partial<Record<string, Partial<ReportContent>>>>({})
+  const [translatingTarget, setTranslatingTarget] = useState<string | null>(null)
+  const [lang, setLang] = useState<'en' | 'es' | 'de'>('en')
   const [isTranslating, setIsTranslating] = useState(false)
   const [translateError, setTranslateError] = useState<string | null>(null)
 
@@ -55,31 +70,30 @@ export function ReportViewer({ report, corrections = [] }: ReportViewerProps) {
 
   const handlePrint = () => window.print()
 
-  const handleToggleLang = async () => {
-    if (lang === 'en') {
-      if (!translatedContent) {
-        setIsTranslating(true)
-        setTranslateError(null)
-        try {
-          const res = await fetch('/api/translate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ reportId: report.id }),
-          })
-          if (!res.ok) throw new Error('Translation failed')
-          const data = await res.json()
-          setTranslatedContent(data.content)
-        } catch (err) {
-          setTranslateError(err instanceof Error ? err.message : 'Translation failed')
-          return
-        } finally {
-          setIsTranslating(false)
-        }
+  const handleSwitchLang = async (target: 'en' | 'es' | 'de') => {
+    if (target === 'en') { setLang('en'); return }
+    if (!translatedCache[target]) {
+      setIsTranslating(true)
+      setTranslatingTarget(target)
+      setTranslateError(null)
+      try {
+        const res = await fetch('/api/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reportId: report.id, targetLang: target }),
+        })
+        if (!res.ok) throw new Error('Translation failed')
+        const data = await res.json()
+        setTranslatedCache(prev => ({ ...prev, [target]: data.content }))
+      } catch (err) {
+        setTranslateError(err instanceof Error ? err.message : 'Translation failed')
+        return
+      } finally {
+        setIsTranslating(false)
+        setTranslatingTarget(null)
       }
-      setLang('es')
-    } else {
-      setLang('en')
     }
+    setLang(target)
   }
 
   const handleEditSection = (key: string) => {
@@ -108,7 +122,7 @@ export function ReportViewer({ report, corrections = [] }: ReportViewerProps) {
       if (!res.ok) throw new Error('Failed to save')
       setLocalContent(newContent)
       // Invalidate translation cache since content changed
-      setTranslatedContent(null)
+      setTranslatedCache({})
       setEditingSection(null)
       setEditingText('')
     } catch (err) {
@@ -118,8 +132,8 @@ export function ReportViewer({ report, corrections = [] }: ReportViewerProps) {
     }
   }
 
-  const displayContent = lang === 'es' && translatedContent
-    ? { ...localContent, ...translatedContent }
+  const displayContent = lang !== 'en' && translatedCache[lang]
+    ? { ...localContent, ...translatedCache[lang] }
     : localContent
 
   return (
@@ -136,28 +150,26 @@ export function ReportViewer({ report, corrections = [] }: ReportViewerProps) {
           Print
         </Button>
         <div className="ml-auto flex items-center gap-1">
-          <button
-            onClick={lang === 'es' ? handleToggleLang : undefined}
-            disabled={isTranslating || !!editingSection}
-            className={`px-4 py-2.5 text-sm font-semibold rounded-l-md border transition-colors min-h-[44px] flex items-center justify-center gap-2 ${
-              lang === 'en'
-                ? 'bg-[oklch(0.68_0.12_65)] text-[oklch(0.22_0.04_50)] border-[oklch(0.68_0.12_65)]'
-                : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            {UK_FLAG}EN
-          </button>
-          <button
-            onClick={lang === 'en' ? handleToggleLang : undefined}
-            disabled={isTranslating || !!editingSection}
-            className={`px-4 py-2.5 text-sm font-semibold rounded-r-md border-t border-b border-r transition-colors min-h-[44px] flex items-center justify-center gap-2 ${
-              lang === 'es'
-                ? 'bg-[oklch(0.68_0.12_65)] text-[oklch(0.22_0.04_50)] border-[oklch(0.68_0.12_65)]'
-                : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            {ES_FLAG}{isTranslating ? <Loader2 className="w-3 h-3 animate-spin" /> : 'ES'}
-          </button>
+          {VIEWER_LANGS.map(({ code, label, flag }, i) => (
+            <button
+              key={code}
+              onClick={lang !== code ? () => handleSwitchLang(code) : undefined}
+              disabled={isTranslating || !!editingSection}
+              className={`px-4 py-2.5 text-sm font-semibold ${
+                i === 0 ? 'rounded-l-md border' :
+                i === VIEWER_LANGS.length - 1 ? 'rounded-r-md border-t border-b border-r' :
+                'border-t border-b border-r'
+              } transition-colors min-h-[44px] flex items-center justify-center gap-2 ${
+                lang === code
+                  ? 'bg-[oklch(0.68_0.12_65)] text-[oklch(0.22_0.04_50)] border-[oklch(0.68_0.12_65)]'
+                  : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              {flag}{isTranslating && translatingTarget === code
+                ? <Loader2 className="w-3 h-3 animate-spin" />
+                : label}
+            </button>
+          ))}
         </div>
       </div>
 

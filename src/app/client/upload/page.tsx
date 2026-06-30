@@ -57,6 +57,10 @@ function UploadContent() {
           left_eye_base64: left,
         }),
       })
+      if (res.status === 413) {
+        alert(t('errorPayloadTooLarge'))
+        return
+      }
       if (!res.ok) {
         alert(t('error'))
         return

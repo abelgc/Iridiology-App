@@ -21,9 +21,18 @@ const ES_FLAG = (
   </svg>
 )
 
+const DE_FLAG = (
+  <svg viewBox="0 0 18 14" preserveAspectRatio="none" width="18" height="14" style={{ borderRadius: '2px', flexShrink: 0, boxShadow: '0 0 0 1px rgba(0,0,0,0.08)' }}>
+    <rect width="18" height="4.67" fill="#000000" />
+    <rect y="4.67" width="18" height="4.67" fill="#DD0000" />
+    <rect y="9.33" width="18" height="4.67" fill="#FFCE00" />
+  </svg>
+)
+
 const LANGS: { code: Lang; label: string; name: string; flag: React.ReactNode }[] = [
   { code: 'en', label: 'EN', name: 'English', flag: UK_FLAG },
   { code: 'es', label: 'ES', name: 'Español', flag: ES_FLAG },
+  { code: 'de', label: 'DE', name: 'Deutsch', flag: DE_FLAG },
 ]
 
 export function LanguageToggle() {

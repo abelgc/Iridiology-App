@@ -31,7 +31,7 @@ export async function enhanceEmotionalFieldWithJyotish(
   reportContent: ReportContent,
   patientName: string,
   astrologyData: JyotishEnhancementData,
-  language: 'en' | 'es' = 'es',
+  language: string = 'es',
 ): Promise<ReportContent> {
   try {
     const provider = await getAIProvider()
@@ -41,7 +41,7 @@ Date of Birth: ${astrologyData.date_of_birth}
 Place of Birth: ${astrologyData.city_of_birth}, ${astrologyData.country_of_birth}
 Time of Day: ${astrologyData.time_of_day}
 
-Based on this birth data, recommend the primary chakra and main emotion to focus on for emotional healing. Respond in ${language === 'en' ? 'English' : 'Spanish'}.`
+Based on this birth data, recommend the primary chakra and main emotion to focus on for emotional healing. Respond in ${language === 'de' ? 'German' : language === 'es' ? 'Spanish' : 'English'}.`
 
     // First call: Get chakra and emotion recommendation
     const chakraResponse = await provider.complete({
@@ -67,7 +67,7 @@ Based on this birth data, recommend the primary chakra and main emotion to focus
     }
 
     // Second call: Blend chakra recommendation into emotional field
-    const langInstruction = language === 'en' ? 'English' : 'Spanish'
+    const langInstruction = language === 'de' ? 'German' : language === 'es' ? 'Spanish' : 'English'
 
     const hepaticWords = (reportContent.section_7_hepatic ?? '').split(/\s+/).filter(Boolean).length
     const digestiveWords = (reportContent.section_8_digestive_intestinal ?? '').split(/\s+/).filter(Boolean).length

@@ -6,9 +6,9 @@ import { useLanguage } from '@/lib/i18n-context'
 import { ClientReportViewer } from '@/components/client/client-report-viewer'
 import { AnalysisSplash } from '@/components/client/analysis-splash'
 
-function formatDeliveredAt(deliveredAt: string | null, lang: 'en' | 'es'): string {
+function formatDeliveredAt(deliveredAt: string | null, lang: 'en' | 'es' | 'de'): string {
   if (!deliveredAt) return ''
-  return new Date(deliveredAt).toLocaleDateString(lang === 'es' ? 'es-ES' : 'en-GB', {
+  return new Date(deliveredAt).toLocaleDateString(lang === 'de' ? 'de-DE' : lang === 'es' ? 'es-ES' : 'en-GB', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
@@ -22,7 +22,7 @@ export default function ClientReportPage() {
   const [state, setState] = useState<
     | { kind: 'loading' }
     | { kind: 'pending' }
-    | { kind: 'ready'; report: Record<string, string>; language: 'en' | 'es'; paymentTier: string; deliveredAt: string | null }
+    | { kind: 'ready'; report: Record<string, string>; language: 'en' | 'es' | 'de'; paymentTier: string; deliveredAt: string | null }
     | { kind: 'error' }
   >({ kind: 'loading' })
 
@@ -41,7 +41,7 @@ export default function ClientReportPage() {
           return
         }
         const json = (await res.json()) as {
-          language: 'en' | 'es'
+          language: 'en' | 'es' | 'de'
           report: Record<string, string>
           paymentTier: string
           deliveredAt: string | null

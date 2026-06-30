@@ -5,7 +5,7 @@ import type { ReportContent } from '@/types/report'
 import type { Lang } from '@/lib/i18n'
 
 export async function generateReportPdf(report: ReportContent, lang: Lang = 'en'): Promise<Buffer> {
-  const generatedAt = new Date().toLocaleDateString(lang === 'es' ? 'es-ES' : 'en-GB', {
+  const generatedAt = new Date().toLocaleDateString(lang === 'de' ? 'de-DE' : lang === 'es' ? 'es-ES' : 'en-GB', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',

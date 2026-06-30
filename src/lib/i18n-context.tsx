@@ -26,7 +26,7 @@ export function LanguageProvider({
     const stored = (typeof window !== 'undefined'
       ? window.localStorage.getItem(STORAGE_KEY)
       : null) as Lang | null
-    if (stored === 'en' || stored === 'es') {
+    if (stored === 'en' || stored === 'es' || stored === 'de') {
       setLangState(stored)
       return
     }

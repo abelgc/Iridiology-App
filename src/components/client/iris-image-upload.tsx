@@ -9,12 +9,34 @@ import {
 
 type Eye = 'right' | 'left'
 
-async function fileToDataUrl(file: File): Promise<string> {
+async function compressImage(file: File, maxDim = 1200, quality = 0.8): Promise<string> {
+  const url = URL.createObjectURL(file)
   return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result))
-    reader.onerror = () => reject(new Error('read_failed'))
-    reader.readAsDataURL(file)
+    const img = new Image()
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      const { naturalWidth: w, naturalHeight: h } = img
+      const scale = Math.min(1, maxDim / Math.max(w, h))
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.round(w * scale)
+      canvas.height = Math.round(h * scale)
+      const ctx = canvas.getContext('2d')
+      if (!ctx) { reject(new Error('canvas_unavailable')); return }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) { reject(new Error('compress_failed')); return }
+          const reader = new FileReader()
+          reader.onload = () => resolve(String(reader.result))
+          reader.onerror = () => reject(new Error('read_failed'))
+          reader.readAsDataURL(blob)
+        },
+        'image/jpeg',
+        quality,
+      )
+    }
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('load_failed')) }
+    img.src = url
   })
 }
 
@@ -48,9 +70,13 @@ export function IrisImageUpload({
       setError(map[validation.reason])
       return
     }
-    const dataUrl = await fileToDataUrl(file)
-    if (eye === 'right') setRight(dataUrl)
-    else setLeft(dataUrl)
+    try {
+      const dataUrl = await compressImage(file)
+      if (eye === 'right') setRight(dataUrl)
+      else setLeft(dataUrl)
+    } catch {
+      setError(t('errorImageFormat'))
+    }
   }
 
   async function handleSubmit() {
