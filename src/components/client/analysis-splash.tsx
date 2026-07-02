@@ -22,7 +22,12 @@ export function AnalysisSplash() {
   }, [])
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 340, gap: 18, textAlign: 'center', padding: '48px 24px' }}>
+    <div
+      role="status"
+      aria-live="polite"
+      style={{ position: 'fixed', inset: 0, zIndex: 200, background: '#f4ead8', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 18, textAlign: 'center', padding: '48px 24px' }}
+    >
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       <div style={{ width: 44, height: 44, border: '3px solid #d8c9ad', borderTopColor: '#3d4a2a', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
       <p style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 500, color: '#2a3520', margin: 0 }}>
         {t('splashTitle')}
