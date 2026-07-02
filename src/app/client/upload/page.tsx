@@ -1,11 +1,12 @@
 'use client'
 
 import { Suspense } from 'react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useLanguage } from '@/lib/i18n-context'
 import { UploadTutorial } from '@/components/client/upload-tutorial'
 import { IrisImageUpload } from '@/components/client/iris-image-upload'
+import { AnalysisSplash } from '@/components/client/analysis-splash'
 
 function ProgressBar() {
   const { t } = useLanguage()
@@ -38,6 +39,7 @@ function UploadContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
+  const [analyzing, setAnalyzing] = useState(false)
 
   useEffect(() => {
     if (!token) {
@@ -47,6 +49,7 @@ function UploadContent() {
 
   async function handleSubmit({ right, left }: { right: string; left: string }) {
     if (!token) return
+    setAnalyzing(true)
     try {
       const res = await fetch('/api/client/upload', {
         method: 'POST',
@@ -58,15 +61,19 @@ function UploadContent() {
         }),
       })
       if (res.status === 413) {
+        setAnalyzing(false)
         alert(t('errorPayloadTooLarge'))
         return
       }
       if (!res.ok) {
+        setAnalyzing(false)
         alert(t('error'))
         return
       }
+      // Keep the splash up through navigation — it unmounts when the report loads.
       router.replace(`/client/report/${token}`)
     } catch {
+      setAnalyzing(false)
       alert(t('error'))
     }
   }
@@ -74,6 +81,7 @@ function UploadContent() {
   if (!token) return null
   return (
     <>
+      {analyzing && <AnalysisSplash />}
       <ProgressBar />
       <main style={{ maxWidth: 880, margin: '0 auto', padding: '32px 20px 56px' }}>
         <p className="upload-tag">{t('uploadTag')}</p>
