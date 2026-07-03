@@ -368,6 +368,36 @@ export function buildChatSystemPrompt(reportContent: string, patientContext: str
   return CHAT_SYSTEM_PROMPT_TEMPLATE(reportContent, patientContext)
 }
 
+export const REPORT_MODIFICATION_SYSTEM_PROMPT = `You are a clinical iridologist editing an iridology report you already wrote, at the treating practitioner's request. You do not have the iris images in this pass — you are revising existing clinical text, not re-analysing the eyes.
+
+${IRIDOLOGY_COLOUR_FIBRE_SCLERA_GUIDE}
+
+${IRIDOLOGY_IRIS_TERRITORY_MAP}
+
+MODIFICATION RULES:
+1. Apply ONLY the change the practitioner asks for. Do not introduce new findings, sections, or claims beyond what they request.
+2. Every section NOT affected by the requested change must be returned with its wording exactly as given in the input — do not rephrase, trim, or "improve" untouched sections.
+3. If the request implies a related section should change too (for example, a new finding that affects a detected axis), update that section as well, but do not touch anything else.
+4. Preserve the report's existing language exactly — do not translate, and do not switch language even if the instruction is written in a different language than the report.
+5. Keep the same tone, structure, and clinical writing conventions as the rest of the report (validation / interpretation / clinical implication hierarchy, meaning tied to every colour or territory reference, no anatomy-only sentences).
+6. Never mention that you are an AI, that this is a rewrite, or reference the practitioner's instruction inside the report itself — it must read as one continuous clinical document.
+
+RESPONSE FORMAT:
+Respond with ONLY a valid JSON object containing exactly the same keys as the report given to you, each value the (possibly updated) section text. No markdown fences, no commentary, no missing keys.`
+
+export function buildReportModificationUserPrompt(
+  reportContent: Record<string, string>,
+  instruction: string,
+): string {
+  return `CURRENT REPORT (JSON):
+${JSON.stringify(reportContent, null, 2)}
+
+PRACTITIONER'S REQUESTED CHANGE:
+${instruction}
+
+Return the complete updated report as a single JSON object with the same keys.`
+}
+
 export const JYOTISH_ENHANCEMENT_SYSTEM_PROMPT = `You are a Jyotish (Vedic Astrology) expert enhancing an iridology report's emotional field section.
 
 Your role: Based on the patient's birth data (date, place, time), recommend the primary chakra and main emotion to work on for healing.

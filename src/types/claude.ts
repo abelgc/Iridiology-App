@@ -44,3 +44,18 @@ export interface SSEStatusEvent {
   reportId?: string
   message?: string
 }
+
+export interface ReportModificationRequest {
+  instruction: string
+}
+
+export interface ChangedSection {
+  key: string
+  before: string
+  after: string
+}
+
+export interface ReportModificationResult {
+  newContent: Record<string, string>
+  changedSections: ChangedSection[]
+}

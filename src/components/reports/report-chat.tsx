@@ -1,10 +1,12 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
-import { ChatMessage as ChatMessageType } from '@/types/claude'
+import Link from 'next/link'
+import { ChatMessage as ChatMessageType, ReportModificationResult } from '@/types/claude'
 import { ChatMessage } from './chat-message'
 import { Button } from '@/components/ui/button'
-import { Trash2, Send } from 'lucide-react'
+import { getSectionLabel } from '@/types/report'
+import { Trash2, Send, Wand2 } from 'lucide-react'
 
 interface ReportChatProps {
   reportId: string
@@ -16,6 +18,67 @@ export function ReportChat({ reportId, patientName }: ReportChatProps) {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const [modifyOpen, setModifyOpen] = useState(false)
+  const [modifyInstruction, setModifyInstruction] = useState('')
+  const [isModifying, setIsModifying] = useState(false)
+  const [modifyError, setModifyError] = useState<string | null>(null)
+  const [proposal, setProposal] = useState<ReportModificationResult | null>(null)
+  const [isApplying, setIsApplying] = useState(false)
+  const [applied, setApplied] = useState(false)
+
+  const handleGenerateModification = async () => {
+    if (!modifyInstruction.trim()) return
+    setIsModifying(true)
+    setModifyError(null)
+    setProposal(null)
+    try {
+      const response = await fetch(`/api/reports/${reportId}/modify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instruction: modifyInstruction }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Failed to generate changes')
+      setProposal(data)
+    } catch (error) {
+      setModifyError(error instanceof Error ? error.message : 'Failed to generate changes')
+    } finally {
+      setIsModifying(false)
+    }
+  }
+
+  const handleApplyModification = async () => {
+    if (!proposal) return
+    setIsApplying(true)
+    try {
+      const response = await fetch(`/api/reports/${reportId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ report_content: proposal.newContent }),
+      })
+      if (!response.ok) throw new Error('Failed to save changes')
+      setApplied(true)
+    } catch (error) {
+      setModifyError(error instanceof Error ? error.message : 'Failed to save changes')
+    } finally {
+      setIsApplying(false)
+    }
+  }
+
+  const handleDiscardModification = () => {
+    setProposal(null)
+    setModifyInstruction('')
+    setModifyError(null)
+  }
+
+  const handleCloseModifyPanel = () => {
+    setModifyOpen(false)
+    setProposal(null)
+    setModifyInstruction('')
+    setModifyError(null)
+    setApplied(false)
+  }
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -165,16 +228,112 @@ export function ReportChat({ reportId, patientName }: ReportChatProps) {
             <span className="sr-only">Send</span>
           </Button>
         </div>
-        <Button
-          onClick={handleClear}
-          variant="outline"
-          size="sm"
-          className="w-full"
-          disabled={isLoading || messages.length === 0}
-        >
-          <Trash2 className="w-4 h-4 mr-2" />
-          Clear chat
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={handleClear}
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            disabled={isLoading || messages.length === 0}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Clear chat
+          </Button>
+          <Button
+            onClick={() => (modifyOpen ? handleCloseModifyPanel() : setModifyOpen(true))}
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            disabled={isLoading}
+          >
+            <Wand2 className="w-4 h-4 mr-2" />
+            Modify report
+          </Button>
+        </div>
+
+        {modifyOpen && (
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 space-y-3 bg-gray-50 dark:bg-gray-800">
+            {applied ? (
+              <div className="space-y-2">
+                <p className="text-sm text-green-700 dark:text-green-400 font-medium">Report updated.</p>
+                <Link
+                  href={`/practitioner/reports/${reportId}`}
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  View updated report
+                </Link>
+              </div>
+            ) : proposal ? (
+              <div className="space-y-3">
+                {proposal.changedSections.length === 0 ? (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    No changes were needed for that instruction.
+                  </p>
+                ) : (
+                  proposal.changedSections.map((section) => (
+                    <div key={section.key} className="space-y-1 text-sm">
+                      <p className="font-semibold text-gray-700 dark:text-gray-200">
+                        {getSectionLabel(section.key)}
+                      </p>
+                      <p className="text-gray-500 dark:text-gray-400 line-through">{section.before}</p>
+                      <p className="text-gray-900 dark:text-white">{section.after}</p>
+                    </div>
+                  ))
+                )}
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleDiscardModification}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    disabled={isApplying}
+                  >
+                    Discard
+                  </Button>
+                  <Button
+                    onClick={handleApplyModification}
+                    size="sm"
+                    className="flex-1"
+                    disabled={isApplying || proposal.changedSections.length === 0}
+                  >
+                    {isApplying ? 'Applying...' : 'Apply changes'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <textarea
+                  value={modifyInstruction}
+                  onChange={(e) => setModifyInstruction(e.target.value)}
+                  placeholder="What should change in the report?"
+                  disabled={isModifying}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:border-gray-600 dark:text-white disabled:opacity-50"
+                />
+                {modifyError && <p className="text-sm text-red-600 dark:text-red-400">{modifyError}</p>}
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleCloseModifyPanel}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    disabled={isModifying}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleGenerateModification}
+                    size="sm"
+                    className="flex-1"
+                    disabled={isModifying || !modifyInstruction.trim()}
+                  >
+                    {isModifying ? 'Generating...' : 'Generate changes'}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

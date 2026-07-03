@@ -14,6 +14,8 @@ export const reportContentSchema = z.object(
   ),
 ) as z.ZodType<Record<typeof REPORT_SECTION_KEYS[number], string>>
 
+export const reportContentUnionSchema = z.union([reportContentSchema, comparisonReportContentSchema])
+
 export const reportUpdateSchema = z.object({
-  report_content: z.union([reportContentSchema, comparisonReportContentSchema]),
+  report_content: reportContentUnionSchema,
 })
