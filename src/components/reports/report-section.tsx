@@ -21,6 +21,21 @@ interface ReportSectionProps {
   correctionCount?: number
 }
 
+function formatAxesAsBullets(content: string): string {
+  const trimmed = content.trim()
+  if (!trimmed) return content
+
+  let lines = trimmed.split('\n').map((l) => l.trim()).filter(Boolean)
+  if (lines.length <= 1) {
+    // Old reports sometimes have every axis crammed into one run-on paragraph
+    lines = trimmed.split(/(?=Axis:)/i).map((l) => l.trim()).filter(Boolean)
+  }
+  if (lines.length <= 1) return content
+  if (lines.every((l) => /^[-*]\s/.test(l))) return content
+
+  return lines.map((l) => `- ${l.replace(/^[-*]\s*/, '')}`).join('\n')
+}
+
 export function ReportSection({
   sectionKey,
   content,
@@ -37,6 +52,7 @@ export function ReportSection({
   const [isExpanded, setIsExpanded] = useState(true)
   const label = getSectionLabel(sectionKey)
   const hasQualityWarning = content.includes('Hallazgo limitado por calidad de imagen')
+  const displayContent = sectionKey === 'section_11_detected_axes' ? formatAxesAsBullets(content) : content
 
   return (
     <div className="border rounded-lg bg-white dark:bg-gray-900 mb-4 print:border-gray-300 print:mb-6">
@@ -99,7 +115,7 @@ export function ReportSection({
               </div>
             </div>
           ) : (
-            <MarkdownRenderer content={content} className="text-sm print:text-sm print:leading-relaxed" />
+            <MarkdownRenderer content={displayContent} className="text-sm print:text-sm print:leading-relaxed" />
           )}
         </div>
       )}
