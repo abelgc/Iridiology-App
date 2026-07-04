@@ -183,6 +183,7 @@ export function ReportViewer({ report, corrections = [] }: ReportViewerProps) {
             key={sectionKey}
             sectionKey={sectionKey}
             content={displayContent[sectionKey] ?? ''}
+            lang={lang}
             isEditing={editingSection === sectionKey}
             editingContent={editingSection === sectionKey ? editingText : undefined}
             onEdit={!editingSection ? () => handleEditSection(sectionKey) : undefined}

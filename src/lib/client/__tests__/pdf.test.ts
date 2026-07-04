@@ -19,13 +19,13 @@ const mockReport: ReportContent = {
 
 describe('generateReportPdf', () => {
   it('returns a non-empty Buffer', async () => {
-    const buf = await generateReportPdf(mockReport)
+    const buf = await generateReportPdf(mockReport, 'en', true)
     expect(buf).toBeInstanceOf(Buffer)
     expect(buf.length).toBeGreaterThan(1000)
   }, 15000)
 
   it('starts with PDF magic bytes', async () => {
-    const buf = await generateReportPdf(mockReport)
+    const buf = await generateReportPdf(mockReport, 'en', true)
     expect(buf.slice(0, 4).toString('ascii')).toBe('%PDF')
   }, 15000)
 })

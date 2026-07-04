@@ -33,15 +33,21 @@ const mockReport: ReportContent = {
   section_11_detected_axes: 'Axis: liver and digestive system and skin elimination',
   section_12_conclusion: 'Overall constitutional weakness with hepatic burden.',
   section_13_strengths_of_the_body: 'Cardiovascular reserve appears adequate.',
+  section_14_recommendations: '**Liver**\nVitamins: A, B12, C, E, Niacin\nMinerals: Iron, Potassium\nHerbs: Dandelion root',
 }
 
 describe('rewriteReportForClient', () => {
-  it('returns a ReportContent with the same 13 keys', async () => {
+  it('returns a ReportContent with the same 14 keys', async () => {
     const result = await rewriteReportForClient(mockReport, 'en')
-    expect(Object.keys(result)).toHaveLength(13)
+    expect(Object.keys(result)).toHaveLength(14)
     expect(result.section_1_general_terrain).toBeDefined()
     expect(result.section_12_conclusion).toBeDefined()
     expect(result.section_13_strengths_of_the_body).toBeDefined()
+  })
+
+  it('passes section_14_recommendations through unchanged, without calling the rewrite pipeline', async () => {
+    const result = await rewriteReportForClient(mockReport, 'en')
+    expect(result.section_14_recommendations).toBe(mockReport.section_14_recommendations)
   })
 
   it('returns non-empty strings for each section', async () => {

@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { ChatMessage as ChatMessageType, ReportModificationResult } from '@/types/claude'
 import { ChatMessage } from './chat-message'
 import { Button } from '@/components/ui/button'
-import { getSectionLabel } from '@/types/report'
+import { getSectionLabel, REPORT_SECTION_I18N_KEYS } from '@/types/report'
+import { t, detectLocale, type TranslationKey } from '@/lib/i18n'
 import { Trash2, Send, Wand2 } from 'lucide-react'
 
 interface ReportChatProps {
@@ -18,6 +19,15 @@ export function ReportChat({ reportId, patientName }: ReportChatProps) {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  // No report-level language field exists yet, so fall back to the
+  // practitioner's browser locale (same detection used by the client-facing
+  // LanguageProvider) rather than hardcoding English.
+  const [lang] = useState(() => detectLocale(typeof navigator !== 'undefined' ? navigator.language : undefined))
+
+  const getLabel = (key: string) => {
+    const i18nKey = REPORT_SECTION_I18N_KEYS[key as keyof typeof REPORT_SECTION_I18N_KEYS] as TranslationKey | undefined
+    return i18nKey ? t(lang, i18nKey) : getSectionLabel(key)
+  }
 
   const [modifyOpen, setModifyOpen] = useState(false)
   const [modifyInstruction, setModifyInstruction] = useState('')
@@ -273,7 +283,7 @@ export function ReportChat({ reportId, patientName }: ReportChatProps) {
                   proposal.changedSections.map((section) => (
                     <div key={section.key} className="space-y-1 text-sm">
                       <p className="font-semibold text-gray-700 dark:text-gray-200">
-                        {getSectionLabel(section.key)}
+                        {getLabel(section.key)}
                       </p>
                       <p className="text-gray-500 dark:text-gray-400 line-through">{section.before}</p>
                       <p className="text-gray-900 dark:text-white">{section.after}</p>

@@ -9,6 +9,7 @@ import type { ReportContent, ReportSectionKey } from '@/types/report'
 import { REPORT_SECTION_KEYS, REPORT_SECTION_I18N_KEYS } from '@/types/report'
 import { translations } from '@/lib/i18n'
 import type { Lang } from '@/lib/i18n'
+import { filterRecommendationsForTier } from '@/lib/client/filter-recommendations'
 
 const styles = StyleSheet.create({
   page: {
@@ -53,9 +54,10 @@ interface Props {
   report: ReportContent
   generatedAt: string
   lang: Lang
+  isPremium?: boolean
 }
 
-export function ReportPdfDocument({ report, generatedAt, lang }: Props) {
+export function ReportPdfDocument({ report, generatedAt, lang, isPremium = false }: Props) {
   const tl = (key: string): string =>
     (translations[lang] as any)[key] ?? (translations.en as any)[key] ?? key
 
@@ -67,12 +69,18 @@ export function ReportPdfDocument({ report, generatedAt, lang }: Props) {
           <Text style={styles.subtitle}>{tl('pdfGenerated')} {generatedAt}</Text>
         </View>
 
-        {REPORT_SECTION_KEYS.map((key: ReportSectionKey) => (
-          <View key={key} style={styles.section}>
-            <Text style={styles.sectionTitle}>{tl(REPORT_SECTION_I18N_KEYS[key])}</Text>
-            <Text style={styles.sectionBody}>{report[key]}</Text>
-          </View>
-        ))}
+        {REPORT_SECTION_KEYS.map((key: ReportSectionKey) => {
+          const body =
+            key === 'section_14_recommendations'
+              ? filterRecommendationsForTier(report[key], isPremium)
+              : report[key]
+          return (
+            <View key={key} style={styles.section}>
+              <Text style={styles.sectionTitle}>{tl(REPORT_SECTION_I18N_KEYS[key])}</Text>
+              <Text style={styles.sectionBody}>{body}</Text>
+            </View>
+          )
+        })}
       </Page>
     </Document>
   )

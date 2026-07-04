@@ -140,7 +140,7 @@ export default function ClientReportPage() {
       </div>
 
       {/* Report viewer */}
-      <ClientReportViewer report={state.report} />
+      <ClientReportViewer report={state.report} isPremium={isPremium} />
 
       {/* Footer */}
       <div className="report-footer no-print">

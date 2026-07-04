@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react'
 import { ChevronDown, AlertCircle, Edit2, Loader2 } from 'lucide-react'
-import { getSectionLabel } from '@/types/report'
+import { getSectionLabel, REPORT_SECTION_I18N_KEYS } from '@/types/report'
+import { t, type Lang, type TranslationKey } from '@/lib/i18n'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { MarkdownRenderer } from '@/components/shared/markdown-renderer'
@@ -10,6 +11,7 @@ import { MarkdownRenderer } from '@/components/shared/markdown-renderer'
 interface ReportSectionProps {
   sectionKey: string
   content: string
+  lang?: Lang
   isEditing?: boolean
   editingContent?: string
   onEdit?: () => void
@@ -39,6 +41,7 @@ function formatAxesAsBullets(content: string): string {
 export function ReportSection({
   sectionKey,
   content,
+  lang = 'en',
   isEditing = false,
   editingContent,
   onEdit,
@@ -50,7 +53,8 @@ export function ReportSection({
   correctionCount = 0,
 }: ReportSectionProps) {
   const [isExpanded, setIsExpanded] = useState(true)
-  const label = getSectionLabel(sectionKey)
+  const i18nKey = REPORT_SECTION_I18N_KEYS[sectionKey as keyof typeof REPORT_SECTION_I18N_KEYS] as TranslationKey | undefined
+  const label = i18nKey ? t(lang, i18nKey) : getSectionLabel(sectionKey)
   const hasQualityWarning = content.includes('Hallazgo limitado por calidad de imagen')
   const displayContent = sectionKey === 'section_11_detected_axes' ? formatAxesAsBullets(content) : content
 

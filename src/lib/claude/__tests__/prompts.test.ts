@@ -7,6 +7,7 @@ import {
   TECHNICAL_REVIEW_SYSTEM_PROMPT,
   IRIDOLOGY_COLOUR_FIBRE_SCLERA_GUIDE,
   IRIDOLOGY_IRIS_TERRITORY_MAP,
+  IRIDOLOGY_VITAMIN_MINERAL_HERB_MAP,
   buildChatSystemPrompt,
   getStandardAnalysisSystemPrompt,
 } from '../prompts'
@@ -281,11 +282,20 @@ describe('Claude Prompts', () => {
       expect(result.success).toBe(false)
     })
 
-    it('should have all 13 section keys', () => {
-      expect(REPORT_SECTION_KEYS).toHaveLength(13)
+    it('should have all 14 section keys', () => {
+      expect(REPORT_SECTION_KEYS).toHaveLength(14)
       expect(REPORT_SECTION_KEYS[0]).toBe('section_1_general_terrain')
       expect(REPORT_SECTION_KEYS[11]).toBe('section_12_conclusion')
       expect(REPORT_SECTION_KEYS[12]).toBe('section_13_strengths_of_the_body')
+      expect(REPORT_SECTION_KEYS[13]).toBe('section_14_recommendations')
+    })
+
+    it('IRIDOLOGY_VITAMIN_MINERAL_HERB_MAP shares organ names with the acute/chronic catalogue and excludes shoulder joint', () => {
+      expect(IRIDOLOGY_VITAMIN_MINERAL_HERB_MAP).toContain('Liver:')
+      expect(IRIDOLOGY_VITAMIN_MINERAL_HERB_MAP).toContain('Vitamins —')
+      expect(IRIDOLOGY_VITAMIN_MINERAL_HERB_MAP).toContain('Minerals —')
+      expect(IRIDOLOGY_VITAMIN_MINERAL_HERB_MAP).toContain('Herbs —')
+      expect(IRIDOLOGY_VITAMIN_MINERAL_HERB_MAP).not.toContain('Shoulder joint:')
     })
   })
 

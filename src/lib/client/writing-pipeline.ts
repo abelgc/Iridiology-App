@@ -95,6 +95,11 @@ export async function rewriteReportForClient(
 
   const rewrites = await Promise.all(
     REPORT_SECTION_KEYS.map(async (key: ReportSectionKey) => {
+      // Recommendations must survive verbatim — vitamin/mineral/herb names and the
+      // Vitamins:/Minerals:/Herbs: prefixes are filtered downstream by exact string match.
+      if (key === 'section_14_recommendations') {
+        return [key, report[key]] as const
+      }
       try {
         const rewritten = await rewriteSection(client, report[key], lang)
         return [key, rewritten || report[key]] as const

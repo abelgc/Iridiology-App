@@ -18,6 +18,7 @@ export const REPORT_SECTION_KEYS = [
   'section_11_detected_axes',
   'section_12_conclusion',
   'section_13_strengths_of_the_body',
+  'section_14_recommendations',
 ] as const
 
 export type ReportSectionKey = typeof REPORT_SECTION_KEYS[number]
@@ -38,6 +39,7 @@ export const REPORT_SECTION_I18N_KEYS = {
   section_11_detected_axes:               'rSecDetectedAxes',
   section_12_conclusion:                   'rSecConclusion',
   section_13_strengths_of_the_body:        'rSecStrengths',
+  section_14_recommendations:              'rSecRecommendations',
 } as const satisfies Record<ReportSectionKey, string>
 
 export const REPORT_SECTION_LABELS: Record<ReportSectionKey, string> = {
@@ -54,6 +56,7 @@ export const REPORT_SECTION_LABELS: Record<ReportSectionKey, string> = {
   section_11_detected_axes: 'Detected Axes',
   section_12_conclusion: 'Conclusion',
   section_13_strengths_of_the_body: 'Strengths of the Body',
+  section_14_recommendations: 'Recommendations',
 }
 
 // Standard (13) + comparison (7) labels, used by the key-driven renderers so a

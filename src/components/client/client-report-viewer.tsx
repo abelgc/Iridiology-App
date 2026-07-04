@@ -6,11 +6,14 @@ import remarkGfm from 'remark-gfm'
 import { REPORT_SECTION_KEYS, REPORT_SECTION_I18N_KEYS } from '@/types/report'
 import { useLanguage } from '@/lib/i18n-context'
 import type { TranslationKey } from '@/lib/i18n'
+import { filterRecommendationsForTier } from '@/lib/client/filter-recommendations'
 
 export function ClientReportViewer({
   report,
+  isPremium,
 }: {
   report: Partial<Record<string, string>>
+  isPremium: boolean
 }) {
   const { t } = useLanguage()
   const sectionsWithContent = REPORT_SECTION_KEYS.filter((key) => !!report[key])
@@ -57,13 +60,17 @@ export function ClientReportViewer({
           {sectionsWithContent.map((key, idx) => {
             const numStr = String(idx + 1).padStart(2, '0')
             const label = t(REPORT_SECTION_I18N_KEYS[key] as TranslationKey)
+            const content =
+              key === 'section_14_recommendations'
+                ? filterRecommendationsForTier(report[key], isPremium)
+                : report[key]!
             return (
               <section key={key} id={`report-section-${key}`}>
                 <h2>
                   <span className="report-section-num">{numStr}</span>
                   {label}
                 </h2>
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{report[key]!}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
               </section>
             )
           })}

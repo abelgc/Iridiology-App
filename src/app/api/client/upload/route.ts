@@ -214,7 +214,7 @@ export async function POST(request: NextRequest) {
     if (row.email && savedClientReport) {
       try {
         const pdfBuffer = await Promise.race([
-          generateReportPdf(savedClientReport, row.language),
+          generateReportPdf(savedClientReport, row.language, row.payment_tier === 'premium_19_90'),
           new Promise<Buffer>((_, reject) =>
             setTimeout(() => reject(new Error('pdf_generation_timeout')), 60000),
           ),

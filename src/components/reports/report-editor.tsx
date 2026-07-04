@@ -3,7 +3,8 @@
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { MarkdownRenderer } from '@/components/shared/markdown-renderer'
-import { getOrderedSectionKeys, getSectionLabel, type ReportContent } from '@/types/report'
+import { getOrderedSectionKeys, getSectionLabel, REPORT_SECTION_I18N_KEYS, type ReportContent } from '@/types/report'
+import { t, detectLocale, type TranslationKey } from '@/lib/i18n'
 import type { Report } from '@/types/database'
 
 interface ReportEditorProps {
@@ -17,6 +18,15 @@ export function ReportEditor({ report, onSave }: ReportEditorProps) {
   const [editingSection, setEditingSection] = useState<string | null>(
     getOrderedSectionKeys(report.report_content)[0] ?? null,
   )
+  // No report-level language field exists yet, so fall back to the
+  // practitioner's browser locale (same detection used by the client-facing
+  // LanguageProvider) rather than hardcoding English.
+  const [lang] = useState(() => detectLocale(typeof navigator !== 'undefined' ? navigator.language : undefined))
+
+  const getLabel = (key: string) => {
+    const i18nKey = REPORT_SECTION_I18N_KEYS[key as keyof typeof REPORT_SECTION_I18N_KEYS] as TranslationKey | undefined
+    return i18nKey ? t(lang, i18nKey) : getSectionLabel(key)
+  }
 
   const currentSection = editingSection
   const currentContent = currentSection ? content[currentSection] : ''
@@ -65,7 +75,7 @@ export function ReportEditor({ report, onSave }: ReportEditorProps) {
                     : 'bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
-                {getSectionLabel(sectionKey)}
+                {getLabel(sectionKey)}
               </button>
             ))}
           </div>
@@ -76,7 +86,7 @@ export function ReportEditor({ report, onSave }: ReportEditorProps) {
           {currentSection && (
             <>
               <div>
-                <h3 className="text-lg font-semibold mb-2">{getSectionLabel(currentSection)}</h3>
+                <h3 className="text-lg font-semibold mb-2">{getLabel(currentSection)}</h3>
                 <textarea
                   value={currentContent}
                   onChange={(e) => handleSectionChange(e.target.value)}
