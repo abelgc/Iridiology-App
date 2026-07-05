@@ -124,6 +124,8 @@ export function TierSelector() {
             [t('compareRow3'), false, true],
             [t('compareRow4'), false, true],
             [t('compareRow5'), false, true],
+            [t('compareRow6'), true, true],
+            [t('compareRow7'), false, true],
           ] as [string, boolean, boolean][]).map(([label, basic, premium], i) => (
             <div key={i} style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr', alignItems: 'center', padding: '13px 16px', borderBottom: '1px solid #d8c9ad', fontSize: '13px' }}>
               <span style={{ color: '#2a1f14', fontWeight: 500 }}>{label}</span>

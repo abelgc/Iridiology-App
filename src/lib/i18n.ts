@@ -50,6 +50,8 @@ export const translations = {
     compareRow3: 'Deep system-by-system analysis',
     compareRow4: 'Personalized energy center',
     compareRow5: 'Core emotion to work with',
+    compareRow6: 'Vitamin recommendations',
+    compareRow7: 'Minerals and herbs recommendations',
     compareRowPrice: 'Price',
     // trust bar + disclaimer
     trustReading: 'Close, honest reading',
@@ -325,6 +327,8 @@ export const translations = {
     compareRow3: 'Análisis profundo sistema a sistema',
     compareRow4: 'Centro energético personalizado',
     compareRow5: 'Emoción principal con la que trabajar',
+    compareRow6: 'Recomendaciones de vitaminas',
+    compareRow7: 'Recomendaciones de minerales y hierbas',
     compareRowPrice: 'Precio',
     // trust bar + disclaimer
     trustReading: 'Lectura cercana y honesta',
@@ -591,6 +595,8 @@ export const translations = {
     compareRow3: 'Tiefe System-für-System-Analyse',
     compareRow4: 'Personalisiertes Energiezentrum',
     compareRow5: 'Kerngefühl, mit dem du arbeiten solltest',
+    compareRow6: 'Vitaminempfehlungen',
+    compareRow7: 'Mineralien- und Kräuterempfehlungen',
     compareRowPrice: 'Preis',
     trustReading: 'Nahe, ehrliche Lesung',
     trustPayment: 'Einmalzahlung · keine Abos',
