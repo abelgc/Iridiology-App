@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const triggerStage2Mock = vi.fn().mockResolvedValue(undefined)
 vi.mock('@/lib/client/trigger-stage2', () => ({ triggerStage2: triggerStage2Mock }))
@@ -11,20 +11,56 @@ let currentRow: Record<string, unknown> = {
   reports: { id: 'r1', report_content: { section_1_general_terrain: 'x' } },
 }
 
-const updateMock = vi.fn().mockReturnValue({ eq: () => Promise.resolve({ error: null }) })
+// Per-call-index override lists. Missing/undefined entries fall back to a default:
+// selects fall back to `currentRow`; updates fall back to a truthy "claimed" result.
+let selectResults: any[] = []
+let selectCallIndex = 0
+let updateCallResults: any[] = []
+let updateCallIndex = 0
+
+function updateChain(finalResult: any): any {
+  const c: any = {
+    eq: () => c,
+    select: () => c,
+    single: () => Promise.resolve(finalResult),
+  }
+  return c
+}
+const updateMock = vi.fn()
 
 vi.mock('@/lib/supabase/server', () => ({
   createAdminClient: () => ({
     from: () => ({
       select: () => ({
         eq: () => ({
-          single: () => Promise.resolve({ data: currentRow, error: null }),
+          single: () => {
+            const result = selectResults[selectCallIndex] ?? { data: currentRow, error: null }
+            selectCallIndex++
+            return Promise.resolve(result)
+          },
         }),
       }),
-      update: updateMock,
+      update: (...args: unknown[]) => {
+        updateMock(...args)
+        const result = updateCallResults[updateCallIndex] ?? {
+          data: { report_download_token: 'x' },
+          error: null,
+        }
+        updateCallIndex++
+        return updateChain(result)
+      },
     }),
   }),
 }))
+
+beforeEach(() => {
+  selectResults = []
+  selectCallIndex = 0
+  updateCallResults = []
+  updateCallIndex = 0
+  updateMock.mockClear()
+  triggerStage2Mock.mockClear()
+})
 
 describe('GET /api/client/reports/[token]', () => {
   it('returns report content for valid token', async () => {
@@ -82,8 +118,40 @@ describe('GET /api/client/reports/[token]', () => {
     expect(json.status).toBe('analyzing')
   })
 
+  it('re-reads and falls through to the completed report when the analyzing-stale CAS loses the race', async () => {
+    // The row looks stale-'analyzing' on the first read, but by the time the guarded 'failed'
+    // write runs, stage 1 has actually finished — the write loses its CAS (0 rows), so instead
+    // of telling the client "failed" we re-read and serve the fresh, completed state.
+    currentRow = {
+      report_download_token: '00000000-0000-4000-8000-000000000006',
+      language: 'en',
+      status: 'analyzing',
+      report_id: null,
+      analyzing_started_at: new Date(Date.now() - 300_000).toISOString(),
+      reports: null,
+    }
+    const freshRow = {
+      report_download_token: '00000000-0000-4000-8000-000000000006',
+      language: 'en',
+      status: 'completed',
+      report_id: 'rX',
+      payment_tier: 'basic_12',
+      report_delivered_at: new Date().toISOString(),
+      reports: { id: 'rX', report_content: { section_1_general_terrain: 'done' }, client_report_content: null },
+    }
+    selectResults = [undefined, { data: freshRow, error: null }]
+    updateCallResults = [{ data: null, error: null }]
+
+    const { GET } = await import('@/app/api/client/reports/[token]/route')
+    const res = await GET(new Request('http://test') as never, {
+      params: Promise.resolve({ token: '00000000-0000-4000-8000-000000000006' }),
+    } as never)
+    const json = await res.json()
+    expect(res.status).toBe(200)
+    expect(json.report.section_1_general_terrain).toBe('done')
+  })
+
   it('retries stage 2 (bounded) when stage2_processing is stale and under the retry limit', async () => {
-    triggerStage2Mock.mockClear()
     currentRow = {
       report_download_token: '00000000-0000-4000-8000-000000000003',
       language: 'en',
@@ -103,8 +171,26 @@ describe('GET /api/client/reports/[token]', () => {
     expect(triggerStage2Mock).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000003')
   })
 
+  it('does not call triggerStage2 when the retry-count CAS loses the race (another poller already retried)', async () => {
+    currentRow = {
+      report_download_token: '00000000-0000-4000-8000-000000000005',
+      language: 'en',
+      status: 'stage2_processing',
+      report_id: 'r5',
+      stage2_started_at: new Date(Date.now() - 300_000).toISOString(),
+      stage2_retry_count: 0,
+      reports: null,
+    }
+    updateCallResults = [{ data: null, error: null }] // the retry-count CAS loses
+    const { GET } = await import('@/app/api/client/reports/[token]/route')
+    const res = await GET(new Request('http://test') as never, {
+      params: Promise.resolve({ token: '00000000-0000-4000-8000-000000000005' }),
+    } as never)
+    expect(res.status).toBe(409)
+    expect(triggerStage2Mock).not.toHaveBeenCalled()
+  })
+
   it('gives up and marks stage 2 failed after exhausting retries', async () => {
-    triggerStage2Mock.mockClear()
     currentRow = {
       report_download_token: '00000000-0000-4000-8000-000000000004',
       language: 'en',

@@ -49,13 +49,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, skipped: true, status: row.status })
   }
 
-  const { data: claimed } = await supabase
+  // Real compare-and-swap: filtering on `status` alone (without changing it) matches every
+  // concurrent caller equally, so it never actually claims anything — two concurrent triggers
+  // would both pass and both run the full pipeline. CAS-ing on the exact `stage2_started_at`
+  // value we just read means only the first caller's write matches; a second concurrent
+  // caller's WHERE no longer matches once the first has updated the timestamp.
+  const myClaimTs = new Date().toISOString()
+  const claimUpdate = supabase
     .from('client_analyses')
-    .update({ stage2_started_at: new Date().toISOString() })
+    .update({ stage2_started_at: myClaimTs })
     .eq('report_download_token', token)
     .eq('status', 'stage2_processing')
-    .select('report_download_token')
-    .single()
+  const { data: claimed } =
+    row.stage2_started_at === null
+      ? await claimUpdate.is('stage2_started_at', null).select('status').single()
+      : await claimUpdate.eq('stage2_started_at', row.stage2_started_at).select('status').single()
 
   if (!claimed) {
     // Someone else's trigger already claimed this run in the tiny window above.
@@ -73,7 +81,6 @@ export async function POST(request: NextRequest) {
     const elapsed = () => `${Math.round((Date.now() - startedAt) / 1000)}s`
     console.log(`[client-stage2] token ${token} — starting stage 2...`)
 
-    let completed = false
     let savedClientReport: ReportContent | null = null
 
     try {
@@ -115,12 +122,23 @@ export async function POST(request: NextRequest) {
             .update({ report_content: enhancedReport, client_report_content: clientReportContent })
             .eq('id', row.report_id)
 
-          await bg
+          // Guard: both status AND the exact claim timestamp we just won — don't overwrite a
+          // verdict the 270s timeout already wrote, and don't let a takeover invocation's
+          // (later) claim get clobbered by this one if we're somehow still running after it.
+          const { data: claimed } = await bg
             .from('client_analyses')
             .update({ status: 'completed', report_delivered_at: new Date().toISOString() })
             .eq('report_download_token', token)
+            .eq('status', 'stage2_processing')
+            .eq('stage2_started_at', myClaimTs)
+            .select('status')
+            .single()
 
-          completed = true
+          if (!claimed) {
+            console.log(`[client-stage2] token ${token} — arrived after the timeout guard already marked it failed, discarding late result`)
+            return
+          }
+
           savedClientReport = clientReportContent
           console.log(`[client-stage2] token ${token} — completed in ${elapsed()} ✓`)
         })(),
@@ -130,11 +148,18 @@ export async function POST(request: NextRequest) {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       console.error(`\x1b[31m[client-stage2] token ${token} — failed after ${elapsed()}: ${msg}\x1b[0m`)
-      if (!completed) {
-        await createAdminClient()
-          .from('client_analyses')
-          .update({ status: 'failed', failure_reason: msg })
-          .eq('report_download_token', token)
+      // Guard: same two conditions as the success write — same un-cancelled-loser risk as
+      // stage 1 (see upload/route.ts's catch block for the full explanation).
+      const { data: failClaimed } = await createAdminClient()
+        .from('client_analyses')
+        .update({ status: 'failed', failure_reason: msg })
+        .eq('report_download_token', token)
+        .eq('status', 'stage2_processing')
+        .eq('stage2_started_at', myClaimTs)
+        .select('status')
+        .single()
+      if (!failClaimed) {
+        console.log(`[client-stage2] token ${token} — late failure ignored, row already progressed`)
       }
       return
     }

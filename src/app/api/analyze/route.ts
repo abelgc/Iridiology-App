@@ -41,36 +41,49 @@ export async function POST(request: NextRequest) {
     // Uses admin client (no cookies) since request context is gone after response
     const runAnalysis = async () => {
       const bg = createAdminClient()
+      const startedAt = Date.now()
       console.log(`[analyze] session ${sessionId} — starting dual-model analysis...`)
       try {
         const result = await withTimeout(
           analyzeIrisDual({ sessionId, patientId, rightIrisBase64, leftIrisBase64, patientData }),
-          250_000,
-          'Analysis timed out after 250s',
+          280_000,
+          'Analysis timed out after 280s',
         )
         if ('code' in result) {
           const msg = `${(result as any).code}: ${(result as any).message}`
           console.error(`\x1b[31m[analyze] session ${sessionId} — error: ${msg}\x1b[0m`)
-          await bg.from('sessions').update({ status: 'error', error_message: msg }).eq('id', sessionId)
+          const { data: claimed } = await bg.from('sessions').update({ status: 'error', error_message: msg }).eq('id', sessionId).eq('status', 'analyzing').select('status').single()
+          if (!claimed) console.log(`[analyze] session ${sessionId} — terminal write skipped, status already settled`)
           return
         }
 
         let finalReport = result
 
-        // Enhance emotional field with Jyotish if all astrological fields present
-        if (shouldEnhanceWithJyotish(patientData)) {
+        // Enhance emotional field with Jyotish only if there's still enough time budget left,
+        // and never let it fail the session — a timeout or error here falls back to the
+        // unenhanced report rather than losing the whole analysis.
+        const elapsedMs = Date.now() - startedAt
+        if (shouldEnhanceWithJyotish(patientData) && elapsedMs < 240_000) {
           console.log(`[analyze] session ${sessionId} — enhancing emotional field with Jyotish...`)
-          finalReport = await enhanceEmotionalFieldWithJyotish(
-            result,
-            patientData.full_name,
-            {
-              date_of_birth: patientData.date_of_birth!,
-              country_of_birth: patientData.country_of_birth!,
-              city_of_birth: patientData.city_of_birth!,
-              time_of_day: patientData.time_of_day!,
-            },
-          )
-          console.log(`[analyze] session ${sessionId} — emotional field enhanced ✓`)
+          try {
+            finalReport = await withTimeout(
+              enhanceEmotionalFieldWithJyotish(
+                result,
+                patientData.full_name,
+                {
+                  date_of_birth: patientData.date_of_birth!,
+                  country_of_birth: patientData.country_of_birth!,
+                  city_of_birth: patientData.city_of_birth!,
+                  time_of_day: patientData.time_of_day!,
+                },
+              ),
+              30_000,
+              'jyotish_timeout',
+            )
+            console.log(`[analyze] session ${sessionId} — emotional field enhanced ✓`)
+          } catch (jyotishErr) {
+            console.error(`[analyze] session ${sessionId} — Jyotish enhancement failed, keeping unenhanced report:`, jyotishErr)
+          }
         }
 
         const { error: reportError } = await bg
@@ -78,16 +91,27 @@ export async function POST(request: NextRequest) {
           .insert({ session_id: sessionId, report_content: finalReport, report_version: 1, is_edited: false })
 
         if (reportError) {
-          await bg.from('sessions').update({ status: 'error', error_message: reportError.message }).eq('id', sessionId)
+          const { data: claimed } = await bg.from('sessions').update({ status: 'error', error_message: reportError.message }).eq('id', sessionId).eq('status', 'analyzing').select('status').single()
+          if (!claimed) console.log(`[analyze] session ${sessionId} — terminal write skipped, status already settled`)
           return
         }
 
-        await bg.from('sessions').update({ status: 'completed' }).eq('id', sessionId)
-        console.log(`[analyze] session ${sessionId} — completed ✓`)
+        // Guard: only applies if status is still 'analyzing' — withTimeout never cancels the
+        // underlying work, so an orphaned "loser" promise from a prior timeout could otherwise
+        // land here later and silently clobber a real verdict. Accepted consequence: if the
+        // timeout fired first, a late-completing inner promise leaves an orphaned `reports`
+        // row on an 'error' session — we do not delete it.
+        const { data: claimed } = await bg.from('sessions').update({ status: 'completed' }).eq('id', sessionId).eq('status', 'analyzing').select('status').single()
+        if (!claimed) {
+          console.log(`[analyze] session ${sessionId} — terminal write skipped, status already settled`)
+        } else {
+          console.log(`[analyze] session ${sessionId} — completed ✓`)
+        }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
         console.error(`\x1b[31m[analyze] session ${sessionId} — caught exception: ${msg}\x1b[0m`)
-        await createAdminClient().from('sessions').update({ status: 'error', error_message: msg }).eq('id', sessionId)
+        const { data: claimed } = await createAdminClient().from('sessions').update({ status: 'error', error_message: msg }).eq('id', sessionId).eq('status', 'analyzing').select('status').single()
+        if (!claimed) console.log(`[analyze] session ${sessionId} — terminal write skipped, status already settled`)
       }
     }
 

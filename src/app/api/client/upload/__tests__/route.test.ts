@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+let waitUntilPromise: Promise<unknown> | null = null
+vi.mock('@vercel/functions', () => ({
+  waitUntil: (p: Promise<unknown>) => {
+    waitUntilPromise = p
+  },
+}))
+
 const analysisRow = {
   id: 'a1',
   status: 'paid',
@@ -32,8 +39,22 @@ const mockReport = {
   section_13_strengths_of_the_body: 'S',
 }
 
+function chain(finalResult: any): any {
+  const c: any = {
+    eq: () => c,
+    select: () => c,
+    single: () => Promise.resolve(finalResult),
+  }
+  return c
+}
+
 const selectSingle = vi.fn().mockResolvedValue({ data: analysisRow, error: null })
-const updateMock = vi.fn().mockResolvedValue({ data: null, error: null })
+const updateMock = vi.fn()
+// Per-call-index override list for the `client_analyses` update chain. Missing/undefined
+// entries fall back to a truthy "claimed" result. Lets tests simulate a specific update in
+// the sequence losing its CAS (0 rows) without affecting the others.
+let updateCallResults: any[] = []
+let updateCallIndex = 0
 const insertReport = vi.fn().mockResolvedValue({
   data: { id: 'r1' },
   error: null,
@@ -49,7 +70,12 @@ vi.mock('@/lib/supabase/server', () => ({
           }),
           update: (...args: unknown[]) => {
             updateMock(...args)
-            return { eq: () => ({ select: () => ({ single: () => Promise.resolve({ data: null, error: null }) }) }) }
+            const result = updateCallResults[updateCallIndex] ?? {
+              data: { report_download_token: analysisRow.report_download_token },
+              error: null,
+            }
+            updateCallIndex++
+            return chain(result)
           },
         }
       }
@@ -65,8 +91,9 @@ vi.mock('@/lib/supabase/server', () => ({
   }),
 }))
 
+const mockAnalyzeDual = vi.fn().mockResolvedValue(mockReport)
 vi.mock('@/lib/claude/analyze-dual', () => ({
-  analyzeIrisDual: vi.fn().mockResolvedValue(mockReport),
+  analyzeIrisDual: (...args: unknown[]) => mockAnalyzeDual(...args),
 }))
 
 vi.mock('@/lib/ai/get-provider', () => ({
@@ -85,40 +112,44 @@ vi.mock('@/lib/claude/enhance-emotional-field', () => ({
   enhanceEmotionalFieldWithJyotish: vi.fn(async (r: unknown) => r),
 }))
 
-vi.mock('@/lib/client/writing-pipeline', () => ({
-  rewriteReportForClient: vi.fn().mockResolvedValue(mockReport),
-}))
-
-vi.mock('@/lib/client/pdf', () => ({
-  generateReportPdf: vi.fn().mockResolvedValue(Buffer.from('pdf')),
-}))
-
-vi.mock('@/lib/client/email', () => ({
-  sendReportEmail: vi.fn().mockResolvedValue({ ok: true, id: 'mail-1' }),
+const mockTriggerStage2 = vi.fn().mockResolvedValue(undefined)
+vi.mock('@/lib/client/trigger-stage2', () => ({
+  triggerStage2: (...args: unknown[]) => mockTriggerStage2(...args),
 }))
 
 beforeEach(() => {
+  waitUntilPromise = null
   selectSingle.mockClear()
+  selectSingle.mockResolvedValue({ data: analysisRow, error: null })
   updateMock.mockClear()
+  updateCallResults = []
+  updateCallIndex = 0
   insertReport.mockClear()
+  mockAnalyzeDual.mockReset().mockResolvedValue(mockReport)
+  mockTriggerStage2.mockClear()
 })
+
+function makeRequest() {
+  return new Request('http://test/api/client/upload', {
+    method: 'POST',
+    body: JSON.stringify({
+      report_download_token: '00000000-0000-4000-8000-000000000000',
+      right_eye_base64: 'data:image/jpeg;base64,AAA',
+      left_eye_base64: 'data:image/jpeg;base64,BBB',
+    }),
+  }) as never
+}
 
 describe('POST /api/client/upload', () => {
   it('runs analysis, stores report, and returns the token', async () => {
     const { POST } = await import('@/app/api/client/upload/route')
-    const req = new Request('http://test/api/client/upload', {
-      method: 'POST',
-      body: JSON.stringify({
-        report_download_token: '00000000-0000-4000-8000-000000000000',
-        right_eye_base64: 'data:image/jpeg;base64,AAA',
-        left_eye_base64: 'data:image/jpeg;base64,BBB',
-      }),
-    })
-    const res = await POST(req as never)
+    const res = await POST(makeRequest())
     const json = await res.json()
     expect(res.status).toBe(200)
     expect(json.report_download_token).toBe('00000000-0000-4000-8000-000000000000')
+    await waitUntilPromise
     expect(insertReport).toHaveBeenCalledTimes(1)
+    expect(mockTriggerStage2).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000000')
   })
 
   it('refuses unpaid analyses', async () => {
@@ -127,15 +158,34 @@ describe('POST /api/client/upload', () => {
       error: null,
     })
     const { POST } = await import('@/app/api/client/upload/route')
-    const req = new Request('http://test/api/client/upload', {
-      method: 'POST',
-      body: JSON.stringify({
-        report_download_token: '00000000-0000-4000-8000-000000000000',
-        right_eye_base64: 'data:image/jpeg;base64,AAA',
-        left_eye_base64: 'data:image/jpeg;base64,BBB',
-      }),
-    })
-    const res = await POST(req as never)
+    const res = await POST(makeRequest())
     expect(res.status).toBe(402)
+  })
+
+  it('returns 409 and never runs the analysis when the initial "analyzing" CAS finds 0 rows', async () => {
+    // Simulates a duplicate/retried POST for the same token — the very first update
+    // (paid -> analyzing) loses its CAS because another request already claimed it.
+    updateCallResults = [{ data: null, error: null }]
+    const { POST } = await import('@/app/api/client/upload/route')
+    const res = await POST(makeRequest())
+    expect(res.status).toBe(409)
+    const json = await res.json()
+    expect(json.error).toBe('already_processing')
+    expect(mockAnalyzeDual).not.toHaveBeenCalled()
+  })
+
+  it('does not throw and treats the failed-write CAS as a no-op when the row already progressed', async () => {
+    // Call 0 = the initial 'paid' -> 'analyzing' claim (succeeds, default).
+    // analyzeIrisDual throws, sending control straight to the catch block, whose guarded
+    // 'failed' write is call 1 — simulate it losing the race (0 rows), as if the row had
+    // already moved on (e.g. to 'stage2_processing') by the time this write landed.
+    updateCallResults = [undefined, { data: null, error: null }]
+    mockAnalyzeDual.mockRejectedValue(new Error('boom'))
+    const { POST } = await import('@/app/api/client/upload/route')
+    const res = await POST(makeRequest())
+    expect(res.status).toBe(200)
+    await expect(waitUntilPromise).resolves.toBeUndefined()
+    const failedCall = updateMock.mock.calls.find(([arg]) => arg.status === 'failed')
+    expect(failedCall).toBeTruthy()
   })
 })

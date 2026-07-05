@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
       paid_at: new Date().toISOString(),
       is_mock_payment: true,
       status: 'paid',
+      failure_reason: null, // clear any stale reason from a prior failed attempt on this token
     })
     .eq('report_download_token', token)
     .select('report_download_token, status')

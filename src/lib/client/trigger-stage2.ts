@@ -1,5 +1,13 @@
 export async function triggerStage2(token: string): Promise<void> {
-  const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'
+  // VERCEL_URL points at the per-deployment URL, which Vercel protects with SSO by
+  // default — any request to it (even server-to-server, even with our own secret)
+  // gets redirected to a Vercel login page before our route ever runs. The stable
+  // production domain is not behind that wall.
+  const baseUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'http://localhost:3000'
   try {
     await fetch(`${baseUrl}/api/client/internal/stage2`, {
       method: 'POST',

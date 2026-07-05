@@ -51,10 +51,19 @@ export async function POST(request: NextRequest) {
 
   const token = parsed.data.report_download_token
 
-  await supabase
+  // Guard: only proceed if still 'paid' — prevents a duplicate/retried POST for the same
+  // token from starting a second concurrent analysis run.
+  const { data: claimedAnalyzing } = await supabase
     .from('client_analyses')
     .update({ status: 'analyzing', analyzing_started_at: new Date().toISOString() })
     .eq('report_download_token', token)
+    .eq('status', 'paid')
+    .select('status')
+    .single()
+
+  if (!claimedAnalyzing) {
+    return NextResponse.json({ error: 'already_processing' }, { status: 409 })
+  }
 
   const runAnalysis = async () => {
     const bg = createAdminClient()
@@ -117,7 +126,7 @@ export async function POST(request: NextRequest) {
           if (reportError || !report)
             throw new Error(reportError?.message ?? 'report_insert_failed')
 
-          await bg
+          const { data: claimed } = await bg
             .from('client_analyses')
             .update({
               status: 'stage2_processing',
@@ -126,6 +135,14 @@ export async function POST(request: NextRequest) {
               ...(languageFlagged ? { language_flag: true } : {}),
             })
             .eq('report_download_token', token)
+            .eq('status', 'analyzing') // guard: don't overwrite a verdict the 270s timeout already wrote
+            .select('status')
+            .single()
+
+          if (!claimed) {
+            console.log(`[client-upload] token ${token} — arrived after the timeout guard already marked it failed, discarding late result`)
+            return
+          }
 
           console.log(`[client-upload] token ${token} — stage 1 done in ${elapsed()}, handing off to stage 2`)
 
@@ -139,10 +156,20 @@ export async function POST(request: NextRequest) {
       console.error(
         `\x1b[31m[client-upload] token ${token} — failed after ${elapsed()}: ${msg}\x1b[0m`,
       )
-      await createAdminClient()
+      // Guard: only write 'failed' if still 'analyzing' — the un-cancelled loser promise
+      // (withTimeout stops waiting, never stops the work) can still complete and write
+      // 'stage2_processing' after this catch runs; without this guard a late success would
+      // get silently stomped back to 'failed' with no recovery path. This is the main clobber fix.
+      const { data: failClaimed } = await createAdminClient()
         .from('client_analyses')
         .update({ status: 'failed', failure_reason: msg })
         .eq('report_download_token', token)
+        .eq('status', 'analyzing')
+        .select('status')
+        .single()
+      if (!failClaimed) {
+        console.log(`[client-upload] token ${token} — late failure ignored, row already progressed`)
+      }
     }
   }
 

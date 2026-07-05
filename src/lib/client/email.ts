@@ -36,16 +36,50 @@ export async function sendReportEmail(params: {
 
   const supabase = createAdminClient()
 
-  // Idempotency check — never send twice for the same analysis
-  // Bug fix: Check for both 'sent' AND 'failed' to prevent resending failed attempts
-  const { data: existing } = await supabase
+  // Claim before sending, not after: the previous check-then-act pattern checked for an
+  // existing log row, then sent via Resend, then wrote the log — so two concurrent calls
+  // (a double-click on "Email me", or the automatic post-analysis send racing a manual
+  // resend) could both pass the check and both actually send. Claiming a 'pending' row
+  // first, guarded by the UNIQUE(analysis_id) constraint, means only one caller proceeds.
+  const { data: inserted } = await supabase
     .from('email_send_log')
-    .select('id, status')
-    .eq('analysis_id', params.analysisId)
+    .insert({
+      analysis_id: params.analysisId,
+      recipient_email: params.to,
+      payment_tier: params.paymentTier,
+      status: 'pending',
+    })
+    .select('id')
     .single()
 
-  if (existing?.status === 'sent') {
-    return { ok: true, id: 'already_sent' }
+  let claimId: string
+  if (inserted) {
+    claimId = inserted.id
+  } else {
+    // A row already exists for this analysis — only re-claim a previously FAILED attempt.
+    const { data: existing } = await supabase
+      .from('email_send_log')
+      .select('id, status')
+      .eq('analysis_id', params.analysisId)
+      .single()
+
+    if (!existing || existing.status !== 'failed') {
+      // Already sent, or another attempt is currently in flight — don't send again.
+      return { ok: true, id: 'already_sent' }
+    }
+
+    const { data: reclaimed } = await supabase
+      .from('email_send_log')
+      .update({ status: 'pending' })
+      .eq('id', existing.id)
+      .eq('status', 'failed') // CAS: only proceed if it's still 'failed' as we just read
+      .select('id')
+      .single()
+
+    if (!reclaimed) {
+      return { ok: true, id: 'already_sent' }
+    }
+    claimId = reclaimed.id
   }
 
   const subject = SUBJECTS[params.lang]
@@ -75,23 +109,13 @@ export async function sendReportEmail(params: {
     })
 
     const status = error ? 'failed' : 'sent'
-    await supabase.from('email_send_log').insert({
-      analysis_id: params.analysisId,
-      recipient_email: params.to,
-      payment_tier: params.paymentTier,
-      status,
-    })
+    await supabase.from('email_send_log').update({ status }).eq('id', claimId)
 
     if (error) return { ok: false, error: String(error) }
     return { ok: true, id: data?.id }
   } catch (err) {
     try {
-      await supabase.from('email_send_log').insert({
-        analysis_id: params.analysisId,
-        recipient_email: params.to,
-        payment_tier: params.paymentTier,
-        status: 'failed',
-      })
+      await supabase.from('email_send_log').update({ status: 'failed' }).eq('id', claimId)
     } catch {
       // best-effort log — ignore failures
     }

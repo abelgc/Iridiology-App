@@ -56,14 +56,15 @@ export async function POST(request: NextRequest) {
             previousSessionDate: '',
             patientData,
           }),
-          290_000,
-          'Analysis timed out after 290s',
+          285_000,
+          'Analysis timed out after 285s',
         )
 
         if ('code' in result) {
           const msg = `${(result as any).code}: ${(result as any).message}`
           console.error(`\x1b[31m[compare] session ${sessionId} — error after ${elapsed()}: ${msg}\x1b[0m`)
-          await bg.from('sessions').update({ status: 'error', error_message: msg }).eq('id', sessionId)
+          const { data: claimed } = await bg.from('sessions').update({ status: 'error', error_message: msg }).eq('id', sessionId).eq('status', 'analyzing').select('status').single()
+          if (!claimed) console.log(`[compare] session ${sessionId} — terminal write skipped, status already settled`)
           return
         }
 
@@ -73,16 +74,27 @@ export async function POST(request: NextRequest) {
 
         if (reportError) {
           console.error(`\x1b[31m[compare] session ${sessionId} — report insert failed after ${elapsed()}: ${reportError.message}\x1b[0m`)
-          await bg.from('sessions').update({ status: 'error', error_message: reportError.message }).eq('id', sessionId)
+          const { data: claimed } = await bg.from('sessions').update({ status: 'error', error_message: reportError.message }).eq('id', sessionId).eq('status', 'analyzing').select('status').single()
+          if (!claimed) console.log(`[compare] session ${sessionId} — terminal write skipped, status already settled`)
           return
         }
 
-        await bg.from('sessions').update({ status: 'completed' }).eq('id', sessionId)
-        console.log(`[compare] session ${sessionId} — completed in ${elapsed()} ✓`)
+        // Guard: only applies if status is still 'analyzing' — withTimeout never cancels the
+        // underlying work, so an orphaned "loser" promise from a prior timeout could otherwise
+        // land here later and silently clobber a real verdict. Accepted consequence: if the
+        // timeout fired first, a late-completing inner promise leaves an orphaned `reports`
+        // row on an 'error' session — we do not delete it.
+        const { data: claimed } = await bg.from('sessions').update({ status: 'completed' }).eq('id', sessionId).eq('status', 'analyzing').select('status').single()
+        if (!claimed) {
+          console.log(`[compare] session ${sessionId} — terminal write skipped, status already settled`)
+        } else {
+          console.log(`[compare] session ${sessionId} — completed in ${elapsed()} ✓`)
+        }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
         console.error(`\x1b[31m[compare] session ${sessionId} — caught exception after ${elapsed()}: ${msg}\x1b[0m`)
-        await createAdminClient().from('sessions').update({ status: 'error', error_message: msg }).eq('id', sessionId)
+        const { data: claimed } = await createAdminClient().from('sessions').update({ status: 'error', error_message: msg }).eq('id', sessionId).eq('status', 'analyzing').select('status').single()
+        if (!claimed) console.log(`[compare] session ${sessionId} — terminal write skipped, status already settled`)
       }
     }
 
