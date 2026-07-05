@@ -25,6 +25,7 @@ vi.mock('@/components/ui/button', () => ({
 vi.mock('lucide-react', () => ({
   Trash2: () => <span>Trash2</span>,
   Send: () => <span>Send</span>,
+  Wand2: () => <span>Wand2</span>,
 }))
 
 describe('ReportChat', () => {
