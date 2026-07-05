@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
 
   await supabase
     .from('client_analyses')
-    .update({ status: 'analyzing' })
+    .update({ status: 'analyzing', analyzing_started_at: new Date().toISOString() })
     .eq('report_download_token', token)
 
   const runAnalysis = async () => {
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
               (row.health_questionnaire as Record<string, unknown> | null) ?? null,
           }
 
-          let reportContent = await analyzeIrisDual(analysisRequest, row.language, {
+          const reportContent = await analyzeIrisDual(analysisRequest, row.language, {
             providers: clientProviders,
           })
 
@@ -103,32 +103,13 @@ export async function POST(request: NextRequest) {
             throw new Error(`Analysis failed: ${(reportContent as any).message}`)
           }
 
-          // Language check — retry once; if still wrong, proceed with flag set
-          let languageFlagged = false
-          const languageOk = detectsCorrectLanguage(
+          // Language check — flag only, no retry: retrying doubled the cost of the single
+          // most expensive step (dual-provider analysis + synthesis) and was the single
+          // biggest avoidable contributor to runs blowing past the Vercel time ceiling.
+          const languageFlagged = !detectsCorrectLanguage(
             (reportContent as ReportContent).section_1_general_terrain,
             row.language,
           )
-
-          if (!languageOk) {
-            const retry = await analyzeIrisDual(analysisRequest, row.language, {
-              providers: clientProviders,
-              forceLanguage: true,
-            })
-            if (!('code' in retry)) {
-              const retryOk = detectsCorrectLanguage(
-                (retry as ReportContent).section_1_general_terrain,
-                row.language,
-              )
-              if (retryOk) {
-                reportContent = retry
-              } else {
-                languageFlagged = true
-              }
-            } else {
-              languageFlagged = true
-            }
-          }
 
           let finalReport = reportContent as ReportContent
 
@@ -193,8 +174,8 @@ export async function POST(request: NextRequest) {
           savedClientReport = clientReportContent
           console.log(`[client-upload] token ${token} — completed in ${elapsed()} ✓`)
         })(),
-        240_000,
-        'Analysis timed out after 240s',
+        270_000,
+        'Analysis timed out after 270s',
       )
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
@@ -210,7 +191,7 @@ export async function POST(request: NextRequest) {
       return
     }
 
-    // PDF + email — best-effort after completion, outside the 240s analysis guard
+    // PDF + email — best-effort after completion, outside the 270s analysis guard
     if (row.email && savedClientReport) {
       try {
         const pdfBuffer = await Promise.race([

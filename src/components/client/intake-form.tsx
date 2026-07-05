@@ -33,8 +33,15 @@ export function IntakeForm({
     } as any,
   })
 
+  function onInvalid(invalidFields: Record<string, unknown>) {
+    const firstErrorName = Object.keys(invalidFields)[0]
+    if (!firstErrorName) return
+    const el = document.querySelector(`[name="${firstErrorName}"]`)
+    el?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
+  }
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <form onSubmit={handleSubmit(onSubmit, onInvalid)} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <input type="hidden" {...register('language')} value={lang} />
       <input type="hidden" {...register('payment_tier')} value={tier} />
 

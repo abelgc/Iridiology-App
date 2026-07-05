@@ -23,15 +23,28 @@ export default function ClientReportPage() {
     | { kind: 'loading' }
     | { kind: 'pending' }
     | { kind: 'ready'; report: Record<string, string>; language: 'en' | 'es' | 'de'; paymentTier: string; deliveredAt: string | null }
+    | { kind: 'failed' }
     | { kind: 'error' }
   >({ kind: 'loading' })
 
   useEffect(() => {
     let cancelled = false
+    let attempts = 0
+    const MAX_ATTEMPTS = 120 // ~6 min at 3s intervals — backend guarantees a resolution by 240s
     async function load() {
       try {
         const res = await fetch(`/api/client/reports/${token}`)
         if (res.status === 409) {
+          const body = (await res.json().catch(() => null)) as { status?: string } | null
+          if (body?.status === 'failed') {
+            if (!cancelled) setState({ kind: 'failed' })
+            return
+          }
+          attempts += 1
+          if (attempts >= MAX_ATTEMPTS) {
+            if (!cancelled) setState({ kind: 'failed' })
+            return
+          }
           if (!cancelled) setState({ kind: 'pending' })
           setTimeout(load, 3000)
           return
@@ -77,6 +90,11 @@ export default function ClientReportPage() {
     </div>
   )
   if (state.kind === 'pending') return <AnalysisSplash />
+  if (state.kind === 'failed') return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300, color: '#a85428', textAlign: 'center', padding: '0 24px' }}>
+      <p>{t('analysisFailedMessage')}</p>
+    </div>
+  )
   if (state.kind === 'error') return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300, color: '#a85428' }}>
       <p>{t('error')}</p>

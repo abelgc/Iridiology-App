@@ -9,6 +9,7 @@ export const translations = {
     submit: 'Submit',
     loading: 'Loading...',
     error: 'Something went wrong',
+    analysisFailedMessage: "We couldn't complete your analysis this time. Please contact us and we'll make it right.",
     // entry page
     chooseLanguage: 'Choose your language',
     chooseTier: 'Choose your report',
@@ -284,6 +285,7 @@ export const translations = {
     submit: 'Enviar',
     loading: 'Cargando...',
     error: 'Algo salió mal',
+    analysisFailedMessage: 'No hemos podido completar tu análisis esta vez. Contáctanos y lo resolveremos.',
     chooseLanguage: 'Elige tu idioma',
     chooseTier: 'Elige tu informe',
     // hero
@@ -552,6 +554,7 @@ export const translations = {
     submit: 'Absenden',
     loading: 'Lädt...',
     error: 'Etwas ist schiefgelaufen',
+    analysisFailedMessage: 'Wir konnten Ihre Analyse diesmal nicht abschließen. Bitte kontaktieren Sie uns, wir kümmern uns darum.',
     chooseLanguage: 'Sprache wählen',
     chooseTier: 'Wähle dein Paket',
     heroEyebrow: 'Deine Reise zum Wohlbefinden beginnt hier',
