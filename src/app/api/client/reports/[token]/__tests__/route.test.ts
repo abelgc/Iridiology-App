@@ -1,5 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
 
+const triggerStage2Mock = vi.fn().mockResolvedValue(undefined)
+vi.mock('@/lib/client/trigger-stage2', () => ({ triggerStage2: triggerStage2Mock }))
+
 let currentRow: Record<string, unknown> = {
   report_download_token: '00000000-0000-4000-8000-000000000000',
   language: 'es',
@@ -77,5 +80,47 @@ describe('GET /api/client/reports/[token]', () => {
     const json = await res.json()
     expect(res.status).toBe(409)
     expect(json.status).toBe('analyzing')
+  })
+
+  it('retries stage 2 (bounded) when stage2_processing is stale and under the retry limit', async () => {
+    triggerStage2Mock.mockClear()
+    currentRow = {
+      report_download_token: '00000000-0000-4000-8000-000000000003',
+      language: 'en',
+      status: 'stage2_processing',
+      report_id: 'r3',
+      stage2_started_at: new Date(Date.now() - 300_000).toISOString(),
+      stage2_retry_count: 0,
+      reports: null,
+    }
+    const { GET } = await import('@/app/api/client/reports/[token]/route')
+    const res = await GET(new Request('http://test') as never, {
+      params: Promise.resolve({ token: '00000000-0000-4000-8000-000000000003' }),
+    } as never)
+    const json = await res.json()
+    expect(res.status).toBe(409)
+    expect(json.status).toBe('stage2_processing')
+    expect(triggerStage2Mock).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000003')
+  })
+
+  it('gives up and marks stage 2 failed after exhausting retries', async () => {
+    triggerStage2Mock.mockClear()
+    currentRow = {
+      report_download_token: '00000000-0000-4000-8000-000000000004',
+      language: 'en',
+      status: 'stage2_processing',
+      report_id: 'r4',
+      stage2_started_at: new Date(Date.now() - 300_000).toISOString(),
+      stage2_retry_count: 2,
+      reports: null,
+    }
+    const { GET } = await import('@/app/api/client/reports/[token]/route')
+    const res = await GET(new Request('http://test') as never, {
+      params: Promise.resolve({ token: '00000000-0000-4000-8000-000000000004' }),
+    } as never)
+    const json = await res.json()
+    expect(res.status).toBe(409)
+    expect(json.status).toBe('failed')
+    expect(triggerStage2Mock).not.toHaveBeenCalled()
   })
 })

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { isValidReportToken } from '@/lib/client/report-token'
+import { triggerStage2 } from '@/lib/client/trigger-stage2'
 
 export async function GET(
   _request: NextRequest,
@@ -22,6 +23,8 @@ export async function GET(
       report_delivered_at,
       report_id,
       analyzing_started_at,
+      stage2_started_at,
+      stage2_retry_count,
       reports:report_id ( id, report_content, client_report_content )
     `)
     .eq('report_download_token', token)
@@ -44,6 +47,29 @@ export async function GET(
         .update({ status: 'failed', failure_reason: 'stale_timeout_synthesized' })
         .eq('report_download_token', token)
       return NextResponse.json({ error: 'not_ready', status: 'failed' }, { status: 409 })
+    }
+  }
+
+  // Stage 2 (Jyotish + client rewrite + PDF + email) runs in its own fresh invocation,
+  // triggered by stage 1 handing off. If it's been running longer than this without
+  // completing, either the trigger call itself failed or its invocation died — retry it
+  // (bounded) rather than leaving the client stuck.
+  const STALE_STAGE2_CEILING_MS = 290_000
+  if (data.status === 'stage2_processing' && data.stage2_started_at) {
+    const elapsedMs = Date.now() - new Date(data.stage2_started_at).getTime()
+    if (elapsedMs > STALE_STAGE2_CEILING_MS) {
+      if ((data.stage2_retry_count ?? 0) >= 2) {
+        await supabase
+          .from('client_analyses')
+          .update({ status: 'failed', failure_reason: 'stage2_stale_after_retries' })
+          .eq('report_download_token', token)
+        return NextResponse.json({ error: 'not_ready', status: 'failed' }, { status: 409 })
+      }
+      await supabase
+        .from('client_analyses')
+        .update({ stage2_retry_count: (data.stage2_retry_count ?? 0) + 1 })
+        .eq('report_download_token', token)
+      await triggerStage2(token)
     }
   }
 

@@ -4,15 +4,9 @@ import { clientUploadSchema } from '@/lib/validators/client-upload'
 import { analyzeIrisDual } from '@/lib/claude/analyze-dual'
 import { ReportContent } from '@/types/report'
 import type { AnalysisRequest } from '@/types/claude'
-import {
-  shouldEnhanceWithJyotish,
-  enhanceEmotionalFieldWithJyotish,
-} from '@/lib/claude/enhance-emotional-field'
-import { sendReportEmail } from '@/lib/client/email'
 import { getClientProviders } from '@/lib/ai/get-provider'
 import { detectsCorrectLanguage } from './language-check'
-import { rewriteReportForClient } from '@/lib/client/writing-pipeline'
-import { generateReportPdf } from '@/lib/client/pdf'
+import { triggerStage2 } from '@/lib/client/trigger-stage2'
 import { waitUntil } from '@vercel/functions'
 import { withTimeout } from '@/lib/utils'
 
@@ -68,9 +62,6 @@ export async function POST(request: NextRequest) {
     const elapsed = () => `${Math.round((Date.now() - startedAt) / 1000)}s`
     console.log(`[client-upload] token ${token} — starting analysis...`)
 
-    let completed = false
-    let savedClientReport: ReportContent | null = null
-
     try {
       await withTimeout(
         (async () => {
@@ -111,36 +102,7 @@ export async function POST(request: NextRequest) {
             row.language,
           )
 
-          let finalReport = reportContent as ReportContent
-
-          if (
-            row.payment_tier === 'premium_19_90' &&
-            shouldEnhanceWithJyotish({
-              date_of_birth: row.date_of_birth,
-              country_of_birth: row.country_of_birth,
-              city_of_birth: row.city_of_birth,
-              time_of_day: row.time_of_day,
-            })
-          ) {
-            finalReport = await enhanceEmotionalFieldWithJyotish(
-              reportContent as ReportContent,
-              'Client',
-              {
-                date_of_birth: row.date_of_birth,
-                country_of_birth: row.country_of_birth,
-                city_of_birth: row.city_of_birth,
-                time_of_day: row.time_of_day,
-              },
-              row.language,
-            )
-          }
-
-          const clientReportContent = await Promise.race([
-            rewriteReportForClient(finalReport, row.language),
-            new Promise<ReportContent>((_, reject) =>
-              setTimeout(() => reject(new Error('rewrite_timeout_exceeded')), 120000),
-            ),
-          ])
+          const finalReport = reportContent as ReportContent
 
           const { data: report, error: reportError } = await bg
             .from('reports')
@@ -156,23 +118,18 @@ export async function POST(request: NextRequest) {
             throw new Error(reportError?.message ?? 'report_insert_failed')
 
           await bg
-            .from('reports')
-            .update({ client_report_content: clientReportContent })
-            .eq('id', report.id)
-
-          await bg
             .from('client_analyses')
             .update({
-              status: 'completed',
+              status: 'stage2_processing',
               report_id: report.id,
-              report_delivered_at: new Date().toISOString(),
+              stage2_started_at: new Date().toISOString(),
               ...(languageFlagged ? { language_flag: true } : {}),
             })
             .eq('report_download_token', token)
 
-          completed = true
-          savedClientReport = clientReportContent
-          console.log(`[client-upload] token ${token} — completed in ${elapsed()} ✓`)
+          console.log(`[client-upload] token ${token} — stage 1 done in ${elapsed()}, handing off to stage 2`)
+
+          await triggerStage2(token)
         })(),
         270_000,
         'Analysis timed out after 270s',
@@ -182,37 +139,10 @@ export async function POST(request: NextRequest) {
       console.error(
         `\x1b[31m[client-upload] token ${token} — failed after ${elapsed()}: ${msg}\x1b[0m`,
       )
-      if (!completed) {
-        await createAdminClient()
-          .from('client_analyses')
-          .update({ status: 'failed', failure_reason: msg })
-          .eq('report_download_token', token)
-      }
-      return
-    }
-
-    // PDF + email — best-effort after completion, outside the 270s analysis guard
-    if (row.email && savedClientReport) {
-      try {
-        const pdfBuffer = await Promise.race([
-          generateReportPdf(savedClientReport, row.language, row.payment_tier === 'premium_19_90'),
-          new Promise<Buffer>((_, reject) =>
-            setTimeout(() => reject(new Error('pdf_generation_timeout')), 60000),
-          ),
-        ])
-        const emailResult = await sendReportEmail({
-          to: row.email,
-          lang: row.language,
-          analysisId: row.id,
-          paymentTier: row.payment_tier,
-          pdfBuffer,
-        })
-        if (!emailResult.ok) {
-          console.error(`[client-upload] token ${token} — email failed:`, emailResult.error)
-        }
-      } catch (err) {
-        console.error(`[client-upload] token ${token} — pdf/email error:`, err)
-      }
+      await createAdminClient()
+        .from('client_analyses')
+        .update({ status: 'failed', failure_reason: msg })
+        .eq('report_download_token', token)
     }
   }
 
