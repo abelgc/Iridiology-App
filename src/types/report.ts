@@ -23,6 +23,15 @@ export const REPORT_SECTION_KEYS = [
 
 export type ReportSectionKey = typeof REPORT_SECTION_KEYS[number]
 
+// Practitioner-only sections: present in report_content but deliberately excluded from
+// REPORT_SECTION_KEYS so client-facing code (writing-pipeline.ts, client-report-viewer.tsx,
+// report-pdf-document.tsx — all keyed off REPORT_SECTION_KEYS directly) never surfaces them.
+// The client-facing API route additionally strips these keys as a belt-and-braces guard — see
+// src/app/api/client/reports/[token]/route.ts.
+export const PRACTITIONER_ONLY_SECTION_KEYS = ['section_15_iris_sign_patterns'] as const
+
+export type PractitionerOnlySectionKey = typeof PRACTITIONER_ONLY_SECTION_KEYS[number]
+
 export type ReportContent = Record<string, string>
 
 export const REPORT_SECTION_I18N_KEYS = {
@@ -40,9 +49,10 @@ export const REPORT_SECTION_I18N_KEYS = {
   section_12_conclusion:                   'rSecConclusion',
   section_13_strengths_of_the_body:        'rSecStrengths',
   section_14_recommendations:              'rSecRecommendations',
-} as const satisfies Record<ReportSectionKey, string>
+  section_15_iris_sign_patterns:           'rSecIrisSignPatterns',
+} as const satisfies Record<ReportSectionKey | PractitionerOnlySectionKey, string>
 
-export const REPORT_SECTION_LABELS: Record<ReportSectionKey, string> = {
+export const REPORT_SECTION_LABELS: Record<ReportSectionKey | PractitionerOnlySectionKey, string> = {
   section_1_general_terrain: 'General Terrain',
   section_2_emotional_field: 'Emotional Field',
   section_3_cognitive_nervous: 'Cognitive and Nervous System',
@@ -57,6 +67,7 @@ export const REPORT_SECTION_LABELS: Record<ReportSectionKey, string> = {
   section_12_conclusion: 'Conclusion',
   section_13_strengths_of_the_body: 'Strengths of the Body',
   section_14_recommendations: 'Recommendations',
+  section_15_iris_sign_patterns: 'Detected Iris Sign Patterns',
 }
 
 // Standard (13) + comparison (7) labels, used by the key-driven renderers so a
@@ -76,7 +87,7 @@ export function getOrderedSectionKeys(content: Record<string, string>): string[]
   const present = new Set(Object.keys(content))
   const canonical: readonly string[] = isComparisonReport(content)
     ? COMPARISON_REPORT_SECTION_KEYS
-    : REPORT_SECTION_KEYS
+    : [...REPORT_SECTION_KEYS, ...PRACTITIONER_ONLY_SECTION_KEYS]
   const ordered = canonical.filter((k) => present.has(k))
   for (const k of Object.keys(content)) if (!ordered.includes(k)) ordered.push(k)
   return ordered
