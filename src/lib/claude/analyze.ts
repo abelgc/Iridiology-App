@@ -261,7 +261,7 @@ export async function analyze(options: {
     practitioner_notes: string
   }
   health_questionnaire?: Record<string, unknown> | null
-  language: 'en' | 'es'
+  language: 'en' | 'es' | 'de'
   modelId?: string
   forceLanguage?: boolean
 }): Promise<ReportContent | AnalysisError> {

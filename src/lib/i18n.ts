@@ -169,6 +169,7 @@ export const translations = {
     errorPayloadTooLarge: 'Your photos are too large to upload. Please retake them at a lower resolution.',
     errorIntakeRequired: 'This field is required.',
     errorEmailFormat: 'Please enter a valid email address.',
+    errorFormInvalid: 'Please check the highlighted fields above.',
     // Questionnaire section headers
     qSectionDigestive: 'Digestive System',
     qSectionCardiovascular: 'Cardiovascular System',
@@ -441,6 +442,7 @@ export const translations = {
     errorPayloadTooLarge: 'Tus fotos son demasiado grandes. Por favor vuelve a tomarlas con menor resolución.',
     errorIntakeRequired: 'Este campo es obligatorio.',
     errorEmailFormat: 'Por favor introduce un correo válido.',
+    errorFormInvalid: 'Por favor revisa los campos resaltados arriba.',
     qSectionDigestive: 'Sistema Digestivo',
     qSectionCardiovascular: 'Sistema Cardiovascular',
     qSectionRespiratory: 'Sistema Respiratorio',
@@ -705,6 +707,7 @@ export const translations = {
     errorPayloadTooLarge: 'Deine Fotos sind zu groß. Bitte mache neue Fotos mit einer niedrigeren Auflösung.',
     errorIntakeRequired: 'Dieses Feld ist erforderlich.',
     errorEmailFormat: 'Bitte gib eine gültige E-Mail-Adresse ein.',
+    errorFormInvalid: 'Bitte überprüfe die markierten Felder oben.',
     qSectionDigestive: 'Verdauungssystem',
     qSectionCardiovascular: 'Herz-Kreislauf-System',
     qSectionRespiratory: 'Atemwegssystem',

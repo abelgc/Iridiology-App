@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { healthQuestionnaireSchema } from './health-questionnaire'
 
 export const clientIntakeSchema = z.object({
-  language: z.enum(['en', 'es']),
+  language: z.enum(['en', 'es', 'de']),
   payment_tier: z.enum(['basic_12', 'premium_19_90']),
   full_name: z.string().min(1).max(255),
   email: z.string().email(),

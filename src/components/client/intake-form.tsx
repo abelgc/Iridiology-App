@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useLanguage } from '@/lib/i18n-context'
@@ -18,6 +19,7 @@ export function IntakeForm({
   onSubmit: (data: ClientIntakeInput) => void | Promise<void>
 }) {
   const { lang, t } = useLanguage()
+  const [showValidationError, setShowValidationError] = useState(false)
   const {
     register,
     handleSubmit,
@@ -33,15 +35,28 @@ export function IntakeForm({
     } as any,
   })
 
+  // Blocked submissions must always surface a visible message near the submit
+  // button — never fail silently. This is a deliberate belt-and-braces guard on
+  // top of per-field error text: it fires for every blocked submit, including
+  // cases we can't foresee (the German-locale bug shipped because the one
+  // invalid field was a hidden input, so scrolling to it showed nothing).
   function onInvalid(invalidFields: Record<string, unknown>) {
+    setShowValidationError(true)
     const firstErrorName = Object.keys(invalidFields)[0]
     if (!firstErrorName) return
     const el = document.querySelector(`[name="${firstErrorName}"]`)
-    el?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
+    if (el instanceof HTMLElement && !(el instanceof HTMLInputElement && el.type === 'hidden')) {
+      el.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
+    }
+  }
+
+  async function handleValidSubmit(data: ClientIntakeInput) {
+    setShowValidationError(false)
+    await onSubmit(data)
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit, onInvalid)} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <form onSubmit={handleSubmit(handleValidSubmit, onInvalid)} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <input type="hidden" {...register('language')} value={lang} />
       <input type="hidden" {...register('payment_tier')} value={tier} />
 
@@ -208,6 +223,11 @@ export function IntakeForm({
       </IntakeCard>
 
       {/* Submit bar */}
+      {showValidationError && (
+        <p role="alert" style={{ color: '#b54a3a', fontSize: '13px', margin: 0, textAlign: 'center' }}>
+          {t('errorFormInvalid')}
+        </p>
+      )}
       <div className="submit-bar">
         <div className="secure-note">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14">

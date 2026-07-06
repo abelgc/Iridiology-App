@@ -33,6 +33,11 @@ describe('clientIntakeSchema', () => {
     expect(() => clientIntakeSchema.parse({ ...baseValid, language: 'fr' })).toThrow()
   })
 
+  it('accepts german language', () => {
+    const parsed = clientIntakeSchema.parse({ ...baseValid, language: 'de' })
+    expect(parsed.language).toBe('de')
+  })
+
   it('allows current_medications to be empty', () => {
     const parsed = clientIntakeSchema.parse({ ...baseValid, current_medications: '' })
     expect(parsed.current_medications).toBe('')
