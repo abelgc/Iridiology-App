@@ -1,10 +1,7 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock the Anthropic SDK before importing the module
-const createMock = vi.fn().mockResolvedValue({
-  content: [{ type: 'text', text: 'Your digestive system shows signs of chronic stress.' }],
-  stop_reason: 'end_turn',
-})
+const createMock = vi.fn()
 
 vi.mock('@anthropic-ai/sdk', () => ({
   default: vi.fn(function () {
@@ -18,6 +15,10 @@ vi.mock('@anthropic-ai/sdk', () => ({
 
 import { rewriteReportForClient } from '../writing-pipeline'
 import type { ReportContent } from '@/types/report'
+import { REPORT_SECTION_KEYS } from '@/types/report'
+
+// Stub ANTHROPIC_API_KEY so the early-return in rewriteReportForClient does not fire
+process.env.ANTHROPIC_API_KEY = 'test-anthropic-api-key'
 
 const mockReport: ReportContent = {
   section_1_general_terrain: 'Dense fiber structure in zone 4 indicates hepatic congestion with lacunar formations.',
@@ -34,9 +35,78 @@ const mockReport: ReportContent = {
   section_12_conclusion: 'Overall constitutional weakness with hepatic burden.',
   section_13_strengths_of_the_body: 'Cardiovascular reserve appears adequate.',
   section_14_recommendations: '**Liver**\nVitamins: A, B12, C, E, Niacin\nMinerals: Iron, Potassium\nHerbs: Dandelion root',
+  section_15_iris_sign_patterns: '- **Radii Solaris** (right iris, 6 o\'clock, pancreatic territory): radial irritation pattern.',
 }
 
+const plannerFixture = {
+  dominantPattern: 'hepatic and lymphatic overload',
+  mainDriver: 'sluggish liver filtration',
+  symptomFindingMap: ['fatigue -> adrenal strain'],
+  systemVerdicts: {
+    section_2_emotional_field: { verdict: 'needs-action', clue: 'autonomic tension' },
+    section_3_cognitive_nervous: { verdict: 'needs-action', clue: 'fibre compression' },
+    section_4_immune_lymphatic: { verdict: 'fine', clue: 'lymphatic flow adequate' },
+    section_5_endocrine_hormonal: { verdict: 'needs-action', clue: 'thyroid pigmentation' },
+    section_6_circulatory_cardiorespiratory: { verdict: 'needs-action', clue: 'cardiac zone density' },
+    section_7_hepatic: { verdict: 'needs-action', clue: 'lacunar formations' },
+    section_8_digestive_intestinal: { verdict: 'needs-action', clue: 'reduced fibre density' },
+    section_9_renal_urinary: { verdict: 'fine', clue: 'renal zone stable' },
+    section_10_structural_integumentary: { verdict: 'fine', clue: 'fibres intact' },
+  },
+  crossSystemLinks: ['liver strain compounds digestive load'],
+  safety: { flags: [], constraint: null },
+}
+
+const writerAFixture = {
+  section_1_general_terrain: 'Your body is carrying a hepatic and lymphatic load right now, and a sluggish liver is the main driver behind it.',
+  section_2_emotional_field: 'Your nervous system is holding tension. That shows up as feeling wound up even at rest. Calming practice each day eases it.',
+  section_3_cognitive_nervous: 'Your focus is under pressure right now. That is why concentrating feels harder than usual. Rest and steady sleep bring it back.',
+  section_4_immune_lymphatic: 'Your lymphatic flow is holding up well.',
+  section_5_endocrine_hormonal: 'Your thyroid is working harder than it should. That can leave you tired or cold. Gentle support helps it recover.',
+}
+
+const writerBFixture = {
+  section_6_circulatory_cardiorespiratory: 'Your heart is working under extra strain. That can show up as tiring more easily. Light daily movement lightens the load.',
+  section_7_hepatic: 'Your liver is filtering slower than it should. That is behind the fatigue and heavy feeling after meals. A gentle month of support gets it moving again.',
+  section_8_digestive_intestinal: 'Your digestion is sluggish. That leaves you bloated after eating. More fibre and water ease it.',
+  section_9_renal_urinary: 'Your kidneys are doing their job well.',
+  section_10_structural_integumentary: 'Your structural system is holding steady.',
+}
+
+const writerCFixture = {
+  section_11_detected_axes: 'Your liver strain is compounding the load on your digestion.',
+  section_12_conclusion: 'Your liver is the priority. Support it first and your energy and digestion follow.',
+  section_13_strengths_of_the_body: 'Your lymphatic flow, kidneys, and structural system are all holding up well.',
+}
+
+function defaultCreateImpl(params: any) {
+  const system: string = params.system
+  if (system.includes('You are the Planner')) {
+    return Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(plannerFixture) }] })
+  }
+  if (system.includes('You are Writer A')) {
+    return Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(writerAFixture) }] })
+  }
+  if (system.includes('You are Writer B')) {
+    return Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(writerBFixture) }] })
+  }
+  if (system.includes('You are Writer C')) {
+    return Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(writerCFixture) }] })
+  }
+  return Promise.resolve({ content: [{ type: 'text', text: '{}' }] })
+}
+
+beforeEach(() => {
+  createMock.mockReset()
+  createMock.mockImplementation(defaultCreateImpl)
+})
+
 describe('rewriteReportForClient', () => {
+  it('makes exactly 4 model calls total: one planner and three parallel writers', async () => {
+    await rewriteReportForClient(mockReport, 'en')
+    expect(createMock).toHaveBeenCalledTimes(4)
+  })
+
   it('returns a ReportContent with the same 14 keys', async () => {
     const result = await rewriteReportForClient(mockReport, 'en')
     expect(Object.keys(result)).toHaveLength(14)
@@ -50,6 +120,11 @@ describe('rewriteReportForClient', () => {
     expect(result.section_14_recommendations).toBe(mockReport.section_14_recommendations)
   })
 
+  it('excludes section_15_iris_sign_patterns entirely (practitioner-only, never sent to clients)', async () => {
+    const result = await rewriteReportForClient(mockReport, 'en')
+    expect(Object.keys(result)).not.toContain('section_15_iris_sign_patterns')
+  })
+
   it('returns non-empty strings for each section', async () => {
     const result = await rewriteReportForClient(mockReport, 'en')
     for (const key of Object.keys(result)) {
@@ -57,7 +132,60 @@ describe('rewriteReportForClient', () => {
     }
   })
 
-  it('falls back to original section text if pipeline throws', async () => {
+  it("uses each writer's own text for its assigned sections", async () => {
+    const result = await rewriteReportForClient(mockReport, 'en')
+    expect(result.section_2_emotional_field).toBe(writerAFixture.section_2_emotional_field)
+    expect(result.section_7_hepatic).toBe(writerBFixture.section_7_hepatic)
+    expect(result.section_12_conclusion).toBe(writerCFixture.section_12_conclusion)
+  })
+
+  it('falls back to original section text for every client-facing section if the planner call fails', async () => {
+    createMock.mockImplementation((params: any) => {
+      if (params.system.includes('You are the Planner')) {
+        return Promise.reject(new Error('planner failed'))
+      }
+      throw new Error('a writer must not be called when the planner fails')
+    })
+
+    const result = await rewriteReportForClient(mockReport, 'en')
+
+    for (const key of REPORT_SECTION_KEYS) {
+      expect(result[key]).toBe(mockReport[key])
+    }
+    expect(createMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('falls back to original text only for the sections owned by a failing writer', async () => {
+    createMock.mockImplementation((params: any) => {
+      const system: string = params.system
+      if (system.includes('You are the Planner')) {
+        return Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(plannerFixture) }] })
+      }
+      if (system.includes('You are Writer A')) {
+        return Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(writerAFixture) }] })
+      }
+      if (system.includes('You are Writer B')) {
+        return Promise.reject(new Error('writer B failed'))
+      }
+      if (system.includes('You are Writer C')) {
+        return Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(writerCFixture) }] })
+      }
+      throw new Error('unexpected call')
+    })
+
+    const result = await rewriteReportForClient(mockReport, 'en')
+
+    expect(result.section_1_general_terrain).toBe(writerAFixture.section_1_general_terrain)
+    expect(result.section_6_circulatory_cardiorespiratory).toBe(mockReport.section_6_circulatory_cardiorespiratory)
+    expect(result.section_7_hepatic).toBe(mockReport.section_7_hepatic)
+    expect(result.section_8_digestive_intestinal).toBe(mockReport.section_8_digestive_intestinal)
+    expect(result.section_9_renal_urinary).toBe(mockReport.section_9_renal_urinary)
+    expect(result.section_10_structural_integumentary).toBe(mockReport.section_10_structural_integumentary)
+    expect(result.section_11_detected_axes).toBe(writerCFixture.section_11_detected_axes)
+    expect(createMock).toHaveBeenCalledTimes(4)
+  })
+
+  it('falls back to original section text if the Anthropic client itself throws', async () => {
     const { default: Anthropic } = await import('@anthropic-ai/sdk')
     vi.mocked(Anthropic).mockImplementationOnce(function () {
       return {
