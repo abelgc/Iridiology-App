@@ -115,6 +115,8 @@ export const translations = {
     // payment (mock)
     paymentMockHeading: 'Mock payment (test mode)',
     paymentMockBody: 'Payment is disabled while we test the flow. Click continue to proceed.',
+    // pre-analysis video
+    preAnalysisVideoHeading: 'While we prepare your reading',
     // upload
     uploadTitle: 'Upload your iris photos',
     uploadTutorialHeading: 'How to take the photos',
@@ -391,6 +393,7 @@ export const translations = {
     timeOfDayEvening: 'Tarde/Noche',
     paymentMockHeading: 'Pago simulado (modo de prueba)',
     paymentMockBody: 'El pago está deshabilitado mientras probamos el flujo. Pulsa continuar para proceder.',
+    preAnalysisVideoHeading: 'Mientras preparamos tu lectura',
     uploadTitle: 'Sube tus fotos del iris',
     uploadTutorialHeading: 'Cómo tomar las fotos',
     uploadTutorialInstruction: 'Sigue las instrucciones del video para ambos ojos — primero el derecho, luego el izquierdo.',
@@ -657,6 +660,7 @@ export const translations = {
     timeOfDayEvening: 'Abends',
     paymentMockHeading: 'Testzahlung (Testmodus)',
     paymentMockBody: 'Die Zahlung ist während des Tests deaktiviert. Klicke auf Weiter, um fortzufahren.',
+    preAnalysisVideoHeading: 'Während wir deine Lesung vorbereiten',
     uploadTitle: 'Lade deine Irisfotos hoch',
     uploadTutorialHeading: 'Wie du die Fotos aufnimmst',
     uploadTutorialInstruction: 'Folge den Videoanweisungen für beide Augen — zuerst das rechte, dann das linke.',

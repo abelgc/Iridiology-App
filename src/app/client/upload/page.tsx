@@ -1,12 +1,13 @@
 'use client'
 
 import { Suspense } from 'react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useLanguage } from '@/lib/i18n-context'
 import { UploadTutorial } from '@/components/client/upload-tutorial'
 import { IrisImageUpload } from '@/components/client/iris-image-upload'
 import { AnalysisSplash } from '@/components/client/analysis-splash'
+import { PreAnalysisVideo } from '@/components/client/pre-analysis-video'
 
 function ProgressBar() {
   const { t } = useLanguage()
@@ -39,7 +40,8 @@ function UploadContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
-  const [analyzing, setAnalyzing] = useState(false)
+  const [stage, setStage] = useState<'form' | 'video' | 'analyzing'>('form')
+  const pendingUpload = useRef<Promise<Response> | null>(null)
 
   useEffect(() => {
     if (!token) {
@@ -47,33 +49,40 @@ function UploadContent() {
     }
   }, [token, router])
 
-  async function handleSubmit({ right, left }: { right: string; left: string }) {
+  function handleSubmit({ right, left }: { right: string; left: string }) {
     if (!token) return
-    setAnalyzing(true)
+    pendingUpload.current = fetch('/api/client/upload', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        report_download_token: token,
+        right_eye_base64: right,
+        left_eye_base64: left,
+      }),
+    })
+    setStage('video')
+  }
+
+  async function handleVideoContinue() {
+    const pending = pendingUpload.current
+    if (!pending) return
+    setStage('analyzing')
     try {
-      const res = await fetch('/api/client/upload', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          report_download_token: token,
-          right_eye_base64: right,
-          left_eye_base64: left,
-        }),
-      })
+      const res = await pending
       if (res.status === 413) {
-        setAnalyzing(false)
+        setStage('form')
         alert(t('errorPayloadTooLarge'))
         return
       }
       if (!res.ok) {
-        setAnalyzing(false)
+        setStage('form')
         alert(t('error'))
         return
       }
       // Keep the splash up through navigation — it unmounts when the report loads.
       router.replace(`/client/report/${token}`)
     } catch {
-      setAnalyzing(false)
+      setStage('form')
       alert(t('error'))
     }
   }
@@ -81,7 +90,8 @@ function UploadContent() {
   if (!token) return null
   return (
     <>
-      {analyzing && <AnalysisSplash />}
+      {stage === 'video' && <PreAnalysisVideo onContinue={handleVideoContinue} />}
+      {stage === 'analyzing' && <AnalysisSplash />}
       <ProgressBar />
       <main style={{ maxWidth: 880, margin: '0 auto', padding: '32px 20px 56px' }}>
         <p className="upload-tag">{t('uploadTag')}</p>
