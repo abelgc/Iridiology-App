@@ -109,8 +109,17 @@ Return ONLY a JSON object, no commentary, no markdown fences, with exactly these
 Base every field only on what the report actually supports — never invent a finding, a symptom, or a link that is not there. If you are unsure whether a safety flag applies, leave it out.`
 
 async function runPlanner(client: Anthropic, report: ReportContent): Promise<ClientReportBrief> {
-  const raw = await callClaude(client, PLANNER_SYSTEM_PROMPT, JSON.stringify(report), 1200)
-  return parseBrief(raw)
+  try {
+    const raw = await callClaude(client, PLANNER_SYSTEM_PROMPT, JSON.stringify(report), 1200)
+    return parseBrief(raw)
+  } catch {
+    // One retry: the Planner is a single point of failure for the whole report — a transient
+    // error here would otherwise dump all 14 sections to raw practitioner text on the first
+    // hiccup. Retrying once is cheap relative to the old ~52-call pipeline (worst case: 5 calls
+    // instead of 4, only when the first Planner attempt fails).
+    const raw = await callClaude(client, PLANNER_SYSTEM_PROMPT, JSON.stringify(report), 1200)
+    return parseBrief(raw)
+  }
 }
 
 type WriterGroup = {

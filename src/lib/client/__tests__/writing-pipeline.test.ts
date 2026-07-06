@@ -152,7 +152,37 @@ describe('rewriteReportForClient', () => {
     for (const key of REPORT_SECTION_KEYS) {
       expect(result[key]).toBe(mockReport[key])
     }
-    expect(createMock).toHaveBeenCalledTimes(1)
+    expect(createMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('retries the planner once on failure before giving up, and proceeds normally if the retry succeeds', async () => {
+    let plannerAttempts = 0
+    createMock.mockImplementation((params: any) => {
+      const system: string = params.system
+      if (system.includes('You are the Planner')) {
+        plannerAttempts += 1
+        if (plannerAttempts === 1) {
+          return Promise.reject(new Error('transient planner failure'))
+        }
+        return Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(plannerFixture) }] })
+      }
+      if (system.includes('You are Writer A')) {
+        return Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(writerAFixture) }] })
+      }
+      if (system.includes('You are Writer B')) {
+        return Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(writerBFixture) }] })
+      }
+      if (system.includes('You are Writer C')) {
+        return Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(writerCFixture) }] })
+      }
+      throw new Error('unexpected call')
+    })
+
+    const result = await rewriteReportForClient(mockReport, 'en')
+
+    expect(result.section_1_general_terrain).toBe(writerAFixture.section_1_general_terrain)
+    expect(plannerAttempts).toBe(2)
+    expect(createMock).toHaveBeenCalledTimes(5)
   })
 
   it('falls back to original text only for the sections owned by a failing writer', async () => {
