@@ -110,12 +110,11 @@ export async function POST(request: NextRequest) {
             )
           }
 
-          const clientReportContent = await Promise.race([
+          const clientReportContent = await withTimeout(
             rewriteReportForClient(enhancedReport, row.language),
-            new Promise<ReportContent>((_, reject) =>
-              setTimeout(() => reject(new Error('rewrite_timeout_exceeded')), 120000),
-            ),
-          ])
+            200_000,
+            'rewrite_timeout_exceeded',
+          )
 
           await bg
             .from('reports')
@@ -135,7 +134,7 @@ export async function POST(request: NextRequest) {
             .single()
 
           if (!claimed) {
-            console.log(`[client-stage2] token ${token} — arrived after the timeout guard already marked it failed, discarding late result`)
+            console.log(`[client-stage2] token ${token} — arrived after another invocation already superseded it, discarding late result`)
             return
           }
 
@@ -147,20 +146,12 @@ export async function POST(request: NextRequest) {
       )
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
-      console.error(`\x1b[31m[client-stage2] token ${token} — failed after ${elapsed()}: ${msg}\x1b[0m`)
-      // Guard: same two conditions as the success write — same un-cancelled-loser risk as
-      // stage 1 (see upload/route.ts's catch block for the full explanation).
-      const { data: failClaimed } = await createAdminClient()
-        .from('client_analyses')
-        .update({ status: 'failed', failure_reason: msg })
-        .eq('report_download_token', token)
-        .eq('status', 'stage2_processing')
-        .eq('stage2_started_at', myClaimTs)
-        .select('status')
-        .single()
-      if (!failClaimed) {
-        console.log(`[client-stage2] token ${token} — late failure ignored, row already progressed`)
-      }
+      console.error(`\x1b[31m[client-stage2] token ${token} — content generation failed after ${elapsed()}, leaving for staleness-retry: ${msg}\x1b[0m`)
+      // Deliberately do NOT mark the row 'failed' here: a Jyotish/rewrite/Planner/Writer
+      // failure or timeout must never finalize a degraded or raw-text report. Leaving status
+      // as 'stage2_processing' lets the staleness-driven retry in reports/[token]/route.ts
+      // (bounded to 2 retries, see STALE_STAGE2_CEILING_MS) re-trigger a fresh full attempt
+      // instead of ever serving lower-quality content or failing on the first hiccup.
       return
     }
 

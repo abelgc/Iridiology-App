@@ -1,6 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { ReportContent, ReportSectionKey } from '@/types/report'
-import { REPORT_SECTION_KEYS, PRACTITIONER_ONLY_SECTION_KEYS } from '@/types/report'
 
 const MODEL = 'claude-sonnet-4-6'
 
@@ -209,23 +208,19 @@ async function runWriter(
   client: Anthropic,
   brief: ClientReportBrief,
   group: WriterGroup,
-  lang: string,
-  fallback: ReportContent
+  lang: string
 ): Promise<Partial<ReportContent>> {
-  try {
-    const raw = await callClaude(client, buildWriterPrompt(group, lang), JSON.stringify(brief), 1600)
-    const parsed = JSON.parse(stripJsonFence(raw))
-    const result: Partial<ReportContent> = {}
-    for (const key of group.keys) {
-      const value = parsed[key]
-      result[key] = typeof value === 'string' && value.trim().length > 0 ? value : fallback[key]
+  const raw = await callClaude(client, buildWriterPrompt(group, lang), JSON.stringify(brief), 1600)
+  const parsed = JSON.parse(stripJsonFence(raw))
+  const result: Partial<ReportContent> = {}
+  for (const key of group.keys) {
+    const value = parsed[key]
+    if (typeof value !== 'string' || value.trim().length === 0) {
+      throw new Error(`writer ${group.role} returned no content for ${key}`)
     }
-    return result
-  } catch {
-    const result: Partial<ReportContent> = {}
-    for (const key of group.keys) result[key] = fallback[key]
-    return result
+    result[key] = value
   }
+  return result
 }
 
 export async function rewriteReportForClient(
@@ -234,33 +229,17 @@ export async function rewriteReportForClient(
 ): Promise<ReportContent> {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
-    // Practitioner-only sections must never reach client_report_content, even on this
-    // early-exit path where no rewriting happens at all.
-    const safe = { ...report }
-    for (const key of PRACTITIONER_ONLY_SECTION_KEYS) delete safe[key]
-    return safe
+    // No silent raw-text fallback: a missing key must surface as a failure so stage2's
+    // retry-via-requeue picks it up, rather than quietly shipping unrewritten clinical text.
+    throw new Error('ANTHROPIC_API_KEY not configured')
   }
 
-  const client = new Anthropic({ apiKey })
+  const client = new Anthropic({ apiKey, maxRetries: 1, timeout: 90_000 })
 
-  let brief: ClientReportBrief | null = null
-  try {
-    brief = await runPlanner(client, report)
-  } catch {
-    brief = null
-  }
-
-  if (!brief) {
-    // No brief means the three writers have nothing to work from — fall back to the raw,
-    // practitioner-voiced text for every client-facing section rather than spending 3 more
-    // calls writing from nothing.
-    const safe: ReportContent = {}
-    for (const key of REPORT_SECTION_KEYS) safe[key] = report[key]
-    return safe
-  }
+  const brief = await runPlanner(client, report)
 
   const [a, b, c] = await Promise.all(
-    WRITER_GROUPS.map((group) => runWriter(client, brief, group, lang, report))
+    WRITER_GROUPS.map((group) => runWriter(client, brief, group, lang))
   )
 
   return {

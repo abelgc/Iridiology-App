@@ -15,7 +15,6 @@ vi.mock('@anthropic-ai/sdk', () => ({
 
 import { rewriteReportForClient } from '../writing-pipeline'
 import type { ReportContent } from '@/types/report'
-import { REPORT_SECTION_KEYS } from '@/types/report'
 
 // Stub ANTHROPIC_API_KEY so the early-return in rewriteReportForClient does not fire
 process.env.ANTHROPIC_API_KEY = 'test-anthropic-api-key'
@@ -139,7 +138,7 @@ describe('rewriteReportForClient', () => {
     expect(result.section_12_conclusion).toBe(writerCFixture.section_12_conclusion)
   })
 
-  it('falls back to original section text for every client-facing section if the planner call fails', async () => {
+  it('throws when the planner call fails after its retry, instead of falling back to raw text', async () => {
     createMock.mockImplementation((params: any) => {
       if (params.system.includes('You are the Planner')) {
         return Promise.reject(new Error('planner failed'))
@@ -147,11 +146,7 @@ describe('rewriteReportForClient', () => {
       throw new Error('a writer must not be called when the planner fails')
     })
 
-    const result = await rewriteReportForClient(mockReport, 'en')
-
-    for (const key of REPORT_SECTION_KEYS) {
-      expect(result[key]).toBe(mockReport[key])
-    }
+    await expect(rewriteReportForClient(mockReport, 'en')).rejects.toThrow('planner failed')
     expect(createMock).toHaveBeenCalledTimes(2)
   })
 
@@ -185,7 +180,7 @@ describe('rewriteReportForClient', () => {
     expect(createMock).toHaveBeenCalledTimes(5)
   })
 
-  it('falls back to original text only for the sections owned by a failing writer', async () => {
+  it('throws when a writer group fails, instead of falling back for just that group', async () => {
     createMock.mockImplementation((params: any) => {
       const system: string = params.system
       if (system.includes('You are the Planner')) {
@@ -203,19 +198,10 @@ describe('rewriteReportForClient', () => {
       throw new Error('unexpected call')
     })
 
-    const result = await rewriteReportForClient(mockReport, 'en')
-
-    expect(result.section_1_general_terrain).toBe(writerAFixture.section_1_general_terrain)
-    expect(result.section_6_circulatory_cardiorespiratory).toBe(mockReport.section_6_circulatory_cardiorespiratory)
-    expect(result.section_7_hepatic).toBe(mockReport.section_7_hepatic)
-    expect(result.section_8_digestive_intestinal).toBe(mockReport.section_8_digestive_intestinal)
-    expect(result.section_9_renal_urinary).toBe(mockReport.section_9_renal_urinary)
-    expect(result.section_10_structural_integumentary).toBe(mockReport.section_10_structural_integumentary)
-    expect(result.section_11_detected_axes).toBe(writerCFixture.section_11_detected_axes)
-    expect(createMock).toHaveBeenCalledTimes(4)
+    await expect(rewriteReportForClient(mockReport, 'en')).rejects.toThrow('writer B failed')
   })
 
-  it('falls back to original section text if the Anthropic client itself throws', async () => {
+  it('throws if the Anthropic client itself throws', async () => {
     const { default: Anthropic } = await import('@anthropic-ai/sdk')
     vi.mocked(Anthropic).mockImplementationOnce(function () {
       return {
@@ -225,8 +211,16 @@ describe('rewriteReportForClient', () => {
       } as any
     })
 
-    const result = await rewriteReportForClient(mockReport, 'en')
-    // Should not throw; falls back gracefully
-    expect(result.section_1_general_terrain).toBeDefined()
+    await expect(rewriteReportForClient(mockReport, 'en')).rejects.toThrow()
+  })
+
+  it('throws when ANTHROPIC_API_KEY is not configured, instead of silently returning raw text', async () => {
+    const original = process.env.ANTHROPIC_API_KEY
+    delete process.env.ANTHROPIC_API_KEY
+    try {
+      await expect(rewriteReportForClient(mockReport, 'en')).rejects.toThrow('ANTHROPIC_API_KEY not configured')
+    } finally {
+      process.env.ANTHROPIC_API_KEY = original
+    }
   })
 })

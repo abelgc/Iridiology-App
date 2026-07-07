@@ -158,13 +158,9 @@ describe('POST /api/client/internal/stage2', () => {
     expect(mockSendEmail).not.toHaveBeenCalled()
   })
 
-  it('does not throw and treats the failed-write CAS as a no-op when the row already progressed', async () => {
+  it('leaves the row untouched for staleness-driven retry when content generation fails, instead of failing or degrading', async () => {
     currentRow = { ...baseRow }
-    // call 0 = claim (succeeds, default); rewrite rejects before any further update call,
-    // sending control to the catch block, whose guarded 'failed' write is call 1 — simulate
-    // it losing the race, as if another invocation had already completed this run.
     mockRewrite.mockRejectedValue(new Error('rewrite boom'))
-    updateCallResults = [undefined, { data: null, error: null }]
     const { POST } = await import('../route')
     const res = await POST(new Request('http://test', {
       method: 'POST',
@@ -174,6 +170,30 @@ describe('POST /api/client/internal/stage2', () => {
     expect(res.status).toBe(200)
 
     await expect(waitUntilPromise).resolves.toBeUndefined()
+    // Only the initial claim update ran (call 0) — no 'reports' write, no 'completed' write,
+    // no 'failed' write: the row is left exactly as-is for the staleness-driven retry in
+    // reports/[token]/route.ts to pick up.
+    expect(updateCallIndex).toBe(1)
+    expect(mockGeneratePdf).not.toHaveBeenCalled()
+    expect(mockSendEmail).not.toHaveBeenCalled()
+  })
+
+  it('leaves the row untouched for staleness-driven retry when the Jyotish enhancement fails', async () => {
+    currentRow = { ...baseRow }
+    mockShouldJyotish.mockReturnValueOnce(true)
+    mockEnhance.mockRejectedValueOnce(new Error('jyotish boom'))
+    const { POST } = await import('../route')
+    const res = await POST(new Request('http://test', {
+      method: 'POST',
+      headers: { 'x-internal-trigger-secret': 'test-secret' },
+      body: JSON.stringify({ report_download_token: 'tok-1' }),
+    }) as any)
+    expect(res.status).toBe(200)
+
+    await expect(waitUntilPromise).resolves.toBeUndefined()
+    expect(updateCallIndex).toBe(1)
+    expect(mockRewrite).not.toHaveBeenCalled()
+    expect(mockGeneratePdf).not.toHaveBeenCalled()
     expect(mockSendEmail).not.toHaveBeenCalled()
   })
 })
