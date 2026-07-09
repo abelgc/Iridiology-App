@@ -27,10 +27,11 @@ export function PreAnalysisVideo({ onContinue }: { onContinue: () => void }) {
         zIndex: 200,
         background: '#f4ead8',
         overflowY: 'auto',
+        minHeight: '100dvh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 'clamp(20px, 4vh, 48px) clamp(16px, 4vw, 40px)',
+        padding: 'clamp(16px, 4vh, 48px) clamp(12px, 4vw, 40px)',
       }}
     >
       <style>{`
@@ -143,8 +144,9 @@ export function PreAnalysisVideo({ onContinue }: { onContinue: () => void }) {
         .pav-frame {
           position: relative;
           aspect-ratio: 9 / 16;
-          height: min(64vh, 540px);
-          max-width: 300px;
+          width: 100%;
+          max-width: min(300px, 80vw);
+          max-height: min(62vh, 540px);
           margin: 0 auto;
           border-radius: 20px;
           overflow: hidden;
@@ -168,12 +170,13 @@ export function PreAnalysisVideo({ onContinue }: { onContinue: () => void }) {
           border-radius: 50%;
           animation: pavSpin 0.9s linear infinite;
         }
-        .pav-iframe {
+        .pav-video {
           position: absolute;
           inset: 0;
           z-index: 1;
           width: 100%;
           height: 100%;
+          object-fit: cover;
           border: 0;
         }
         .pav-caption {
@@ -238,13 +241,27 @@ export function PreAnalysisVideo({ onContinue }: { onContinue: () => void }) {
         }
 
         @media (max-width: 760px) {
-          .pav-card { grid-template-columns: 1fr; }
+          .pav-card {
+            grid-template-columns: 1fr;
+            gap: 24px;
+            padding: clamp(20px, 5vw, 32px);
+            border-radius: 22px;
+          }
           .pav-left { text-align: center; }
           .pav-eyebrow { justify-content: center; }
           .pav-lead { margin-left: auto; margin-right: auto; }
           .pav-steps { margin-left: auto; margin-right: auto; width: fit-content; text-align: left; }
           .pav-right { order: -1; }
-          .pav-frame { height: min(52vh, 460px); }
+          .pav-cta { margin-top: 22px; }
+        }
+
+        @media (max-width: 430px) {
+          .pav-card { padding: 18px 16px; gap: 18px; border-radius: 18px; }
+          .pav-heading { font-size: 24px; margin-bottom: 10px; }
+          .pav-lead { font-size: 14.5px; margin-bottom: 16px; }
+          .pav-steps { gap: 10px; margin-bottom: 16px; }
+          .pav-frame { max-height: 54vh; }
+          .pav-continue { width: 100%; max-width: 320px; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -288,12 +305,14 @@ export function PreAnalysisVideo({ onContinue }: { onContinue: () => void }) {
             <div className="pav-loading">
               <div className="pav-spinner" />
             </div>
-            <iframe
-              src="https://www.youtube.com/embed/Gq9X-V8d3bc?autoplay=1&mute=1&playsinline=1&rel=0"
-              title="Iris analysis intro video"
-              allow="autoplay; encrypted-media; picture-in-picture"
-              allowFullScreen
-              className="pav-iframe"
+            <video
+              className="pav-video"
+              src="/intro.mp4"
+              poster="/intro-poster.jpg"
+              autoPlay
+              muted
+              loop
+              playsInline
             />
             <div className="pav-caption">
               <span className="pav-caption-badge">N</span>
