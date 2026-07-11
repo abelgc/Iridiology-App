@@ -13,7 +13,7 @@ vi.mock('@anthropic-ai/sdk', () => ({
   }),
 }))
 
-import { rewriteReportForClient } from '../writing-pipeline'
+import { rewriteReportForClient, firstNameFrom } from '../writing-pipeline'
 import type { ReportContent } from '@/types/report'
 
 // Stub ANTHROPIC_API_KEY so the early-return in rewriteReportForClient does not fire
@@ -53,11 +53,12 @@ const plannerFixture = {
     section_10_structural_integumentary: { verdict: 'fine', clue: 'fibres intact' },
   },
   crossSystemLinks: ['liver strain compounds digestive load'],
+  knownDiagnoses: [],
   safety: { flags: [], constraint: null },
 }
 
 const writerAFixture = {
-  section_1_general_terrain: 'Your body is carrying a hepatic and lymphatic load right now, and a sluggish liver is the main driver behind it.',
+  section_1_general_terrain: 'Jane, your body is carrying a hepatic and lymphatic load right now, and a sluggish liver is the main driver behind it.',
   section_2_emotional_field: 'Your nervous system is holding tension. That shows up as feeling wound up even at rest. Calming practice each day eases it.',
   section_3_cognitive_nervous: 'Your focus is under pressure right now. That is why concentrating feels harder than usual. Rest and steady sleep bring it back.',
   section_4_immune_lymphatic: 'Your lymphatic flow is holding up well.',
@@ -100,14 +101,25 @@ beforeEach(() => {
   createMock.mockImplementation(defaultCreateImpl)
 })
 
+describe('firstNameFrom', () => {
+  it('returns the first token of a full name', () => {
+    expect(firstNameFrom('Maria Lopez')).toBe('Maria')
+  })
+
+  it('returns an empty string for null or blank input', () => {
+    expect(firstNameFrom(null)).toBe('')
+    expect(firstNameFrom('   ')).toBe('')
+  })
+})
+
 describe('rewriteReportForClient', () => {
   it('makes exactly 4 model calls total: one planner and three parallel writers', async () => {
-    await rewriteReportForClient(mockReport, 'en')
+    await rewriteReportForClient(mockReport, 'en', 'Jane')
     expect(createMock).toHaveBeenCalledTimes(4)
   })
 
   it('returns a ReportContent with the same 14 keys', async () => {
-    const result = await rewriteReportForClient(mockReport, 'en')
+    const result = await rewriteReportForClient(mockReport, 'en', 'Jane')
     expect(Object.keys(result)).toHaveLength(14)
     expect(result.section_1_general_terrain).toBeDefined()
     expect(result.section_12_conclusion).toBeDefined()
@@ -115,27 +127,42 @@ describe('rewriteReportForClient', () => {
   })
 
   it('passes section_14_recommendations through unchanged, without calling the rewrite pipeline', async () => {
-    const result = await rewriteReportForClient(mockReport, 'en')
+    const result = await rewriteReportForClient(mockReport, 'en', 'Jane')
     expect(result.section_14_recommendations).toBe(mockReport.section_14_recommendations)
   })
 
   it('excludes section_15_iris_sign_patterns entirely (practitioner-only, never sent to clients)', async () => {
-    const result = await rewriteReportForClient(mockReport, 'en')
+    const result = await rewriteReportForClient(mockReport, 'en', 'Jane')
     expect(Object.keys(result)).not.toContain('section_15_iris_sign_patterns')
   })
 
   it('returns non-empty strings for each section', async () => {
-    const result = await rewriteReportForClient(mockReport, 'en')
+    const result = await rewriteReportForClient(mockReport, 'en', 'Jane')
     for (const key of Object.keys(result)) {
       expect(result[key as keyof typeof result].length).toBeGreaterThan(0)
     }
   })
 
   it("uses each writer's own text for its assigned sections", async () => {
-    const result = await rewriteReportForClient(mockReport, 'en')
+    const result = await rewriteReportForClient(mockReport, 'en', 'Jane')
     expect(result.section_2_emotional_field).toBe(writerAFixture.section_2_emotional_field)
     expect(result.section_7_hepatic).toBe(writerBFixture.section_7_hepatic)
     expect(result.section_12_conclusion).toBe(writerCFixture.section_12_conclusion)
+  })
+
+  it('carries the given first name straight into the brief for Writer A', async () => {
+    await rewriteReportForClient(mockReport, 'en', 'Maria')
+    const writerACall = createMock.mock.calls.find(([params]) => params.system.includes('You are Writer A'))
+    expect(writerACall).toBeDefined()
+    const briefSent = JSON.parse(writerACall![0].messages[0].content)
+    expect(briefSent.clientFirstName).toBe('Maria')
+  })
+
+  it('handles an empty first name gracefully (legacy rows without a name)', async () => {
+    await rewriteReportForClient(mockReport, 'en', '')
+    const writerACall = createMock.mock.calls.find(([params]) => params.system.includes('You are Writer A'))
+    const briefSent = JSON.parse(writerACall![0].messages[0].content)
+    expect(briefSent.clientFirstName).toBe('')
   })
 
   it('throws when the planner call fails after its retry, instead of falling back to raw text', async () => {
@@ -146,7 +173,7 @@ describe('rewriteReportForClient', () => {
       throw new Error('a writer must not be called when the planner fails')
     })
 
-    await expect(rewriteReportForClient(mockReport, 'en')).rejects.toThrow('planner failed')
+    await expect(rewriteReportForClient(mockReport, 'en', 'Jane')).rejects.toThrow('planner failed')
     expect(createMock).toHaveBeenCalledTimes(2)
   })
 
@@ -173,7 +200,7 @@ describe('rewriteReportForClient', () => {
       throw new Error('unexpected call')
     })
 
-    const result = await rewriteReportForClient(mockReport, 'en')
+    const result = await rewriteReportForClient(mockReport, 'en', 'Jane')
 
     expect(result.section_1_general_terrain).toBe(writerAFixture.section_1_general_terrain)
     expect(plannerAttempts).toBe(2)
@@ -198,7 +225,7 @@ describe('rewriteReportForClient', () => {
       throw new Error('unexpected call')
     })
 
-    await expect(rewriteReportForClient(mockReport, 'en')).rejects.toThrow('writer B failed')
+    await expect(rewriteReportForClient(mockReport, 'en', 'Jane')).rejects.toThrow('writer B failed')
   })
 
   it('throws if the Anthropic client itself throws', async () => {
@@ -211,14 +238,14 @@ describe('rewriteReportForClient', () => {
       } as any
     })
 
-    await expect(rewriteReportForClient(mockReport, 'en')).rejects.toThrow()
+    await expect(rewriteReportForClient(mockReport, 'en', 'Jane')).rejects.toThrow()
   })
 
   it('throws when ANTHROPIC_API_KEY is not configured, instead of silently returning raw text', async () => {
     const original = process.env.ANTHROPIC_API_KEY
     delete process.env.ANTHROPIC_API_KEY
     try {
-      await expect(rewriteReportForClient(mockReport, 'en')).rejects.toThrow('ANTHROPIC_API_KEY not configured')
+      await expect(rewriteReportForClient(mockReport, 'en', 'Jane')).rejects.toThrow('ANTHROPIC_API_KEY not configured')
     } finally {
       process.env.ANTHROPIC_API_KEY = original
     }

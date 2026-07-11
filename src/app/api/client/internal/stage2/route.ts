@@ -6,7 +6,7 @@ import {
   enhanceEmotionalFieldWithJyotish,
 } from '@/lib/claude/enhance-emotional-field'
 import { sendReportEmail } from '@/lib/client/email'
-import { rewriteReportForClient } from '@/lib/client/writing-pipeline'
+import { rewriteReportForClient, firstNameFrom } from '@/lib/client/writing-pipeline'
 import { generateReportPdf } from '@/lib/client/pdf'
 import { waitUntil } from '@vercel/functions'
 import { withTimeout } from '@/lib/utils'
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
           }
 
           const clientReportContent = await withTimeout(
-            rewriteReportForClient(enhancedReport, row.language),
+            rewriteReportForClient(enhancedReport, row.language, firstNameFrom(row.full_name ?? null)),
             200_000,
             'rewrite_timeout_exceeded',
           )

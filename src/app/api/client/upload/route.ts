@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
             rightIrisBase64: extractBase64(parsed.data.right_eye_base64),
             leftIrisBase64: extractBase64(parsed.data.left_eye_base64),
             patientData: {
-              full_name: row.email ?? 'Client',
+              full_name: row.full_name ?? row.email ?? 'Client',
               date_of_birth: row.date_of_birth,
               gender: null,
               general_history: '',

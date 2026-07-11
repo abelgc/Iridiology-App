@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
       amount: pricing.amount,
       currency: pricing.currency,
       email: data.email,
+      full_name: data.full_name,
       main_complaint: data.main_complaint,
       symptom_duration: data.symptom_duration,
       current_medications: data.current_medications || null,

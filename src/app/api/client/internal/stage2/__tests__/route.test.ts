@@ -45,6 +45,10 @@ vi.mock('@/lib/claude/enhance-emotional-field', () => ({
 }))
 vi.mock('@/lib/client/writing-pipeline', () => ({
   rewriteReportForClient: (...args: any[]) => mockRewrite(...args),
+  firstNameFrom: (fullName: string | null) => {
+    const trimmed = fullName?.trim()
+    return trimmed ? trimmed.split(/\s+/)[0] : ''
+  },
 }))
 vi.mock('@/lib/client/pdf', () => ({
   generateReportPdf: (...args: any[]) => mockGeneratePdf(...args),
