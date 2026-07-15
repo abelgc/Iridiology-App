@@ -5,8 +5,8 @@ import type { AIProvider } from './types'
 import type { PaymentTier } from '@/types/client-analysis'
 
 export const TIER_MODELS: Record<PaymentTier, { anthropic: string; openai: string }> = {
-  premium_19_90: { anthropic: 'claude-sonnet-4-6', openai: 'gpt-4o' },
-  basic_12: { anthropic: 'claude-haiku-4-5-20251001', openai: 'gpt-4.1-mini' },
+  premium_19_90: { anthropic: 'claude-sonnet-5', openai: 'gpt-5.6' },
+  basic_12: { anthropic: 'claude-haiku-4-5-20251001', openai: 'gpt-5.6-luna' },
 }
 
 async function getSettings(): Promise<Record<string, string>> {
@@ -24,12 +24,12 @@ export async function getAIProvider(): Promise<AIProvider> {
 
   if (activeProvider === 'openai') {
     const key = map['openai_api_key'] || process.env.OPENAI_API_KEY || ''
-    const model = map['openai_model'] || process.env.OPENAI_MODEL || 'gpt-4o'
+    const model = map['openai_model'] || process.env.OPENAI_MODEL || 'gpt-5.6'
     return new OpenAIProvider(key, model)
   }
 
   const key = map['anthropic_api_key'] || process.env.ANTHROPIC_API_KEY || ''
-  const model = map['anthropic_model'] || 'claude-sonnet-4-6'
+  const model = map['anthropic_model'] || 'claude-sonnet-5'
   return new AnthropicProvider(key, model)
 }
 
@@ -47,8 +47,8 @@ export async function getBothProviders(): Promise<{
   if (!anthropicKey || !openaiKey) return null
 
   return {
-    anthropic: new AnthropicProvider(anthropicKey, map['anthropic_model'] || 'claude-sonnet-4-6'),
-    openai: new OpenAIProvider(openaiKey, map['openai_model'] || 'gpt-4o'),
+    anthropic: new AnthropicProvider(anthropicKey, map['anthropic_model'] || 'claude-sonnet-5'),
+    openai: new OpenAIProvider(openaiKey, map['openai_model'] || 'gpt-5.6'),
   }
 }
 

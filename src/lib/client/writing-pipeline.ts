@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { ReportContent, ReportSectionKey } from '@/types/report'
 
-const MODEL = 'claude-sonnet-4-6'
+const MODEL = 'claude-sonnet-5'
 
 function languageName(lang: string): string {
   if (lang === 'de') return 'German'
@@ -33,6 +33,7 @@ async function callClaude(
   const response = await client.messages.create({
     model: MODEL,
     max_tokens: maxTokens,
+    thinking: { type: 'disabled' },
     system: systemPrompt,
     messages: [{ role: 'user', content: userContent }],
   })

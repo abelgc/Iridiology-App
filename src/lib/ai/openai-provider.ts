@@ -5,7 +5,7 @@ export class OpenAIProvider implements AIProvider {
   private client: OpenAI
   private model: string
 
-  constructor(apiKey: string, model = 'gpt-4o') {
+  constructor(apiKey: string, model = 'gpt-5.6') {
     // No SDK retries (each retry would re-run a long generation and blow the
     // function budget). Streaming below keeps long generations alive, so the
     // timeout only guards against a truly stalled connection.

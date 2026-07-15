@@ -300,14 +300,14 @@ describe('Claude Prompts', () => {
   })
 
   describe('TIER_MODELS', () => {
-    it('maps basic_12 to haiku and gpt-4.1-mini', () => {
+    it('maps basic_12 to haiku and gpt-5.6-luna', () => {
       expect(TIER_MODELS.basic_12.anthropic).toMatch(/haiku/i)
-      expect(TIER_MODELS.basic_12.openai).toBe('gpt-4.1-mini')
+      expect(TIER_MODELS.basic_12.openai).toBe('gpt-5.6-luna')
     })
 
-    it('maps premium_19_90 to sonnet and gpt-4o', () => {
+    it('maps premium_19_90 to sonnet and gpt-5.6', () => {
       expect(TIER_MODELS.premium_19_90.anthropic).toMatch(/sonnet/i)
-      expect(TIER_MODELS.premium_19_90.openai).toBe('gpt-4o')
+      expect(TIER_MODELS.premium_19_90.openai).toBe('gpt-5.6')
     })
   })
 
