@@ -127,7 +127,9 @@ Return ONLY a JSON object, no commentary, no markdown fences, with exactly these
     "constraint": string | null — "gentle support only, no fasting or aggressive protocols" if flags is non-empty, otherwise null
   }
 }
-Base every field only on what the report actually supports — never invent a finding, a symptom, a diagnosis, or a link that is not there. If you are unsure whether a safety flag or a diagnosis applies, leave it out.`
+Base every field only on what the report actually supports — never invent a finding, a symptom, a diagnosis, or a link that is not there. If you are unsure whether a safety flag or a diagnosis applies, leave it out.
+
+For "section_2_emotional_field" specifically: if the source text names a specific chakra (e.g. "Root Chakra") and/or a specific emotion to work with, the clue MUST quote both names verbatim — never paraphrase, generalize, or drop them. This is a paid detail the client is specifically promised.`
 
 async function runPlanner(
   client: Anthropic,
@@ -226,6 +228,8 @@ function sectionInstructions(key: ReportSectionKey, lang: string): string {
       return `section_12_conclusion: tell the recovery story and the order of priorities — the main priorities and a clear order of support — using brief.dominantPattern, brief.mainDriver, and brief.systemVerdicts. Introduce no new findings, do not repeat the other sections. If brief.safety.flags is non-empty, end this section with exactly this line, in ${languageName(lang)}: "${safetyLine(lang)}"`
     case 'section_13_strengths_of_the_body':
       return 'section_13_strengths_of_the_body: name what\'s holding up well, drawn from any brief.systemVerdicts entries marked "fine" — reserve, adaptability, capacity to respond. Never write "healthy", "fine", "undamaged", or "disease-free" — say what you\'d expect from a body with real reserve instead, e.g. "your lungs show few patterns and good reserve". Motivating and true.'
+    case 'section_2_emotional_field':
+      return 'section_2_emotional_field: use brief.systemVerdicts["section_2_emotional_field"] — a short plain verdict, then what it causes for the client, then the direction of the fix. Cover the system even when its verdict is "fine" (one honest line). If the clue names a specific chakra and/or emotion to work with, state both explicitly by name as a clear, personal recommendation — this is a paid detail the client is specifically promised, never fold it anonymously into generic language. If brief.knownDiagnoses includes a condition that belongs to this system, reference it only as history already under a doctor\'s care per the KNOWN DIAGNOSES rule below — never as something this reading found.'
     default:
       return `${key}: use brief.systemVerdicts["${key}"] — a short plain verdict, then what it causes for the client, then the direction of the fix. Cover the system even when its verdict is "fine" (one honest line). If brief.knownDiagnoses includes a condition that belongs to this system, reference it only as history already under a doctor's care per the KNOWN DIAGNOSES rule below — never as something this reading found.`
   }

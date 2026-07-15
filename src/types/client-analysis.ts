@@ -9,6 +9,6 @@ export type ClientAnalysisStatus =
   | 'failed'
 
 export const TIER_PRICING: Record<PaymentTier, { amount: number; currency: 'EUR' }> = {
-  basic_12: { amount: 12.0, currency: 'EUR' },
-  premium_19_90: { amount: 19.9, currency: 'EUR' },
+  basic_12: { amount: 19.9, currency: 'EUR' },
+  premium_19_90: { amount: 29.9, currency: 'EUR' },
 }

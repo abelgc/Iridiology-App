@@ -6,7 +6,7 @@ import remarkGfm from 'remark-gfm'
 import { REPORT_SECTION_KEYS, REPORT_SECTION_I18N_KEYS } from '@/types/report'
 import { useLanguage } from '@/lib/i18n-context'
 import type { TranslationKey } from '@/lib/i18n'
-import { filterRecommendationsForTier } from '@/lib/client/filter-recommendations'
+import { consolidateRecommendationsForTier } from '@/lib/client/filter-recommendations'
 
 export function ClientReportViewer({
   report,
@@ -62,7 +62,7 @@ export function ClientReportViewer({
             const label = t(REPORT_SECTION_I18N_KEYS[key] as TranslationKey)
             const content =
               key === 'section_14_recommendations'
-                ? filterRecommendationsForTier(report[key], isPremium)
+                ? consolidateRecommendationsForTier(report[key], isPremium)
                 : report[key]!
             return (
               <section key={key} id={`report-section-${key}`}>

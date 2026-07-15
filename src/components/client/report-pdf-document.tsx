@@ -9,7 +9,7 @@ import type { ReportContent, ReportSectionKey } from '@/types/report'
 import { REPORT_SECTION_KEYS, REPORT_SECTION_I18N_KEYS } from '@/types/report'
 import { translations } from '@/lib/i18n'
 import type { Lang } from '@/lib/i18n'
-import { filterRecommendationsForTier } from '@/lib/client/filter-recommendations'
+import { consolidateRecommendationsForTier } from '@/lib/client/filter-recommendations'
 
 const styles = StyleSheet.create({
   page: {
@@ -72,7 +72,7 @@ export function ReportPdfDocument({ report, generatedAt, lang, isPremium = false
         {REPORT_SECTION_KEYS.map((key: ReportSectionKey) => {
           const body =
             key === 'section_14_recommendations'
-              ? filterRecommendationsForTier(report[key], isPremium)
+              ? consolidateRecommendationsForTier(report[key], isPremium)
               : report[key]
           return (
             <View key={key} style={styles.section}>

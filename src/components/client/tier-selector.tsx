@@ -45,7 +45,9 @@ export function TierSelector() {
               {t('tierBasicDescription')}
             </p>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px dashed #d8c9ad' }}>
-              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '44px', lineHeight: 1, letterSpacing: '-0.02em', color: '#3d4a2a' }}>€12</span>
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '44px', lineHeight: 1, letterSpacing: '-0.02em', color: '#3d4a2a' }}>
+                €19<span style={{ fontSize: '22px', fontWeight: 500, opacity: 0.8 }}>.90</span>
+              </span>
               <span style={{ fontSize: '13px', color: '#5d4f3f' }}>{t('tierPriceSuffix')}</span>
             </div>
             <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '22px' }}>
@@ -81,7 +83,7 @@ export function TierSelector() {
               </p>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px dashed rgba(244,234,216,0.18)' }}>
                 <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '44px', lineHeight: 1, letterSpacing: '-0.02em', color: '#d4a04a' }}>
-                  €19<span style={{ fontSize: '22px', fontWeight: 500, opacity: 0.8 }}>.90</span>
+                  €29<span style={{ fontSize: '22px', fontWeight: 500, opacity: 0.8 }}>.90</span>
                 </span>
                 <span style={{ fontSize: '13px', color: 'rgba(244,234,216,0.6)' }}>{t('tierPriceSuffix')}</span>
               </div>
@@ -123,7 +125,6 @@ export function TierSelector() {
             [t('compareRow2'), true, true],
             [t('compareRow3'), false, true],
             [t('compareRow4'), false, true],
-            [t('compareRow5'), false, true],
             [t('compareRow6'), true, true],
             [t('compareRow7'), false, true],
           ] as [string, boolean, boolean][]).map(([label, basic, premium], i) => (
@@ -139,8 +140,8 @@ export function TierSelector() {
           ))}
           <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr', alignItems: 'center', padding: '13px 16px', fontSize: '13px' }}>
             <span style={{ color: '#2a1f14', fontWeight: 500 }}>{t('compareRowPrice')}</span>
-            <span style={{ textAlign: 'center', fontFamily: 'var(--font-display)', fontSize: '17px', color: '#3d4a2a', fontWeight: 600 }}>€12</span>
-            <span style={{ textAlign: 'center', fontFamily: 'var(--font-display)', fontSize: '17px', color: '#a85428', fontWeight: 600 }}>€19.90</span>
+            <span style={{ textAlign: 'center', fontFamily: 'var(--font-display)', fontSize: '17px', color: '#3d4a2a', fontWeight: 600 }}>€19.90</span>
+            <span style={{ textAlign: 'center', fontFamily: 'var(--font-display)', fontSize: '17px', color: '#a85428', fontWeight: 600 }}>€29.90</span>
           </div>
         </div>
       </section>

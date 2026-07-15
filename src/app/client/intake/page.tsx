@@ -45,7 +45,7 @@ function IntakeContent() {
         <div style={{ position: 'relative', maxWidth: '720px', margin: '0 auto' }}>
           <div className={`plan-pill${isPremium ? ' is-premium' : ''}`}>
             <span className="plan-pill-badge">
-              {isPremium ? 'Premium · €19.90' : 'Essential · €12'}
+              {isPremium ? `${t('tierPremiumTag')} · ${t('tierPremiumPrice')}` : `${t('tierBasicTag')} · ${t('tierBasicPrice')}`}
             </span>
             <span>{t('intakePlanSuffix')}</span>
           </div>
