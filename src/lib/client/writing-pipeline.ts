@@ -47,9 +47,12 @@ async function callClaude(
 // Claude sometimes wraps JSON in a markdown fence despite instructions not to — strip it
 // before parsing rather than failing the whole call over a formatting slip.
 function stripJsonFence(raw: string): string {
-  const trimmed = raw.trim()
-  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/)
-  return fenced ? fenced[1] : trimmed
+  return raw
+    .trim()
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/```\s*$/i, '')
+    .trim()
 }
 
 type SystemVerdict = { verdict: 'needs-action' | 'fine'; clue: string }

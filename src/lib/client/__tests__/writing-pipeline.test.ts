@@ -182,6 +182,27 @@ describe('rewriteReportForClient', () => {
     expect(createMock).toHaveBeenCalledTimes(2)
   })
 
+  it('REGRESSION (2026-07-19 production incident): parses a Planner response whose markdown fence was never closed', async () => {
+    // Reproduces the exact production failure: "content generation failed ... Unexpected
+    // token '`', \"```json { \"... is not valid JSON". Most likely cause: the Planner's
+    // maxTokens (1200) cut the response off before the model reached a closing ``` fence,
+    // leaving a valid ```json-prefixed-but-unterminated response. The old stripJsonFence
+    // required an opening AND a matching closing fence in one all-or-nothing regex match, so
+    // on any mismatch it silently stripped nothing at all, leaving the literal backticks in
+    // front of JSON.parse.
+    createMock.mockImplementation((params: any) => {
+      if (params.system.includes('You are the Planner')) {
+        return Promise.resolve({
+          content: [{ type: 'text', text: '```json\n' + JSON.stringify(plannerFixture) }],
+        })
+      }
+      return defaultCreateImpl(params)
+    })
+
+    const result = await rewriteReportForClient(mockReport, 'en', 'Jane')
+    expect(Object.keys(result)).toHaveLength(14)
+  })
+
   it('does not retry the planner when it fails with a non-retryable billing/auth error (400 invalid_request_error) — fails fast on the first attempt', async () => {
     const billingError = Object.assign(
       new Error('400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."}}'),
