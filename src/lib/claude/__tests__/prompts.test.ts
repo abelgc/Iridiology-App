@@ -305,9 +305,9 @@ describe('Claude Prompts', () => {
       expect(TIER_MODELS.basic_12.openai).toBe('gpt-5.6-luna')
     })
 
-    it('maps premium_19_90 to sonnet and gpt-5.6', () => {
+    it('maps premium_19_90 to sonnet and gpt-5.6-sol', () => {
       expect(TIER_MODELS.premium_19_90.anthropic).toMatch(/sonnet/i)
-      expect(TIER_MODELS.premium_19_90.openai).toBe('gpt-5.6')
+      expect(TIER_MODELS.premium_19_90.openai).toBe('gpt-5.6-sol')
     })
   })
 
