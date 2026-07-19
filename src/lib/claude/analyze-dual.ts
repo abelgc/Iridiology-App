@@ -48,11 +48,14 @@ export async function analyzeIrisDual(
   }
 
   console.log('[analyzeIrisDual] running Claude + GPT-4o in parallel...')
+  const dualStartedAt = Date.now()
 
   const [claudeResult, openaiResult] = await Promise.allSettled([
     anthropic.complete({ systemPrompt, userText: userPrompt, images, maxTokens: 8192 }),
     openai.complete({ systemPrompt, userText: userPrompt, images, maxTokens: 8192 }),
   ])
+
+  console.log(`[analyzeIrisDual] parallel legs settled in ${Date.now() - dualStartedAt}ms`)
 
   if (claudeResult.status === 'rejected') {
     console.error('[analyzeIrisDual] Claude failed:', claudeResult.reason)
@@ -67,6 +70,7 @@ export async function analyzeIrisDual(
   }
 
   console.log('[analyzeIrisDual] both complete, synthesising...')
+  const synthesisStartedAt = Date.now()
 
   const langLabel = language === 'de' ? 'German' : language === 'es' ? 'Spanish' : 'English'
 
@@ -98,6 +102,8 @@ The reader is the practitioner and must NEVER see references to "Analysis A", "A
     images: [],
     maxTokens: 8192,
   })
+
+  console.log(`[analyzeIrisDual] synthesis completed in ${Date.now() - synthesisStartedAt}ms (total: ${Date.now() - dualStartedAt}ms)`)
 
   const parsed = parseReportResponse(synthesisResponse.text)
   if ('code' in parsed) {

@@ -126,21 +126,45 @@ export async function POST(request: NextRequest) {
           if (reportError || !report)
             throw new Error(reportError?.message ?? 'report_insert_failed')
 
+          const updatePayload = {
+            status: 'stage2_processing',
+            report_id: report.id,
+            stage2_started_at: new Date().toISOString(),
+            ...(languageFlagged ? { language_flag: true } : {}),
+          }
+
           const { data: claimed } = await bg
             .from('client_analyses')
-            .update({
-              status: 'stage2_processing',
-              report_id: report.id,
-              stage2_started_at: new Date().toISOString(),
-              ...(languageFlagged ? { language_flag: true } : {}),
-            })
+            .update(updatePayload)
             .eq('report_download_token', token)
             .eq('status', 'analyzing') // guard: don't overwrite a verdict the 270s timeout already wrote
             .select('status')
             .single()
 
-          if (!claimed) {
-            console.log(`[client-upload] token ${token} — arrived after the timeout guard already marked it failed, discarding late result`)
+          let advanced = claimed
+
+          if (!advanced) {
+            // The 270s timeout guard may have already marked this row 'failed' before
+            // this result came back — but the analysis actually succeeded and its
+            // report row already exists (inserted above). Rescue it instead of
+            // discarding a completed, paid analysis: retry the same update guarded
+            // on 'failed' specifically, so we only ever recover from exactly this
+            // race and never clobber a status we don't recognize.
+            const { data: rescued } = await bg
+              .from('client_analyses')
+              .update({ ...updatePayload, failure_reason: null })
+              .eq('report_download_token', token)
+              .eq('status', 'failed')
+              .select('status')
+              .single()
+            advanced = rescued
+            if (advanced) {
+              console.log(`[client-upload] token ${token} — rescued a late-arriving success after the timeout guard, resuming stage 2`)
+            }
+          }
+
+          if (!advanced) {
+            console.log(`[client-upload] token ${token} — arrived after the timeout guard and could not be rescued (status changed again), discarding`)
             return
           }
 

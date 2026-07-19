@@ -188,4 +188,43 @@ describe('POST /api/client/upload', () => {
     const failedCall = updateMock.mock.calls.find(([arg]) => arg.status === 'failed')
     expect(failedCall).toBeTruthy()
   })
+
+  it('rescues a late-arriving success when the 270s timeout guard already marked the row failed', async () => {
+    // Call 0 = the initial 'paid' -> 'analyzing' claim (succeeds, default).
+    // Call 1 = the 'analyzing' -> 'stage2_processing' claim loses its CAS (0 rows) —
+    // simulates the withTimeout guard having already written 'failed' first.
+    // Call 2 = the new rescue attempt, guarded on 'failed' specifically, succeeds (default).
+    updateCallResults = [undefined, { data: null, error: null }]
+    const { POST } = await import('@/app/api/client/upload/route')
+    const res = await POST(makeRequest())
+    expect(res.status).toBe(200)
+    await waitUntilPromise
+
+    // The report was still inserted (analysis genuinely succeeded)...
+    expect(insertReport).toHaveBeenCalledTimes(1)
+    // ...and stage 2 was still triggered — proving the late result was rescued,
+    // not discarded, despite the first CAS losing the race.
+    expect(mockTriggerStage2).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000000')
+
+    // The rescue update (3rd .update() call on client_analyses) clears failure_reason
+    // and re-asserts stage2_processing — confirms the rescue path ran, not just the
+    // normal path succeeding on a lucky retry.
+    expect(updateMock).toHaveBeenCalledTimes(3)
+    const rescueCallArgs = updateMock.mock.calls[2][0]
+    expect(rescueCallArgs).toMatchObject({ status: 'stage2_processing', failure_reason: null })
+  })
+
+  it('discards the result when both the normal claim and the rescue attempt lose their CAS', async () => {
+    // Call 1 (normal claim) and call 2 (rescue attempt) both find 0 matching rows —
+    // simulates the row having moved to some other, unrecognized status in between.
+    updateCallResults = [undefined, { data: null, error: null }, { data: null, error: null }]
+    const { POST } = await import('@/app/api/client/upload/route')
+    const res = await POST(makeRequest())
+    expect(res.status).toBe(200)
+    await waitUntilPromise
+
+    expect(insertReport).toHaveBeenCalledTimes(1)
+    expect(mockTriggerStage2).not.toHaveBeenCalled()
+    expect(updateMock).toHaveBeenCalledTimes(3)
+  })
 })
