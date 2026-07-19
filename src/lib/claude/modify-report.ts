@@ -46,13 +46,29 @@ export async function proposeReportModification(
   instruction: string,
 ): Promise<ReportModificationResult | ModificationError> {
   const provider = await getAIProvider()
+  const userText = buildReportModificationUserPrompt(reportContent, instruction)
 
-  const response = await provider.complete({
+  let response = await provider.complete({
     systemPrompt: REPORT_MODIFICATION_SYSTEM_PROMPT,
-    userText: buildReportModificationUserPrompt(reportContent, instruction),
+    userText,
     images: [],
     maxTokens: 8192,
   })
+
+  if (response.stopReason === 'max_tokens') {
+    response = await provider.complete({
+      systemPrompt: REPORT_MODIFICATION_SYSTEM_PROMPT,
+      userText,
+      images: [],
+      maxTokens: 12288,
+    })
+    if (response.stopReason === 'max_tokens') {
+      return {
+        code: 'modification_failed',
+        message: 'response_too_long: modification response still truncated after increasing token limit',
+      }
+    }
+  }
 
   const parsed = parseModifiedReport(response.text)
   if (!parsed.success) return parsed.error

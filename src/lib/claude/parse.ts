@@ -1,6 +1,6 @@
 import { ReportContent } from '@/types/report'
 import { reportContentSchema } from '@/lib/validators/report'
-import { sanitizeJsonControlCharacters, describeJsonSyntaxError } from './json-repair'
+import { sanitizeJsonControlCharacters, describeJsonSyntaxError, recoverJsonBeforeTrailingGarbage } from './json-repair'
 import { z } from 'zod'
 
 export interface ParseError {
@@ -31,6 +31,11 @@ export function parseReportResponse(responseText: string): ReportContent | Parse
     }
 
     if (error instanceof SyntaxError) {
+      const recovered = recoverJsonBeforeTrailingGarbage(sanitized, error)
+      if (recovered !== undefined) {
+        const revalidated = reportContentSchema.safeParse(recovered)
+        if (revalidated.success) return revalidated.data
+      }
       return {
         code: 'invalid_json',
         message: describeJsonSyntaxError(sanitized, error),

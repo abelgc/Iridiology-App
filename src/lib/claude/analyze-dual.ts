@@ -2,6 +2,7 @@ import { getBothProviders, getAIProvider } from '@/lib/ai/get-provider'
 import { isNonRetryableAIError } from '@/lib/ai/errors'
 import type { AnthropicProvider } from '@/lib/ai/anthropic-provider'
 import type { OpenAIProvider } from '@/lib/ai/openai-provider'
+import type { AIProvider, CompletionRequest, CompletionResponse } from '@/lib/ai/types'
 import { getStandardAnalysisSystemPrompt } from './prompts'
 import { buildPatientContext } from './context'
 import { buildUserPrompt } from './analyze'
@@ -9,6 +10,29 @@ import { parseReportResponse } from './parse'
 import type { ReportContent } from '@/types/report'
 import type { AnalysisError } from './analyze'
 import type { AnalysisRequest } from '@/types/claude'
+
+/**
+ * Wraps provider.complete() with a single truncation-retry: if the response stops for
+ * `max_tokens`, retries once at `retryMaxTokens`. If still truncated, throws a
+ * `response_too_long:`-tagged Error (matching this app's existing failure_reason convention —
+ * see writing-pipeline.ts) instead of returning text guaranteed to fail JSON parsing.
+ */
+async function completeWithTruncationGuard(
+  provider: AIProvider,
+  request: CompletionRequest,
+  retryMaxTokens: number,
+): Promise<CompletionResponse> {
+  const response = await provider.complete(request)
+  if (response.stopReason !== 'max_tokens') return response
+
+  const retryResponse = await provider.complete({ ...request, maxTokens: retryMaxTokens })
+  if (retryResponse.stopReason === 'max_tokens') {
+    throw new Error(
+      `response_too_long: response still truncated after increasing token limit to ${retryMaxTokens}`,
+    )
+  }
+  return retryResponse
+}
 
 export interface DualAnalysisOptions {
   providers?: { anthropic: AnthropicProvider; openai: OpenAIProvider }
@@ -52,8 +76,8 @@ export async function analyzeIrisDual(
   const dualStartedAt = Date.now()
 
   const [claudeResult, openaiResult] = await Promise.allSettled([
-    anthropic.complete({ systemPrompt, userText: userPrompt, images, maxTokens: 8192 }),
-    openai.complete({ systemPrompt, userText: userPrompt, images, maxTokens: 8192 }),
+    completeWithTruncationGuard(anthropic, { systemPrompt, userText: userPrompt, images, maxTokens: 8192 }, 12288),
+    completeWithTruncationGuard(openai, { systemPrompt, userText: userPrompt, images, maxTokens: 8192 }, 12288),
   ])
 
   console.log(`[analyzeIrisDual] parallel legs settled in ${Date.now() - dualStartedAt}ms`)
@@ -104,12 +128,24 @@ ${openaiResult.value.text}
 
 The reader is the practitioner and must NEVER see references to "Analysis A", "Analysis B", the model names, or any meta-commentary comparing the two source analyses. Never write phrases such as "Analysis B offered no contradiction". Produce one clean, integrated clinical report only.`
 
-  const synthesisResponse = await anthropic.complete({
-    systemPrompt: `You are a senior clinical iridologist producing a definitive iris analysis report. Be direct. Every sentence must make a clinical claim. Write in ${langLabel}.`,
-    userText: synthesisPrompt,
-    images: [],
-    maxTokens: 8192,
-  })
+  let synthesisResponse: CompletionResponse
+  try {
+    synthesisResponse = await completeWithTruncationGuard(
+      anthropic,
+      {
+        systemPrompt: `You are a senior clinical iridologist producing a definitive iris analysis report. Be direct. Every sentence must make a clinical claim. Write in ${langLabel}.`,
+        userText: synthesisPrompt,
+        images: [],
+        maxTokens: 8192,
+      },
+      12288,
+    )
+  } catch (error) {
+    console.warn('[analyzeIrisDual] synthesis truncated twice, falling back to Claude-only result:', error)
+    const claudeParsed = parseReportResponse(claudeResult.value.text)
+    if ('code' in claudeParsed) return { code: 'analysis_failed', message: claudeParsed.message }
+    return claudeParsed
+  }
 
   console.log(`[analyzeIrisDual] synthesis completed in ${Date.now() - synthesisStartedAt}ms (total: ${Date.now() - dualStartedAt}ms)`)
 

@@ -40,4 +40,15 @@ export async function* chatAboutReport(
       yield chunk.delta.text
     }
   }
+
+  // Free-form chat has no JSON to break, so truncation isn't catastrophic here — but it can
+  // still cut a reply off mid-sentence with no visible signal. Log it so it's diagnosable.
+  try {
+    const finalMessage = await stream.finalMessage()
+    if (finalMessage.stop_reason === 'max_tokens') {
+      console.warn('[chatAboutReport] response_too_long: reply truncated at max_tokens (2048)')
+    }
+  } catch (error) {
+    console.warn('[chatAboutReport] could not inspect final stream message for truncation:', error)
+  }
 }

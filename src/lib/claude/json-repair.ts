@@ -48,3 +48,27 @@ export function describeJsonSyntaxError(text: string, error: SyntaxError): strin
   const end = Math.min(text.length, pos + 80)
   return `${error.message} — near: ${JSON.stringify(text.slice(start, pos))}<<HERE>>${JSON.stringify(text.slice(pos, end))}`
 }
+
+/**
+ * Recovers a complete JSON value when a model produced valid JSON and then appended trailing
+ * non-JSON content (e.g. self-correcting mid-generation: a closing fence followed by "I need
+ * to provide the full JSON... Let me complete..." appended after an otherwise-complete
+ * object) — confirmed live in production via analyze-dual.ts's Claude-only fallback path.
+ * JSON.parse legitimately rejects this with "Unexpected non-whitespace character after JSON
+ * at position N", but everything up to position N is often syntactically complete. Only ever
+ * called as a fallback AFTER a normal JSON.parse attempt has already failed with exactly this
+ * error shape — never guesses at a cut point on its own. Returns undefined (not a partial
+ * guess) if the prefix still doesn't parse. Callers MUST additionally validate the result
+ * against a schema — this function only recovers a candidate value, it never vouches for its
+ * correctness.
+ */
+export function recoverJsonBeforeTrailingGarbage(text: string, error: SyntaxError): unknown | undefined {
+  const match = error.message.match(/Unexpected non-whitespace character after JSON at position (\d+)/)
+  if (!match) return undefined
+  const pos = Number(match[1])
+  try {
+    return JSON.parse(text.slice(0, pos))
+  } catch {
+    return undefined
+  }
+}

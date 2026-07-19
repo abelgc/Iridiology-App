@@ -39,12 +39,28 @@ RULES:
     }
 
     const provider = await getAIProvider()
-    const response = await provider.complete({
+    const translateUserText = JSON.stringify(toTranslate)
+    let response = await provider.complete({
       systemPrompt: TRANSLATE_SYSTEM_PROMPT,
-      userText: JSON.stringify(toTranslate),
+      userText: translateUserText,
       images: [],
       maxTokens: 8192,
     })
+
+    if (response.stopReason === 'max_tokens') {
+      response = await provider.complete({
+        systemPrompt: TRANSLATE_SYSTEM_PROMPT,
+        userText: translateUserText,
+        images: [],
+        maxTokens: 12288,
+      })
+      if (response.stopReason === 'max_tokens') {
+        return NextResponse.json(
+          { error: 'response_too_long: translation response still truncated after increasing token limit' },
+          { status: 500 },
+        )
+      }
+    }
 
     const cleaned = response.text
       .replace(/^```json\s*/i, '')

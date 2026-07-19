@@ -83,4 +83,33 @@ describe('parseReportResponse', () => {
     const result = parseReportResponse(JSON.stringify(obj))
     expect('code' in result && result.code).toBe('validation_failed')
   })
+
+  it('REGRESSION (2026-07-19 production incident): recovers a full 15-section report with trailing self-correction text after it', () => {
+    // Reproduces the exact production failure: "Unexpected non-whitespace character after
+    // JSON at position 1462 — near: '...}\n'<<HERE>>'```\n\nI need to provide the full JSON
+    // with all 14 keys. Let me complete the analy'" — Claude produced a complete, valid
+    // report, then appended trailing commentary while apparently second-guessing itself.
+    const textWithTrailingGarbage =
+      reportJson() + '\n```\n\nI need to provide the full JSON with all 14 keys. Let me complete the analy'
+
+    const result = parseReportResponse(textWithTrailingGarbage)
+
+    expect('code' in result).toBe(false)
+    if (!('code' in result)) {
+      expect(result.section_1_general_terrain).toBe('Content for section_1_general_terrain.')
+    }
+  })
+
+  it('does NOT recover trailing garbage when the JSON prefix itself is missing a required section — the Zod re-validation guard actually blocks a shorter, invalid document', () => {
+    const obj: Record<string, string> = {}
+    for (const key of ALL_15_KEYS) {
+      if (key === 'section_15_iris_sign_patterns') continue
+      obj[key] = `Content for ${key}.`
+    }
+    const incompleteWithTrailingGarbage = JSON.stringify(obj) + '\n```\n\nLet me try again from scratch.'
+
+    const result = parseReportResponse(incompleteWithTrailingGarbage)
+
+    expect('code' in result && result.code).toBe('invalid_json')
+  })
 })

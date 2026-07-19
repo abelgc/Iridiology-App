@@ -1,7 +1,7 @@
 import { ComparisonReportContent } from '@/types/comparison-report'
 import { comparisonReportContentSchema } from '@/lib/validators/comparison-report'
 import { type ParseError } from './parse'
-import { sanitizeJsonControlCharacters, describeJsonSyntaxError } from './json-repair'
+import { sanitizeJsonControlCharacters, describeJsonSyntaxError, recoverJsonBeforeTrailingGarbage } from './json-repair'
 import { z } from 'zod'
 
 // Mirror of parseReportResponse, but validates against the 7-key comparison
@@ -25,6 +25,11 @@ export function parseComparisonResponse(
       return { code: 'validation_failed', message: error.message }
     }
     if (error instanceof SyntaxError) {
+      const recovered = recoverJsonBeforeTrailingGarbage(sanitized, error)
+      if (recovered !== undefined) {
+        const revalidated = comparisonReportContentSchema.safeParse(recovered)
+        if (revalidated.success) return revalidated.data as ComparisonReportContent
+      }
       return { code: 'invalid_json', message: describeJsonSyntaxError(sanitized, error) }
     }
     return { code: 'parse_failed', message: 'Unknown parsing error' }

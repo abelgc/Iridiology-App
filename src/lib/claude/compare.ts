@@ -6,10 +6,33 @@ import { parseComparisonResponse } from './parse-comparison'
 import { ComparisonReportContent } from '@/types/comparison-report'
 import { ComparisonRequest } from '@/types/claude'
 import { calculateAge } from '@/lib/utils'
+import type { AIProvider, CompletionRequest, CompletionResponse } from '@/lib/ai/types'
 
 export interface ComparisonError {
   code: 'analysis_failed' | 'response_too_long' | 'timeout'
   message: string
+}
+
+/**
+ * Wraps provider.complete() with a single truncation-retry: if the response stops for
+ * `max_tokens`, retries once at `retryMaxTokens`. If still truncated, throws a
+ * `response_too_long:`-tagged Error instead of returning text guaranteed to fail JSON parsing.
+ */
+async function completeWithTruncationGuard(
+  provider: AIProvider,
+  request: CompletionRequest,
+  retryMaxTokens: number,
+): Promise<CompletionResponse> {
+  const response = await provider.complete(request)
+  if (response.stopReason !== 'max_tokens') return response
+
+  const retryResponse = await provider.complete({ ...request, maxTokens: retryMaxTokens })
+  if (retryResponse.stopReason === 'max_tokens') {
+    throw new Error(
+      `response_too_long: response still truncated after increasing token limit to ${retryMaxTokens}`,
+    )
+  }
+  return retryResponse
 }
 
 export const COMPARISON_SYNTHESIS_INSTRUCTIONS = `=== SYNTHESIS INSTRUCTIONS ===
@@ -107,7 +130,31 @@ export async function compareIris(request: ComparisonRequest): Promise<Compariso
       })
 
       if (response.stopReason === 'max_tokens') {
-        return { code: 'response_too_long', message: 'Response truncated — report too long for token limit' }
+        const retryResponse = await provider.complete({
+          systemPrompt: COMPARISON_ANALYSIS_SYSTEM_PROMPT,
+          userText: userPrompt,
+          images,
+          maxTokens: 12288,
+        })
+        if (retryResponse.stopReason === 'max_tokens') {
+          return {
+            code: 'response_too_long',
+            message: 'response_too_long: response still truncated after increasing token limit',
+          }
+        }
+        const parseResult = await parseWithRetry(retryResponse.text)
+        if ('code' in parseResult && parseResult.code === 'invalid_json') {
+          const strongerPrompt = `${userPrompt}\n\nIMPORTANT: Respond ONLY with valid JSON. No additional text.`
+          const finalResponse = await provider.complete({
+            systemPrompt: COMPARISON_ANALYSIS_SYSTEM_PROMPT,
+            userText: strongerPrompt,
+            images,
+            maxTokens: 12288,
+          })
+          const finalParseResult = await parseWithRetry(finalResponse.text, 2)
+          return finalParseResult as ComparisonReportContent | ComparisonError
+        }
+        return parseResult as ComparisonReportContent | ComparisonError
       }
 
       const parseResult = await parseWithRetry(response.text)
@@ -132,8 +179,8 @@ export async function compareIris(request: ComparisonRequest): Promise<Compariso
     const { anthropic, openai } = both
 
     const [claudeResult, openaiResult] = await Promise.allSettled([
-      anthropic.complete({ systemPrompt: COMPARISON_ANALYSIS_SYSTEM_PROMPT, userText: userPrompt, images, maxTokens: 8192 }),
-      openai.complete({ systemPrompt: COMPARISON_ANALYSIS_SYSTEM_PROMPT, userText: userPrompt, images, maxTokens: 8192 }),
+      completeWithTruncationGuard(anthropic, { systemPrompt: COMPARISON_ANALYSIS_SYSTEM_PROMPT, userText: userPrompt, images, maxTokens: 8192 }, 12288),
+      completeWithTruncationGuard(openai, { systemPrompt: COMPARISON_ANALYSIS_SYSTEM_PROMPT, userText: userPrompt, images, maxTokens: 8192 }, 12288),
     ])
 
     if (claudeResult.status === 'rejected') {
@@ -157,12 +204,24 @@ ${openaiResult.value.text}
 
 ${COMPARISON_SYNTHESIS_INSTRUCTIONS}`
 
-    const synthesisResponse = await anthropic.complete({
-      systemPrompt: `You are a senior clinical iridologist producing a definitive comparative iris analysis report (previous vs current session). Be direct. Every sentence must make a clinical claim.`,
-      userText: synthesisPrompt,
-      images: [],
-      maxTokens: 8192,
-    })
+    let synthesisResponse: CompletionResponse
+    try {
+      synthesisResponse = await completeWithTruncationGuard(
+        anthropic,
+        {
+          systemPrompt: `You are a senior clinical iridologist producing a definitive comparative iris analysis report (previous vs current session). Be direct. Every sentence must make a clinical claim.`,
+          userText: synthesisPrompt,
+          images: [],
+          maxTokens: 8192,
+        },
+        12288,
+      )
+    } catch (error) {
+      console.warn('[compareIris] synthesis truncated twice, falling back to Claude-only comparison:', error)
+      const claudeParsed = parseComparisonResponse(claudeResult.value.text)
+      if ('code' in claudeParsed) return { code: 'analysis_failed', message: claudeParsed.message }
+      return claudeParsed
+    }
 
     const parsed = parseComparisonResponse(synthesisResponse.text)
     if ('code' in parsed) {

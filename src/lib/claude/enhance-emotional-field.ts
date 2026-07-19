@@ -45,12 +45,25 @@ Time of Day: ${astrologyData.time_of_day}
 Based on this birth data, recommend the primary chakra and main emotion to focus on for emotional healing. Respond in ${language === 'de' ? 'German' : language === 'es' ? 'Spanish' : 'English'}.`
 
     // First call: Get chakra and emotion recommendation
-    const chakraResponse = await provider.complete({
+    let chakraResponse = await provider.complete({
       systemPrompt: JYOTISH_ENHANCEMENT_SYSTEM_PROMPT,
       userText: chakraPrompt,
       images: [],
       maxTokens: 500,
     })
+
+    if (chakraResponse.stopReason === 'max_tokens') {
+      chakraResponse = await provider.complete({
+        systemPrompt: JYOTISH_ENHANCEMENT_SYSTEM_PROMPT,
+        userText: chakraPrompt,
+        images: [],
+        maxTokens: 1000,
+      })
+      if (chakraResponse.stopReason === 'max_tokens') {
+        console.error('response_too_long: Jyotish chakra recommendation still truncated after doubling token limit')
+        return reportContent
+      }
+    }
 
     const cleanedChakra = chakraResponse.text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim()
     const sanitizedChakra = sanitizeJsonControlCharacters(cleanedChakra)
@@ -96,12 +109,27 @@ Rewrite the emotional field section integrating the chakra insight. Rules:
 
 Respond with ONLY the rewritten emotional field text, no additional commentary. Write in ${langInstruction}.`
 
-    const blendResponse = await provider.complete({
-      systemPrompt: `You are a clinical iridologist enhancing an emotional field section. Never mention Jyotish, astrology, planets, or houses. Translate all inputs into nervous system and emotional body language only. Write in a clinical, professional tone using full paragraphs. Always respond in ${langInstruction}.`,
+    const blendSystemPrompt = `You are a clinical iridologist enhancing an emotional field section. Never mention Jyotish, astrology, planets, or houses. Translate all inputs into nervous system and emotional body language only. Write in a clinical, professional tone using full paragraphs. Always respond in ${langInstruction}.`
+
+    let blendResponse = await provider.complete({
+      systemPrompt: blendSystemPrompt,
       userText: blendPrompt,
       images: [],
       maxTokens: 1000,
     })
+
+    if (blendResponse.stopReason === 'max_tokens') {
+      blendResponse = await provider.complete({
+        systemPrompt: blendSystemPrompt,
+        userText: blendPrompt,
+        images: [],
+        maxTokens: 2000,
+      })
+      if (blendResponse.stopReason === 'max_tokens') {
+        console.error('response_too_long: Jyotish emotional-field blend still truncated after doubling token limit')
+        return reportContent
+      }
+    }
 
     if (!blendResponse.text || blendResponse.text.trim().length === 0) {
       console.error('Blending response is empty')

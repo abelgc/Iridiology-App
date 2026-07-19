@@ -1,4 +1,4 @@
-import { sanitizeJsonControlCharacters, describeJsonSyntaxError } from '../json-repair'
+import { sanitizeJsonControlCharacters, describeJsonSyntaxError, recoverJsonBeforeTrailingGarbage } from '../json-repair'
 
 const NL = String.fromCharCode(10)
 const CR = String.fromCharCode(13)
@@ -86,5 +86,44 @@ describe('describeJsonSyntaxError', () => {
   it('falls back to the bare error message when no position is present', () => {
     const error = new SyntaxError('Unexpected end of JSON input')
     expect(describeJsonSyntaxError('anything', error)).toBe('Unexpected end of JSON input')
+  })
+})
+
+describe('recoverJsonBeforeTrailingGarbage', () => {
+  function trailingGarbageError(text: string): SyntaxError {
+    try {
+      JSON.parse(text)
+      throw new Error('expected JSON.parse to throw')
+    } catch (e) {
+      return e as SyntaxError
+    }
+  }
+
+  it('REGRESSION (2026-07-19 production incident): recovers a complete object followed by the model self-correcting mid-generation', () => {
+    // Reproduces the exact production shape: "Analysis failed: Unexpected non-whitespace
+    // character after JSON at position 1462 ... near: '...}\n'<<HERE>>'```\n\nI need to
+    // provide the full JSON with all 14 keys. Let me complete the analy'"
+    const text =
+      '{"section_1_general_terrain": "content"}\n```\n\nI need to provide the full JSON with all 14 keys. Let me complete the analy'
+    const error = trailingGarbageError(text)
+    expect(error.message).toMatch(/Unexpected non-whitespace character after JSON/)
+
+    const recovered = recoverJsonBeforeTrailingGarbage(text, error)
+    expect(recovered).toEqual({ section_1_general_terrain: 'content' })
+  })
+
+  it('returns undefined for a different SyntaxError shape (e.g. unterminated string), so it never misfires on an unrelated failure', () => {
+    const text = '{"section_1_general_terrain": "unterminated'
+    const error = trailingGarbageError(text)
+    expect(error.message).toMatch(/Unterminated string/)
+
+    expect(recoverJsonBeforeTrailingGarbage(text, error)).toBeUndefined()
+  })
+
+  it('returns undefined when the recovered prefix itself still does not parse', () => {
+    // Crafts an error whose reported position doesn't actually land on valid JSON, proving
+    // this function never guesses — it only returns a value when the prefix genuinely parses.
+    const fakeError = new SyntaxError('Unexpected non-whitespace character after JSON at position 3')
+    expect(recoverJsonBeforeTrailingGarbage('{"a', fakeError)).toBeUndefined()
   })
 })

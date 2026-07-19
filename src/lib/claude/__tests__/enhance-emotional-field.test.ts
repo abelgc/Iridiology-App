@@ -723,5 +723,83 @@ describe('Jyotish Emotional Field Enhancement', () => {
         expect(result.section_2_emotional_field).toBe(enhancedEmotionalField)
       }
     })
+
+    it('REGRESSION: retries the chakra call with double max_tokens when truncated, instead of silently mis-parsing it as invalid JSON', async () => {
+      const mockReport = createMockReport()
+      const astrologyData = createAstrologyData()
+      const mockChakraRecommendation = { chakra: 'Heart', emotion: 'compassion', reasoning: 'x' }
+      const enhancedEmotionalField = 'Enhanced emotional field text.'
+
+      const mockProvider = { complete: vi.fn() }
+      mockProvider.complete
+        .mockResolvedValueOnce({ text: '{"chakra": "Hea', stopReason: 'max_tokens' }) // chakra call, truncated
+        .mockResolvedValueOnce({ text: JSON.stringify(mockChakraRecommendation), stopReason: 'end_turn' }) // chakra retry
+        .mockResolvedValueOnce({ text: enhancedEmotionalField, stopReason: 'end_turn' }) // blend call
+
+      mockGetAIProvider.mockResolvedValueOnce(mockProvider)
+
+      const result = await enhanceEmotionalFieldWithJyotish(mockReport, 'John Doe', astrologyData)
+
+      expect(result.section_2_emotional_field).toBe(enhancedEmotionalField)
+      expect(mockProvider.complete).toHaveBeenCalledTimes(3)
+      expect(mockProvider.complete.mock.calls[1][0].maxTokens).toBe(1000) // doubled from 500
+    })
+
+    it('returns the original report when the chakra call is still truncated after the retry', async () => {
+      const mockReport = createMockReport()
+      const astrologyData = createAstrologyData()
+
+      const mockProvider = { complete: vi.fn() }
+      mockProvider.complete
+        .mockResolvedValueOnce({ text: 'cut off', stopReason: 'max_tokens' })
+        .mockResolvedValueOnce({ text: 'still cut off', stopReason: 'max_tokens' })
+
+      mockGetAIProvider.mockResolvedValueOnce(mockProvider)
+
+      const result = await enhanceEmotionalFieldWithJyotish(mockReport, 'John Doe', astrologyData)
+
+      expect(result).toEqual(mockReport)
+      expect(mockProvider.complete).toHaveBeenCalledTimes(2)
+    })
+
+    it('REGRESSION: retries the blend call with double max_tokens when truncated, instead of silently accepting a cut-off blend', async () => {
+      const mockReport = createMockReport()
+      const astrologyData = createAstrologyData()
+      const mockChakraRecommendation = { chakra: 'Heart', emotion: 'compassion', reasoning: 'x' }
+      const fullBlend = 'The complete, untruncated enhanced emotional field text.'
+
+      const mockProvider = { complete: vi.fn() }
+      mockProvider.complete
+        .mockResolvedValueOnce({ text: JSON.stringify(mockChakraRecommendation), stopReason: 'end_turn' })
+        .mockResolvedValueOnce({ text: 'The complete, un', stopReason: 'max_tokens' }) // blend, truncated
+        .mockResolvedValueOnce({ text: fullBlend, stopReason: 'end_turn' }) // blend retry
+
+      mockGetAIProvider.mockResolvedValueOnce(mockProvider)
+
+      const result = await enhanceEmotionalFieldWithJyotish(mockReport, 'John Doe', astrologyData)
+
+      expect(result.section_2_emotional_field).toBe(fullBlend)
+      expect(mockProvider.complete).toHaveBeenCalledTimes(3)
+      expect(mockProvider.complete.mock.calls[2][0].maxTokens).toBe(2000) // doubled from 1000
+    })
+
+    it('returns the original report when the blend call is still truncated after the retry (closes the pre-existing gap where a truncated-but-nonempty blend was silently accepted)', async () => {
+      const mockReport = createMockReport()
+      const astrologyData = createAstrologyData()
+      const mockChakraRecommendation = { chakra: 'Heart', emotion: 'compassion', reasoning: 'x' }
+
+      const mockProvider = { complete: vi.fn() }
+      mockProvider.complete
+        .mockResolvedValueOnce({ text: JSON.stringify(mockChakraRecommendation), stopReason: 'end_turn' })
+        .mockResolvedValueOnce({ text: 'cut off but non-empty', stopReason: 'max_tokens' })
+        .mockResolvedValueOnce({ text: 'still cut off but non-empty', stopReason: 'max_tokens' })
+
+      mockGetAIProvider.mockResolvedValueOnce(mockProvider)
+
+      const result = await enhanceEmotionalFieldWithJyotish(mockReport, 'John Doe', astrologyData)
+
+      // Before this fix, a non-empty-but-truncated blend would have been accepted as final text.
+      expect(result).toEqual(mockReport)
+    })
   })
 })
