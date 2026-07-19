@@ -31,12 +31,107 @@ degrading every dual-model analysis to Claude-only:
 
 Bug #2 alone would have caused every OpenAI call to fail with a
 different error (invalid model) even after bug #1 was fixed — both had
-to be found and fixed together for OpenAI to actually work. Not yet
-re-verified end-to-end with a real analysis after both fixes (the user
-was mid-fix at the point this doc was last updated) — next real test
-should confirm the 401 is gone and dual-model synthesis actually runs,
-which also unblocks getting real timing data for the still-open Stage-1
-timeout resize below.
+to be found and fixed together for OpenAI to actually work.
+
+## Follow-up: the 401 persisted after both OpenAI fixes — root cause is org verification, not code (2026-07-19)
+
+Re-tested end-to-end after the allow-list + model-name fixes above.
+Confirmed via live logs that both fixes worked (no more "model not
+allowed" / no more invalid-model-name errors) — but the OpenAI leg
+still failed with `401 You have insufficient permissions for this
+operation.` Traced to a **third, separate gate**, unrelated to the
+project-level model allow-list: OpenAI's organization-level
+**Verifications** (`platform.openai.com` → Organization settings →
+General → "Verifications" — "Verify as an individual or business to
+access protected models"). Neither Individual nor Business verification
+has been started on this account (both show "Start", not "Verified").
+`gpt-5.6-sol` ("frontier model for complex professional work" per
+OpenAI's own model picker) is almost certainly gated behind this,
+separately from the per-project allow-list checkbox already fixed.
+
+**This is not a code fix — it requires the account owner to complete
+identity/business verification directly with OpenAI.** Steps: Organization
+settings → General → Verifications → "Start" under "Individual" (fits a
+solo-developer project; "Business" only if the app is under a registered
+company) → follow OpenAI's own document-upload flow. Review time is
+OpenAI's, not instant. No code or project-settings change is needed
+once verification completes — the existing `iris-app` key and its
+already-fixed allow-list will just start working for gated models.
+
+**Why this hasn't been blocking the app entirely**: `analyze-dual.ts`
+already degrades gracefully to a Claude-only result when the OpenAI leg
+rejects (confirmed in logs: `"GPT-4o failed, using Claude only"` — note
+this log string is a stale label from when the model literally was
+`gpt-4o`; it does not mean gpt-4o was actually requested). So this 401
+alone was not the cause of customer-visible failures — a separate,
+fourth JSON-parsing bug in that same Claude-only fallback path was (see
+below). Once that fourth bug is fixed, the app should work correctly for
+customers even while OpenAI verification is pending, at the cost of
+running Claude-only (no dual-model synthesis) until verification
+completes.
+
+## Fourth JSON-parsing bug found live, same session: trailing content after a complete JSON object
+
+Confirmed via Vercel logs, in the Claude-only fallback path described
+above: `Analysis failed: Unexpected non-whitespace character after JSON
+at position 1462 — near: "...}\n"<<HERE>>"```\n\nI need to provide the
+full JSON with all 14 keys. Let me complete the analy"`. Claude produced
+a complete, valid JSON object, then appended trailing non-JSON text
+(the model apparently second-guessing itself mid-generation). This is
+the same general bug family as the three fixed earlier today (control
+characters, unterminated fence, token-truncation) but in a different
+file: `src/lib/claude/analyze-dual.ts` calls the `AIProvider.complete()`
+interface (camelCase `stopReason`, not `writing-pipeline.ts`'s raw-SDK
+snake_case `stop_reason`) for its Claude leg, OpenAI leg, and synthesis
+call, and — unlike `analyze.ts`, which already has this check — never
+checks `stopReason === 'max_tokens'` anywhere.
+
+Given the pattern of finding these one file at a time, dispatched a
+broader audit-and-fix pass covering every remaining AI call site for the
+same missing-truncation-detection gap.
+
+**Agent results (2026-07-19, investigation only — no files edited yet):**
+Inventoried 14 AI-JSON-parsing call sites. Only 2 already had correct
+truncation detection (`analyze.ts`, the reference pattern, and
+`review.ts`, verified — not assumed — to already mirror it correctly).
+**9 sites had the gap and need the fix**: `analyze-dual.ts` (Claude leg,
+OpenAI leg, synthesis — 3 calls, includes the confirmed-live bug above),
+`compare.ts` (single-provider path has partial detection but gives up
+instead of retrying; both dual legs and its synthesis have none — 4
+call sites total), `enhance-emotional-field.ts` (both the chakra call
+and the blend call — the blend call has an extra latent bug: a
+truncated-but-non-empty response is silently accepted today, only
+emptiness is checked), `modify-report.ts`, `translate/route.ts`. One
+more (`chat.ts`) gets a lighter log-only fix since it's free-form text,
+not JSON — truncation there is a UX rough edge, not a parse failure.
+One file (`src/lib/claude/client.ts`) turned out to be dead code, no
+call sites — flagged, not touched.
+
+Also designed the "trailing garbage" defense-in-depth from the write-up
+above: a new `recoverJsonBeforeTrailingGarbage()` in `json-repair.ts`
+that, only when `JSON.parse` fails with exactly "Unexpected
+non-whitespace character after JSON at position N", retries parsing
+just the prefix up to N — verified against the real V8 error string
+(`JSON.parse('{"a":1}\n\nI need to provide the full JSON')` reproduces
+the exact message shape). Wired into `parse.ts` and `parse-
+comparison.ts`, always re-validated against the existing Zod schema
+before being accepted — never trusts a recovered prefix on its own.
+
+Deliberately did **not** extract the truncation-retry helper into a
+single cross-file shared module (`analyze-dual.ts` and `compare.ts` each
+get their own small copy) — this spec's own candidate #4 above already
+flagged `runSingleOrDual` as a paused, larger refactor after an
+adversarial review found its latency math wrong by 3-4x; folding a
+~10-line helper into that paused effort risks the same scope creep the
+original pause was meant to avoid.
+
+**Status: proposal complete, not yet applied.** The agent (correctly,
+per this repo's `changes-awareness` requirement) stopped short of
+editing any files, since a background agent cannot supply the user's
+own explicit "yes, change" — it produced copy-pasteable diffs for all 9
+files plus a full test plan (8 new/extended test files) instead. Full
+diffs live in the agent's transcript; apply on next session once
+reviewed.
 
 ## Cost & speed audit (2026-07-19, via /improve-codebase-architecture)
 
