@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { getAnthropicApiKey } from '@/lib/ai/get-provider'
 import { isNonRetryableAIError } from '@/lib/ai/errors'
+import { sanitizeJsonControlCharacters } from '@/lib/claude/json-repair'
 import type { ReportContent, ReportSectionKey } from '@/types/report'
 
 const MODEL = 'claude-sonnet-5'
@@ -81,7 +82,7 @@ type ClientReportBrief = {
 // clientFirstName is never asked of the model — the caller already knows it, so it's
 // spliced into the parsed brief directly rather than trusting an LLM to echo PII correctly.
 function parseBrief(raw: string, clientFirstName: string): ClientReportBrief {
-  const parsed = JSON.parse(stripJsonFence(raw))
+  const parsed = JSON.parse(sanitizeJsonControlCharacters(stripJsonFence(raw)))
   if (
     typeof parsed.dominantPattern !== 'string' ||
     typeof parsed.mainDriver !== 'string' ||
@@ -257,7 +258,7 @@ async function runWriter(
   lang: string
 ): Promise<Partial<ReportContent>> {
   const raw = await callClaude(client, buildWriterPrompt(group, lang), JSON.stringify(brief), 1600)
-  const parsed = JSON.parse(stripJsonFence(raw))
+  const parsed = JSON.parse(sanitizeJsonControlCharacters(stripJsonFence(raw)))
   const result: Partial<ReportContent> = {}
   for (const key of group.keys) {
     const value = parsed[key]

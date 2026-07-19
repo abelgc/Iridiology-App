@@ -1,5 +1,6 @@
 import { getAIProvider } from '@/lib/ai/get-provider'
 import { JYOTISH_ENHANCEMENT_SYSTEM_PROMPT } from './prompts'
+import { sanitizeJsonControlCharacters, describeJsonSyntaxError } from './json-repair'
 import { ReportContent } from '@/types/report'
 
 export interface JyotishEnhancementData {
@@ -51,12 +52,16 @@ Based on this birth data, recommend the primary chakra and main emotion to focus
       maxTokens: 500,
     })
 
+    const cleanedChakra = chakraResponse.text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim()
+    const sanitizedChakra = sanitizeJsonControlCharacters(cleanedChakra)
     let chakraRecommendation: ChakraRecommendation
     try {
-      const cleaned = chakraResponse.text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim()
-      chakraRecommendation = JSON.parse(cleaned)
+      chakraRecommendation = JSON.parse(sanitizedChakra)
     } catch (parseError) {
-      console.error('Failed to parse Jyotish chakra recommendation:', parseError)
+      console.error(
+        'Failed to parse Jyotish chakra recommendation:',
+        parseError instanceof SyntaxError ? describeJsonSyntaxError(sanitizedChakra, parseError) : parseError,
+      )
       return reportContent
     }
 

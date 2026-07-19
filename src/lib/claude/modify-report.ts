@@ -1,6 +1,7 @@
 import { getAIProvider } from '@/lib/ai/get-provider'
 import { REPORT_MODIFICATION_SYSTEM_PROMPT, buildReportModificationUserPrompt } from './prompts'
 import { reportContentUnionSchema } from '@/lib/validators/report'
+import { sanitizeJsonControlCharacters, describeJsonSyntaxError } from './json-repair'
 import type { ReportContent } from '@/types/report'
 import type { ChangedSection, ReportModificationResult } from '@/types/claude'
 
@@ -20,13 +21,15 @@ function parseModifiedReport(responseText: string): ParsedReport {
     .replace(/```\s*$/i, '')
     .trim()
 
+  const sanitized = sanitizeJsonControlCharacters(cleaned)
+
   try {
-    const parsed = JSON.parse(cleaned)
+    const parsed = JSON.parse(sanitized)
     const content = reportContentUnionSchema.parse(parsed) as ReportContent
     return { success: true, content }
   } catch (error) {
     if (error instanceof SyntaxError) {
-      return { success: false, error: { code: 'invalid_json', message: error.message } }
+      return { success: false, error: { code: 'invalid_json', message: describeJsonSyntaxError(sanitized, error) } }
     }
     return {
       success: false,

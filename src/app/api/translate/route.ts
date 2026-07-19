@@ -1,11 +1,13 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { getAIProvider } from '@/lib/ai/get-provider'
+import { sanitizeJsonControlCharacters, describeJsonSyntaxError } from '@/lib/claude/json-repair'
 import { type ReportContent } from '@/types/report'
 import { NextRequest, NextResponse } from 'next/server'
 
 const LANG_NAMES: Record<string, string> = { es: 'Spanish', de: 'German' }
 
 export async function POST(request: NextRequest) {
+  let sanitized = ''
   try {
     const { reportId, targetLang = 'es' } = await request.json()
     const targetLangName = LANG_NAMES[targetLang] ?? 'Spanish'
@@ -50,10 +52,14 @@ RULES:
       .replace(/```\s*$/i, '')
       .trim()
 
-    const translated = JSON.parse(cleaned) as Partial<ReportContent>
+    sanitized = sanitizeJsonControlCharacters(cleaned)
+    const translated = JSON.parse(sanitized) as Partial<ReportContent>
 
     return NextResponse.json({ content: translated })
   } catch (err) {
+    if (err instanceof SyntaxError) {
+      console.error('[translate] JSON parse failed:', describeJsonSyntaxError(sanitized, err))
+    }
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Translation failed' },
       { status: 500 },
