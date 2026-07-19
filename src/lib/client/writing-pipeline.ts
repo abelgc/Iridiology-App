@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { getAnthropicApiKey } from '@/lib/ai/get-provider'
+import { isNonRetryableAIError } from '@/lib/ai/errors'
 import type { ReportContent, ReportSectionKey } from '@/types/report'
 
 const MODEL = 'claude-sonnet-5'
@@ -142,7 +143,13 @@ async function runPlanner(
   try {
     const raw = await callClaude(client, PLANNER_SYSTEM_PROMPT, userContent, 1200)
     return parseBrief(raw, clientFirstName)
-  } catch {
+  } catch (error) {
+    if (isNonRetryableAIError(error)) {
+      // A 400 invalid_request_error (e.g. insufficient account credit) or a 401 auth error
+      // will fail identically on a second attempt — don't spend a second Planner call on it,
+      // just propagate so the caller can fail fast.
+      throw error
+    }
     // One retry: the Planner is a single point of failure for the whole report — a transient
     // error here would otherwise dump all 14 sections to raw practitioner text on the first
     // hiccup. Retrying once is cheap relative to the old ~52-call pipeline (worst case: 5 calls

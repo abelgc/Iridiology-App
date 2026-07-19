@@ -9,6 +9,10 @@ let currentRow: any
 // a truthy "claimed" result.
 let updateCallResults: any[] = []
 let updateCallIndex = 0
+// Records the payload passed to every `.update(...)` call, in order, so tests can assert on
+// exactly what was written (e.g. the `failure_reason` text) without changing the CAS-result
+// plumbing above.
+let updateCallPayloads: any[] = []
 
 function chain(finalResult: any): any {
   const c: any = {
@@ -24,7 +28,8 @@ vi.mock('@/lib/supabase/server', () => ({
   createAdminClient: () => ({
     from: () => ({
       select: () => chain({ data: currentRow, error: null }),
-      update: () => {
+      update: (payload: any) => {
+        updateCallPayloads.push(payload)
         const result = updateCallResults[updateCallIndex] ?? { data: { status: 'ok' }, error: null }
         updateCallIndex++
         return chain(result)
@@ -84,6 +89,7 @@ describe('POST /api/client/internal/stage2', () => {
     vi.clearAllMocks()
     updateCallResults = []
     updateCallIndex = 0
+    updateCallPayloads = []
     waitUntilPromise = null
     mockRewrite.mockReset().mockResolvedValue({ section_1_general_terrain: 'client x' })
     mockGeneratePdf.mockReset().mockResolvedValue(Buffer.from('PDF_MAGIC_BYTES', 'utf8'))
@@ -178,6 +184,34 @@ describe('POST /api/client/internal/stage2', () => {
     // no 'failed' write: the row is left exactly as-is for the staleness-driven retry in
     // reports/[token]/route.ts to pick up.
     expect(updateCallIndex).toBe(1)
+    expect(mockGeneratePdf).not.toHaveBeenCalled()
+    expect(mockSendEmail).not.toHaveBeenCalled()
+  })
+
+  it('fails fast (does not leave for staleness retry) when content generation fails with a non-retryable billing/auth error', async () => {
+    currentRow = { ...baseRow }
+    const billingError = Object.assign(
+      new Error('400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."}}'),
+      { status: 400, error: { type: 'error', error: { type: 'invalid_request_error' } } },
+    )
+    mockRewrite.mockRejectedValue(billingError)
+    const { POST } = await import('../route')
+    const res = await POST(new Request('http://test', {
+      method: 'POST',
+      headers: { 'x-internal-trigger-secret': 'test-secret' },
+      body: JSON.stringify({ report_download_token: 'tok-1' }),
+    }) as any)
+    expect(res.status).toBe(200)
+
+    await expect(waitUntilPromise).resolves.toBeUndefined()
+
+    // Call 0 = the initial claim, call 1 = the immediate 'failed' write below — no lingering
+    // 'stage2_processing' status left for the staleness-driven retry to pick up.
+    expect(updateCallIndex).toBe(2)
+    const failWrite = updateCallPayloads[1]
+    expect(failWrite.status).toBe('failed')
+    expect(failWrite.failure_reason).toMatch(/^billing_or_auth_error: /)
+    expect(failWrite.failure_reason).toContain('credit balance is too low')
     expect(mockGeneratePdf).not.toHaveBeenCalled()
     expect(mockSendEmail).not.toHaveBeenCalled()
   })

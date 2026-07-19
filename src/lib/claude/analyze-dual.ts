@@ -1,4 +1,5 @@
 import { getBothProviders, getAIProvider } from '@/lib/ai/get-provider'
+import { isNonRetryableAIError } from '@/lib/ai/errors'
 import type { AnthropicProvider } from '@/lib/ai/anthropic-provider'
 import type { OpenAIProvider } from '@/lib/ai/openai-provider'
 import { getStandardAnalysisSystemPrompt } from './prompts'
@@ -59,7 +60,14 @@ export async function analyzeIrisDual(
 
   if (claudeResult.status === 'rejected') {
     console.error('[analyzeIrisDual] Claude failed:', claudeResult.reason)
-    return { code: 'analysis_failed', message: claudeResult.reason?.message ?? 'Claude analysis failed' }
+    const message = claudeResult.reason?.message ?? 'Claude analysis failed'
+    // Tag non-retryable causes (400 invalid_request_error / 401 auth, e.g. insufficient
+    // account credit) so it's obvious on sight in a failure_reason column that this needs
+    // an account fix — this leg already fails fast with no retry either way.
+    return {
+      code: 'analysis_failed',
+      message: isNonRetryableAIError(claudeResult.reason) ? `billing_or_auth_error: ${message}` : message,
+    }
   }
 
   if (openaiResult.status === 'rejected') {

@@ -178,7 +178,11 @@ export async function POST(request: NextRequest) {
         'Analysis timed out after 270s',
       )
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
+      const rawMsg = err instanceof Error ? err.message : String(err)
+      // Tag non-retryable causes (400 invalid_request_error / 401 auth, e.g. insufficient
+      // account credit) so it's obvious on sight in client_analyses.failure_reason that this
+      // needs an account fix, not a re-run — this route never retries stage 1 itself either way.
+      const msg = isNonRetryableAIError(err) ? `billing_or_auth_error: ${rawMsg}` : rawMsg
       console.error(
         `\x1b[31m[client-upload] token ${token} — failed after ${elapsed()}: ${msg}\x1b[0m`,
       )

@@ -182,6 +182,38 @@ describe('rewriteReportForClient', () => {
     expect(createMock).toHaveBeenCalledTimes(2)
   })
 
+  it('does not retry the planner when it fails with a non-retryable billing/auth error (400 invalid_request_error) — fails fast on the first attempt', async () => {
+    const billingError = Object.assign(
+      new Error('400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."}}'),
+      { status: 400, error: { type: 'error', error: { type: 'invalid_request_error' } } },
+    )
+    createMock.mockImplementation((params: any) => {
+      if (params.system.includes('You are the Planner')) {
+        return Promise.reject(billingError)
+      }
+      throw new Error('a writer must not be called when the planner fails')
+    })
+
+    await expect(rewriteReportForClient(mockReport, 'en', 'Jane')).rejects.toBe(billingError)
+    expect(createMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not retry the planner when it fails with a 401 authentication error — fails fast', async () => {
+    const authError = Object.assign(
+      new Error('401 {"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"}}'),
+      { status: 401, error: { type: 'error', error: { type: 'authentication_error' } } },
+    )
+    createMock.mockImplementation((params: any) => {
+      if (params.system.includes('You are the Planner')) {
+        return Promise.reject(authError)
+      }
+      throw new Error('a writer must not be called when the planner fails')
+    })
+
+    await expect(rewriteReportForClient(mockReport, 'en', 'Jane')).rejects.toBe(authError)
+    expect(createMock).toHaveBeenCalledTimes(1)
+  })
+
   it('retries the planner once on failure before giving up, and proceeds normally if the retry succeeds', async () => {
     let plannerAttempts = 0
     createMock.mockImplementation((params: any) => {

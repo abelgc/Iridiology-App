@@ -208,6 +208,37 @@ describe('POST /api/client/upload', () => {
     expect(failedCall).toBeTruthy()
   })
 
+  it('tags failure_reason with billing_or_auth_error when analyzeIrisDual fails with a non-retryable 400 invalid_request_error', async () => {
+    updateCallResults = [undefined, { data: null, error: null }]
+    const billingError = Object.assign(
+      new Error('400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."}}'),
+      { status: 400, error: { type: 'error', error: { type: 'invalid_request_error' } } },
+    )
+    mockAnalyzeDual.mockRejectedValue(billingError)
+    const { POST } = await import('@/app/api/client/upload/route')
+    const res = await POST(makeRequest())
+    expect(res.status).toBe(200)
+    await expect(waitUntilPromise).resolves.toBeUndefined()
+
+    const failedCall = updateMock.mock.calls.find(([arg]) => arg.status === 'failed')
+    expect(failedCall).toBeTruthy()
+    expect(failedCall![0].failure_reason).toMatch(/^billing_or_auth_error: /)
+    expect(failedCall![0].failure_reason).toContain('credit balance is too low')
+  })
+
+  it('does not tag failure_reason for a genuinely transient error (message unchanged)', async () => {
+    updateCallResults = [undefined, { data: null, error: null }]
+    mockAnalyzeDual.mockRejectedValue(new Error('boom'))
+    const { POST } = await import('@/app/api/client/upload/route')
+    const res = await POST(makeRequest())
+    expect(res.status).toBe(200)
+    await expect(waitUntilPromise).resolves.toBeUndefined()
+
+    const failedCall = updateMock.mock.calls.find(([arg]) => arg.status === 'failed')
+    expect(failedCall).toBeTruthy()
+    expect(failedCall![0].failure_reason).toBe('boom')
+  })
+
   it('rescues a late-arriving success when the 270s timeout guard already marked the row failed', async () => {
     // Call 0 = the initial 'paid' -> 'analyzing' claim (succeeds, default).
     // Call 1 = the 'analyzing' -> 'stage2_processing' claim loses its CAS (0 rows) —

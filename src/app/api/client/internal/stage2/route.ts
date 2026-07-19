@@ -10,6 +10,7 @@ import { rewriteReportForClient, firstNameFrom } from '@/lib/client/writing-pipe
 import { generateReportPdf } from '@/lib/client/pdf'
 import { waitUntil } from '@vercel/functions'
 import { withTimeout } from '@/lib/utils'
+import { isNonRetryableAIError } from '@/lib/ai/errors'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -146,6 +147,24 @@ export async function POST(request: NextRequest) {
       )
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
+
+      if (isNonRetryableAIError(err)) {
+        // A 400 invalid_request_error (e.g. insufficient Anthropic account credit) or a 401
+        // auth error will fail identically on every retry — letting the staleness-driven
+        // requeue below re-run this (bounded to 2 more full attempts, each up to 270s) would
+        // just waste time on a run that was doomed from the first attempt. Fail fast instead,
+        // tagging the reason so it's obvious on sight in client_analyses.failure_reason that
+        // this needs an account fix, not a retry.
+        console.error(`\x1b[31m[client-stage2] token ${token} — non-retryable billing/auth error after ${elapsed()}, failing fast: ${msg}\x1b[0m`)
+        await bg
+          .from('client_analyses')
+          .update({ status: 'failed', failure_reason: `billing_or_auth_error: ${msg}` })
+          .eq('report_download_token', token)
+          .eq('status', 'stage2_processing')
+          .eq('stage2_started_at', myClaimTs)
+        return
+      }
+
       console.error(`\x1b[31m[client-stage2] token ${token} — content generation failed after ${elapsed()}, leaving for staleness-retry: ${msg}\x1b[0m`)
       // Deliberately do NOT mark the row 'failed' here: a Jyotish/rewrite/Planner/Writer
       // failure or timeout must never finalize a degraded or raw-text report. Leaving status

@@ -1,4 +1,5 @@
 import { getAIProvider } from '@/lib/ai/get-provider'
+import { isNonRetryableAIError } from '@/lib/ai/errors'
 import { TECHNICAL_REVIEW_SYSTEM_PROMPT } from './prompts'
 import { buildPatientContext } from './context'
 import { parseReportResponse, type ParseError } from './parse'
@@ -141,6 +142,17 @@ export async function reviewIris(request: TechnicalReviewRequest): Promise<Repor
 
     return parseResult as ReportContent | ReviewError
   } catch (error) {
+    if (isNonRetryableAIError(error)) {
+      // A 400 invalid_request_error (e.g. insufficient account credit) or a 401 auth error
+      // can never succeed on retry — fail immediately instead of burning the timeout-retry
+      // below, and tag the message so it's obvious on sight in a failure_reason column that
+      // this needs an account fix, not a re-run.
+      return {
+        code: 'analysis_failed',
+        message: `billing_or_auth_error: ${error instanceof Error ? error.message : String(error)}`,
+      }
+    }
+
     if (error instanceof Error) {
       if (error.message.includes('timeout') || error.message.includes('ETIMEDOUT')) {
         // Retry once after 5 seconds
