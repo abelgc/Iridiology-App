@@ -32,7 +32,17 @@ export class AnthropicProvider implements AIProvider {
       model: modelToUse,
       max_tokens: request.maxTokens,
       thinking,
-      system: request.systemPrompt,
+      // 5-minute ephemeral cache: the same static system prompt is re-sent on
+      // every retry (max_tokens truncation, invalid-JSON, timeout-catch) and
+      // on both legs of a dual-model analysis. Caching it means only the
+      // first send within a 5-minute window pays full input price.
+      system: [
+        {
+          type: 'text' as const,
+          text: request.systemPrompt,
+          cache_control: { type: 'ephemeral' as const },
+        },
+      ],
       messages: [
         {
           role: 'user',
@@ -52,6 +62,12 @@ export class AnthropicProvider implements AIProvider {
     })
 
     const response = await stream.finalMessage()
+
+    console.log('[AnthropicProvider] cache usage', {
+      cache_creation_input_tokens: response.usage.cache_creation_input_tokens,
+      cache_read_input_tokens: response.usage.cache_read_input_tokens,
+      input_tokens: response.usage.input_tokens,
+    })
 
     const textBlock = response.content.find((c) => c.type === 'text')
     return {
