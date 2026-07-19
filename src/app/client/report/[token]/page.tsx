@@ -29,8 +29,10 @@ export default function ClientReportPage() {
 
   useEffect(() => {
     let cancelled = false
-    let attempts = 0
-    const MAX_ATTEMPTS = 120 // ~6 min at 3s intervals — backend guarantees a resolution by 240s
+    let elapsedMs = 0
+    let delayMs = 3000 // starts at 3s, backs off up to 20s — same ~6min total wait budget as before
+    const POLL_CEILING_MS = 360000
+    const POLL_MAX_DELAY_MS = 20000
     async function load() {
       try {
         const res = await fetch(`/api/client/reports/${token}`)
@@ -40,13 +42,14 @@ export default function ClientReportPage() {
             if (!cancelled) setState({ kind: 'failed' })
             return
           }
-          attempts += 1
-          if (attempts >= MAX_ATTEMPTS) {
+          elapsedMs += delayMs
+          if (elapsedMs >= POLL_CEILING_MS) {
             if (!cancelled) setState({ kind: 'failed' })
             return
           }
           if (!cancelled) setState({ kind: 'pending' })
-          setTimeout(load, 3000)
+          setTimeout(load, delayMs)
+          delayMs = Math.min(delayMs * 1.3, POLL_MAX_DELAY_MS)
           return
         }
         if (!res.ok) {

@@ -79,40 +79,55 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
     fetchSession()
   }, [sessionId])
 
-  // Poll every 4 seconds while analysis is running (max ~5 min, then stop)
+  // Poll with backoff (4s -> up to 20s) while analysis is running (max ~5 min, then stop)
   useEffect(() => {
     if (!sessionId || !session || session.status !== 'analyzing') return
 
-    let polls = 0
-    const MAX_POLLS = 75 // 75 × 4s = 5 min, matches server maxDuration
+    let cancelled = false
+    let elapsedMs = 0
+    let delayMs = 4000
+    const POLL_CEILING_MS = 300000 // 5 min, matches server maxDuration
+    const POLL_MAX_DELAY_MS = 20000
+    let timeoutId: ReturnType<typeof setTimeout>
 
-    const interval = setInterval(async () => {
-      polls += 1
-      if (polls > MAX_POLLS) {
-        clearInterval(interval)
+    const poll = async () => {
+      try {
+        const response = await fetch(`/api/sessions/${sessionId}`)
+        if (response.ok) {
+          const data = await response.json()
+          if (!cancelled) setSession(data)
+
+          if (data.status === 'completed') {
+            const reportResponse = await fetch(`/api/reports?sessionId=${sessionId}`)
+            if (reportResponse.ok) {
+              const reports = await reportResponse.json()
+              if (!cancelled && reports.length > 0) setReport(reports[0])
+            }
+            return
+          } else if (data.status === 'error') {
+            return
+          }
+        }
+      } catch { /* silent — keep polling */ }
+      scheduleNext()
+    }
+
+    const scheduleNext = () => {
+      if (cancelled) return
+      elapsedMs += delayMs
+      if (elapsedMs > POLL_CEILING_MS) {
         setPollLimitReached(true)
         return
       }
-      try {
-        const response = await fetch(`/api/sessions/${sessionId}`)
-        if (!response.ok) return
-        const data = await response.json()
-        setSession(data)
+      timeoutId = setTimeout(poll, delayMs)
+      delayMs = Math.min(delayMs * 1.3, POLL_MAX_DELAY_MS)
+    }
 
-        if (data.status === 'completed') {
-          clearInterval(interval)
-          const reportResponse = await fetch(`/api/reports?sessionId=${sessionId}`)
-          if (reportResponse.ok) {
-            const reports = await reportResponse.json()
-            if (reports.length > 0) setReport(reports[0])
-          }
-        } else if (data.status === 'error') {
-          clearInterval(interval)
-        }
-      } catch { /* silent — keep polling */ }
-    }, 4000)
-
-    return () => clearInterval(interval)
+    scheduleNext()
+    return () => {
+      cancelled = true
+      clearTimeout(timeoutId)
+    }
   }, [sessionId, session?.status])
 
   if (!sessionId) {
