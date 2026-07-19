@@ -66,8 +66,8 @@ export async function reviewIris(request: TechnicalReviewRequest): Promise<Repor
   const provider = await getAIProvider()
 
   const images = [
-    { data: request.rightIrisBase64, mediaType: 'image/jpeg' as const },
-    { data: request.leftIrisBase64, mediaType: 'image/jpeg' as const },
+    { data: request.rightIrisBase64, mediaType: request.rightIrisMediaType ?? 'image/jpeg' },
+    { data: request.leftIrisBase64, mediaType: request.leftIrisMediaType ?? 'image/jpeg' },
   ]
 
   try {

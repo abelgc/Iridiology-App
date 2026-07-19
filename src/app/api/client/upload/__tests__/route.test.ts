@@ -129,13 +129,13 @@ beforeEach(() => {
   mockTriggerStage2.mockClear()
 })
 
-function makeRequest() {
+function makeRequest(overrides?: { right_eye_base64?: string; left_eye_base64?: string }) {
   return new Request('http://test/api/client/upload', {
     method: 'POST',
     body: JSON.stringify({
       report_download_token: '00000000-0000-4000-8000-000000000000',
-      right_eye_base64: 'data:image/jpeg;base64,AAA',
-      left_eye_base64: 'data:image/jpeg;base64,BBB',
+      right_eye_base64: overrides?.right_eye_base64 ?? 'data:image/jpeg;base64,AAA',
+      left_eye_base64: overrides?.left_eye_base64 ?? 'data:image/jpeg;base64,BBB',
     }),
   }) as never
 }
@@ -150,6 +150,25 @@ describe('POST /api/client/upload', () => {
     await waitUntilPromise
     expect(insertReport).toHaveBeenCalledTimes(1)
     expect(mockTriggerStage2).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000000')
+  })
+
+  it('parses each eye image data URL independently and passes the real declared media type through, not a hardcoded image/jpeg', async () => {
+    const { POST } = await import('@/app/api/client/upload/route')
+    const res = await POST(
+      makeRequest({
+        right_eye_base64: 'data:image/png;base64,RIGHTPNG',
+        left_eye_base64: 'data:image/jpeg;base64,LEFTJPEG',
+      }),
+    )
+    expect(res.status).toBe(200)
+    await waitUntilPromise
+
+    expect(mockAnalyzeDual).toHaveBeenCalledTimes(1)
+    const [analysisRequest] = mockAnalyzeDual.mock.calls[0]
+    expect(analysisRequest.rightIrisBase64).toBe('RIGHTPNG')
+    expect(analysisRequest.rightIrisMediaType).toBe('image/png')
+    expect(analysisRequest.leftIrisBase64).toBe('LEFTJPEG')
+    expect(analysisRequest.leftIrisMediaType).toBe('image/jpeg')
   })
 
   it('refuses unpaid analyses', async () => {

@@ -79,10 +79,10 @@ async function parseWithRetry(
 
 export async function compareIris(request: ComparisonRequest): Promise<ComparisonReportContent | ComparisonError> {
   const images = [
-    { data: request.previousRightIrisBase64, mediaType: 'image/jpeg' as const },
-    { data: request.previousLeftIrisBase64, mediaType: 'image/jpeg' as const },
-    { data: request.rightIrisBase64, mediaType: 'image/jpeg' as const },
-    { data: request.leftIrisBase64, mediaType: 'image/jpeg' as const },
+    { data: request.previousRightIrisBase64, mediaType: request.previousRightIrisMediaType ?? 'image/jpeg' },
+    { data: request.previousLeftIrisBase64, mediaType: request.previousLeftIrisMediaType ?? 'image/jpeg' },
+    { data: request.rightIrisBase64, mediaType: request.rightIrisMediaType ?? 'image/jpeg' },
+    { data: request.leftIrisBase64, mediaType: request.leftIrisMediaType ?? 'image/jpeg' },
   ]
 
   try {

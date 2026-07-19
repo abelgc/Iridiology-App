@@ -9,14 +9,11 @@ import { detectsCorrectLanguage } from './language-check'
 import { triggerStage2 } from '@/lib/client/trigger-stage2'
 import { waitUntil } from '@vercel/functions'
 import { withTimeout } from '@/lib/utils'
+import { parseImageDataUrl } from '@/lib/claude/images'
+import { isNonRetryableAIError } from '@/lib/ai/errors'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
-
-function extractBase64(dataUrl: string): string {
-  const match = dataUrl.match(/^data:image\/\w+;base64,(.+)$/)
-  return match ? match[1] : dataUrl
-}
 
 export async function POST(request: NextRequest) {
   let body: unknown
@@ -76,11 +73,16 @@ export async function POST(request: NextRequest) {
         (async () => {
           const clientProviders = await getClientProviders(row.payment_tier)
 
+          const rightImage = parseImageDataUrl(parsed.data.right_eye_base64)
+          const leftImage = parseImageDataUrl(parsed.data.left_eye_base64)
+
           const analysisRequest: AnalysisRequest = {
             sessionId: '',
             patientId: '',
-            rightIrisBase64: extractBase64(parsed.data.right_eye_base64),
-            leftIrisBase64: extractBase64(parsed.data.left_eye_base64),
+            rightIrisBase64: rightImage.data,
+            leftIrisBase64: leftImage.data,
+            rightIrisMediaType: rightImage.mediaType,
+            leftIrisMediaType: leftImage.mediaType,
             patientData: {
               full_name: row.full_name ?? row.email ?? 'Client',
               date_of_birth: row.date_of_birth,

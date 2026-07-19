@@ -3,6 +3,12 @@ export interface AnalysisRequest {
   patientId: string
   rightIrisBase64: string
   leftIrisBase64: string
+  // Actual declared MIME type of each image, parsed from its source data URL. Optional
+  // because some callers (practitioner routes) only ever send bare, already-JPEG-encoded
+  // base64 with no prefix — callers that build the `images` array should default to
+  // 'image/jpeg' when these are undefined.
+  rightIrisMediaType?: 'image/jpeg' | 'image/png' | 'image/webp'
+  leftIrisMediaType?: 'image/jpeg' | 'image/png' | 'image/webp'
   patientData: {
     full_name: string
     date_of_birth: string | null
@@ -20,6 +26,8 @@ export interface AnalysisRequest {
 export interface ComparisonRequest extends AnalysisRequest {
   previousRightIrisBase64: string
   previousLeftIrisBase64: string
+  previousRightIrisMediaType?: 'image/jpeg' | 'image/png' | 'image/webp'
+  previousLeftIrisMediaType?: 'image/jpeg' | 'image/png' | 'image/webp'
   previousSessionDate: string
 }
 

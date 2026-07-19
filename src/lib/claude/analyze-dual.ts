@@ -30,8 +30,8 @@ export async function analyzeIrisDual(
   const { anthropic, openai } = providers
 
   const images = [
-    { data: request.rightIrisBase64, mediaType: 'image/jpeg' as const },
-    { data: request.leftIrisBase64, mediaType: 'image/jpeg' as const },
+    { data: request.rightIrisBase64, mediaType: request.rightIrisMediaType ?? 'image/jpeg' },
+    { data: request.leftIrisBase64, mediaType: request.leftIrisMediaType ?? 'image/jpeg' },
   ]
 
   const patientContext = await buildPatientContext(request.patientId)
