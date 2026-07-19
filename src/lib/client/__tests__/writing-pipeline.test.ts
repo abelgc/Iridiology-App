@@ -203,6 +203,52 @@ describe('rewriteReportForClient', () => {
     expect(Object.keys(result)).toHaveLength(14)
   })
 
+  it('REGRESSION (2026-07-19 production incident): retries with double max_tokens when the Planner response is truncated (stop_reason max_tokens), instead of parsing a cut-off string', async () => {
+    // Reproduces the exact production failure: "content generation failed ... Unterminated
+    // string in JSON at position 3083" — the Planner's 1200-token cap cut the response off
+    // mid-string, and nothing detected it, so the truncated fragment went straight to
+    // JSON.parse. This mirrors the same stop_reason === 'max_tokens' retry analyze.ts already
+    // does for Stage 1.
+    let plannerCallCount = 0
+    let observedRetryMaxTokens: number | undefined
+    createMock.mockImplementation((params: any) => {
+      if (params.system.includes('You are the Planner')) {
+        plannerCallCount++
+        if (plannerCallCount === 1) {
+          return Promise.resolve({
+            stop_reason: 'max_tokens',
+            content: [{ type: 'text', text: '{"dominantPattern": "hepatic overload", "mainDriver": "sluggish li' }],
+          })
+        }
+        observedRetryMaxTokens = params.max_tokens
+        return Promise.resolve({
+          stop_reason: 'end_turn',
+          content: [{ type: 'text', text: JSON.stringify(plannerFixture) }],
+        })
+      }
+      return defaultCreateImpl(params)
+    })
+
+    const result = await rewriteReportForClient(mockReport, 'en', 'Jane')
+    expect(Object.keys(result)).toHaveLength(14)
+    expect(plannerCallCount).toBe(2)
+    expect(observedRetryMaxTokens).toBe(2400) // double the Planner's 1200 budget
+  })
+
+  it('throws a clear response_too_long error when the Planner is still truncated after the doubled retry', async () => {
+    createMock.mockImplementation((params: any) => {
+      if (params.system.includes('You are the Planner')) {
+        return Promise.resolve({
+          stop_reason: 'max_tokens',
+          content: [{ type: 'text', text: '{"dominantPattern": "still cut off' }],
+        })
+      }
+      throw new Error('a writer must not be called when the planner is truncated')
+    })
+
+    await expect(rewriteReportForClient(mockReport, 'en', 'Jane')).rejects.toThrow(/response_too_long/)
+  })
+
   it('does not retry the planner when it fails with a non-retryable billing/auth error (400 invalid_request_error) — fails fast on the first attempt', async () => {
     const billingError = Object.assign(
       new Error('400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."}}'),

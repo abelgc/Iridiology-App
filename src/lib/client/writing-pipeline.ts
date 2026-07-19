@@ -40,6 +40,26 @@ async function callClaude(
     system: systemPrompt,
     messages: [{ role: 'user', content: userContent }],
   })
+
+  if (response.stop_reason === 'max_tokens') {
+    // The model hit its token cap mid-generation, leaving a truncated, unparseable JSON
+    // fragment — confirmed in production ("Unterminated string in JSON"). Retry once with
+    // double the budget instead of handing a cut-off string to JSON.parse, mirroring the
+    // same max_tokens retry analyze.ts already does for Stage 1.
+    const retryResponse = await client.messages.create({
+      model: MODEL,
+      max_tokens: maxTokens * 2,
+      thinking: { type: 'disabled' },
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userContent }],
+    })
+    if (retryResponse.stop_reason === 'max_tokens') {
+      throw new Error(`response_too_long: truncated even after doubling max_tokens to ${maxTokens * 2}`)
+    }
+    const retryBlock = retryResponse.content.find((b) => b.type === 'text')
+    return retryBlock?.type === 'text' ? retryBlock.text.trim() : ''
+  }
+
   const block = response.content.find((b) => b.type === 'text')
   return block?.type === 'text' ? block.text.trim() : ''
 }
