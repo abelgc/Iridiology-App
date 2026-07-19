@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { getAnthropicApiKey } from '@/lib/ai/get-provider'
 import type { ReportContent, ReportSectionKey } from '@/types/report'
 
 const MODEL = 'claude-sonnet-5'
@@ -266,7 +267,7 @@ export async function rewriteReportForClient(
   lang: string,
   clientFirstName: string
 ): Promise<ReportContent> {
-  const apiKey = process.env.ANTHROPIC_API_KEY
+  const apiKey = await getAnthropicApiKey()
   if (!apiKey) {
     // No silent raw-text fallback: a missing key must surface as a failure so stage2's
     // retry-via-requeue picks it up, rather than quietly shipping unrewritten clinical text.

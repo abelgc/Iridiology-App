@@ -18,6 +18,11 @@ async function getSettings(): Promise<Record<string, string>> {
   return Object.fromEntries((data ?? []).map((r) => [r.key, r.value ?? '']))
 }
 
+export async function getAnthropicApiKey(): Promise<string> {
+  const map = await getSettings()
+  return map['anthropic_api_key'] || process.env.ANTHROPIC_API_KEY || ''
+}
+
 export async function getAIProvider(): Promise<AIProvider> {
   const map = await getSettings()
   const activeProvider = map['active_provider'] ?? 'anthropic'

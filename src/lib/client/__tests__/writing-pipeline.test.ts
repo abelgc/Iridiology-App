@@ -13,11 +13,15 @@ vi.mock('@anthropic-ai/sdk', () => ({
   }),
 }))
 
+// Mock the shared API-key resolver (settings table -> env var) instead of stubbing
+// process.env directly, so this test exercises the same lookup production code uses.
+const mockGetAnthropicApiKey = vi.fn().mockResolvedValue('test-anthropic-api-key')
+vi.mock('@/lib/ai/get-provider', () => ({
+  getAnthropicApiKey: () => mockGetAnthropicApiKey(),
+}))
+
 import { rewriteReportForClient, firstNameFrom } from '../writing-pipeline'
 import type { ReportContent } from '@/types/report'
-
-// Stub ANTHROPIC_API_KEY so the early-return in rewriteReportForClient does not fire
-process.env.ANTHROPIC_API_KEY = 'test-anthropic-api-key'
 
 const mockReport: ReportContent = {
   section_1_general_terrain: 'Dense fiber structure in zone 4 indicates hepatic congestion with lacunar formations.',
@@ -97,6 +101,7 @@ function defaultCreateImpl(params: any) {
 }
 
 beforeEach(() => {
+  mockGetAnthropicApiKey.mockReset().mockResolvedValue('test-anthropic-api-key')
   createMock.mockReset()
   createMock.mockImplementation(defaultCreateImpl)
 })
@@ -241,13 +246,8 @@ describe('rewriteReportForClient', () => {
     await expect(rewriteReportForClient(mockReport, 'en', 'Jane')).rejects.toThrow()
   })
 
-  it('throws when ANTHROPIC_API_KEY is not configured, instead of silently returning raw text', async () => {
-    const original = process.env.ANTHROPIC_API_KEY
-    delete process.env.ANTHROPIC_API_KEY
-    try {
-      await expect(rewriteReportForClient(mockReport, 'en', 'Jane')).rejects.toThrow('ANTHROPIC_API_KEY not configured')
-    } finally {
-      process.env.ANTHROPIC_API_KEY = original
-    }
+  it('throws when no key is resolved (settings table empty AND env var unset), instead of silently returning raw text', async () => {
+    mockGetAnthropicApiKey.mockResolvedValueOnce('')
+    await expect(rewriteReportForClient(mockReport, 'en', 'Jane')).rejects.toThrow('ANTHROPIC_API_KEY not configured')
   })
 })
