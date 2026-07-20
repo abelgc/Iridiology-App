@@ -129,7 +129,8 @@ function parseBrief(raw: string, clientFirstName: string): ClientReportBrief {
   }
 }
 
-const PLANNER_SYSTEM_PROMPT = `You are the Planner for a client iridology report. You read the full hidden clinical report below — a JSON object, one field per section, written for a practitioner. It may contain iris, zone, fibre, and other clinical language. You never write client-facing prose yourself. You extract a compact BRIEF that three writers will use instead of the full report.
+function buildPlannerSystemPrompt(lang: string): string {
+  return `You are the Planner for a client iridology report. You read the full hidden clinical report below — a JSON object, one field per section, written for a practitioner. It may contain iris, zone, fibre, and other clinical language. You never write client-facing prose yourself. You extract a compact BRIEF that three writers will use instead of the full report.
 
 Return ONLY a JSON object, no commentary, no markdown fences, with exactly these keys:
 {
@@ -156,16 +157,21 @@ Return ONLY a JSON object, no commentary, no markdown fences, with exactly these
 }
 Base every field only on what the report actually supports — never invent a finding, a symptom, a diagnosis, or a link that is not there. If you are unsure whether a safety flag or a diagnosis applies, leave it out.
 
-For "section_2_emotional_field" specifically: if the source text names a specific chakra (e.g. "Root Chakra") and/or a specific emotion to work with, the clue MUST quote both names verbatim — never paraphrase, generalize, or drop them. This is a paid detail the client is specifically promised.`
+For "section_2_emotional_field" specifically: if the source text names a specific chakra (e.g. "Root Chakra") and/or a specific emotion to work with, the clue MUST quote both names verbatim — never paraphrase, generalize, or drop them. This is a paid detail the client is specifically promised.
+
+LANGUAGE: Write every string value in your JSON response — dominantPattern, mainDriver, each symptomFindingMap entry, every clue, each crossSystemLinks entry, each knownDiagnoses entry, and safety.constraint — in ${languageName(lang)}. The source report above may already be in ${languageName(lang)}; keep it in that language, never translate or drift into English.`
+}
 
 async function runPlanner(
   client: Anthropic,
   report: ReportContent,
-  clientFirstName: string
+  clientFirstName: string,
+  lang: string
 ): Promise<ClientReportBrief> {
+  const systemPrompt = buildPlannerSystemPrompt(lang)
   const userContent = JSON.stringify(report)
   try {
-    const raw = await callClaude(client, PLANNER_SYSTEM_PROMPT, userContent, 1200)
+    const raw = await callClaude(client, systemPrompt, userContent, 1200)
     return parseBrief(raw, clientFirstName)
   } catch (error) {
     if (isNonRetryableAIError(error)) {
@@ -178,7 +184,7 @@ async function runPlanner(
     // error here would otherwise dump all 14 sections to raw practitioner text on the first
     // hiccup. Retrying once is cheap relative to the old ~52-call pipeline (worst case: 5 calls
     // instead of 4, only when the first Planner attempt fails).
-    const raw = await callClaude(client, PLANNER_SYSTEM_PROMPT, userContent, 1200)
+    const raw = await callClaude(client, systemPrompt, userContent, 1200)
     return parseBrief(raw, clientFirstName)
   }
 }
@@ -307,7 +313,7 @@ export async function rewriteReportForClient(
 
   const client = new Anthropic({ apiKey, maxRetries: 1, timeout: 90_000 })
 
-  const brief = await runPlanner(client, report, clientFirstName)
+  const brief = await runPlanner(client, report, clientFirstName, lang)
 
   const [a, b, c] = await Promise.all(
     WRITER_GROUPS.map((group) => runWriter(client, brief, group, lang))

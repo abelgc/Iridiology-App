@@ -99,6 +99,7 @@ export async function POST(request: NextRequest) {
 
           const reportContent = await analyzeIrisDual(analysisRequest, row.language, {
             providers: clientProviders,
+            forceLanguage: true,
           })
 
           if ('code' in reportContent) {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useLanguage } from '@/lib/i18n-context'
@@ -24,6 +24,7 @@ export function IntakeForm({
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<ClientIntakeInput>({
     resolver: zodResolver(clientIntakeSchema) as any,
@@ -34,6 +35,13 @@ export function IntakeForm({
       health_questionnaire: {},
     } as any,
   })
+
+  // The toggle in the header can change `lang` after this form mounts (e.g. the client
+  // switches language mid-fill) — defaultValues only captures the value at mount, so
+  // without this the submitted language could silently lag behind what's shown on screen.
+  useEffect(() => {
+    setValue('language', lang)
+  }, [lang, setValue])
 
   // Blocked submissions must always surface a visible message near the submit
   // button — never fail silently. This is a deliberate belt-and-braces guard on
@@ -57,7 +65,7 @@ export function IntakeForm({
 
   return (
     <form onSubmit={handleSubmit(handleValidSubmit, onInvalid)} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      <input type="hidden" {...register('language')} value={lang} />
+      <input type="hidden" {...register('language')} />
       <input type="hidden" {...register('payment_tier')} value={tier} />
 
       {/* Card 1: Personal details */}

@@ -133,7 +133,9 @@ The reader is the practitioner and must NEVER see references to "Analysis A", "A
     synthesisResponse = await completeWithTruncationGuard(
       anthropic,
       {
-        systemPrompt: `You are a senior clinical iridologist producing a definitive iris analysis report. Be direct. Every sentence must make a clinical claim. Write in ${langLabel}.`,
+        systemPrompt: `You are a senior clinical iridologist producing a definitive iris analysis report. Be direct. Every sentence must make a clinical claim.
+
+LANGUAGE DIRECTIVE: You MUST write the ENTIRE response in ${langLabel}, including every JSON value, even if Analysis A or Analysis B below are written in a different language — translate and rewrite them into ${langLabel}. Do not use any other language under any circumstance. This is a hard requirement.`,
         userText: synthesisPrompt,
         images: [],
         maxTokens: 8192,

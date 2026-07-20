@@ -155,6 +155,19 @@ describe('rewriteReportForClient', () => {
     expect(result.section_12_conclusion).toBe(writerCFixture.section_12_conclusion)
   })
 
+  it("REGRESSION (2026-07-20 production incident): tells the Planner what language to write its brief in, not just the Writers", async () => {
+    // Reproduces the reported failure: a client's report came back partly in English even
+    // though language='es' was correctly threaded through to Stage 1 and to the Writers.
+    // Root cause — the Planner (which extracts dominantPattern/mainDriver/clues that the
+    // Writers quote near-verbatim, e.g. the chakra/emotion clue for section_2_emotional_field)
+    // had zero language instruction at all, so it could freely answer in English regardless
+    // of `lang`, leaking English fragments into an otherwise-Spanish report.
+    await rewriteReportForClient(mockReport, 'es', 'Jane')
+    const plannerCall = createMock.mock.calls.find(([params]) => params.system.includes('You are the Planner'))
+    expect(plannerCall).toBeDefined()
+    expect(plannerCall![0].system).toMatch(/write every string value.*in spanish/i)
+  })
+
   it('carries the given first name straight into the brief for Writer A', async () => {
     await rewriteReportForClient(mockReport, 'en', 'Maria')
     const writerACall = createMock.mock.calls.find(([params]) => params.system.includes('You are Writer A'))
