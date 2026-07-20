@@ -1,22 +1,63 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { Loader2 } from 'lucide-react'
 import { REPORT_SECTION_KEYS, REPORT_SECTION_I18N_KEYS } from '@/types/report'
 import { useLanguage } from '@/lib/i18n-context'
-import type { TranslationKey } from '@/lib/i18n'
+import type { Lang, TranslationKey } from '@/lib/i18n'
 import { consolidateRecommendationsForTier } from '@/lib/client/filter-recommendations'
 
 export function ClientReportViewer({
   report,
   isPremium,
+  token,
+  originalLanguage,
 }: {
   report: Partial<Record<string, string>>
   isPremium: boolean
+  token: string
+  originalLanguage: Lang
 }) {
-  const { t } = useLanguage()
-  const sectionsWithContent = REPORT_SECTION_KEYS.filter((key) => !!report[key])
+  const { t, lang } = useLanguage()
+  const [translatedCache, setTranslatedCache] = useState<Partial<Record<Lang, Partial<Record<string, string>>>>>({})
+  const [isTranslating, setIsTranslating] = useState(false)
+  const [translateErrorKey, setTranslateErrorKey] = useState<TranslationKey | null>(null)
+
+  useEffect(() => {
+    if (lang === originalLanguage || translatedCache[lang]) return
+    let cancelled = false
+    setIsTranslating(true)
+    setTranslateErrorKey(null)
+    fetch(`/api/client/reports/${token}/translate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lang }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('translation_failed')
+        return res.json() as Promise<{ content: Partial<Record<string, string>> }>
+      })
+      .then((data) => {
+        if (!cancelled) setTranslatedCache((prev) => ({ ...prev, [lang]: data.content }))
+      })
+      .catch(() => {
+        if (!cancelled) setTranslateErrorKey('reportTranslateError')
+      })
+      .finally(() => {
+        if (!cancelled) setIsTranslating(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [lang, originalLanguage, token, translatedCache])
+
+  const displayReport = lang !== originalLanguage && translatedCache[lang]
+    ? { ...report, ...translatedCache[lang] }
+    : report
+
+  const sectionsWithContent = REPORT_SECTION_KEYS.filter((key) => !!displayReport[key])
   const [activeKey, setActiveKey] = useState<string>(sectionsWithContent[0] ?? '')
 
   function scrollToSection(key: string) {
@@ -56,14 +97,23 @@ export function ClientReportViewer({
 
       {/* Report card */}
       <div className="report-card">
+        {isTranslating && (
+          <p className="no-print" style={{ fontSize: 13, color: '#5d4f3f', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            {t('reportTranslating')}
+          </p>
+        )}
+        {translateErrorKey && !isTranslating && (
+          <p className="no-print" style={{ fontSize: 13, color: '#a85428', marginBottom: 16 }}>{t(translateErrorKey)}</p>
+        )}
         <article className="report-prose">
           {sectionsWithContent.map((key, idx) => {
             const numStr = String(idx + 1).padStart(2, '0')
             const label = t(REPORT_SECTION_I18N_KEYS[key] as TranslationKey)
             const content =
               key === 'section_14_recommendations'
-                ? consolidateRecommendationsForTier(report[key], isPremium)
-                : report[key]!
+                ? consolidateRecommendationsForTier(displayReport[key], isPremium)
+                : displayReport[key]!
             return (
               <section key={key} id={`report-section-${key}`}>
                 <h2>

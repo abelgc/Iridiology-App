@@ -161,7 +161,7 @@ export default function ClientReportPage() {
       </div>
 
       {/* Report viewer */}
-      <ClientReportViewer report={state.report} isPremium={isPremium} />
+      <ClientReportViewer report={state.report} isPremium={isPremium} token={token} originalLanguage={state.language} />
 
       {/* Footer */}
       <div className="report-footer no-print">
