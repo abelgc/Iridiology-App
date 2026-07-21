@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react'
 import { Lang, t as translate, TranslationKey, detectLocale } from './i18n'
 
 const STORAGE_KEY = 'iridology_lang'
@@ -33,12 +33,12 @@ export function LanguageProvider({
     setLangState(detectLocale(typeof navigator !== 'undefined' ? navigator.language : undefined))
   }, [])
 
-  function setLang(next: Lang) {
+  const setLang = useCallback((next: Lang) => {
     setLangState(next)
     if (typeof window !== 'undefined') {
       window.localStorage.setItem(STORAGE_KEY, next)
     }
-  }
+  }, [])
 
   return (
     <LanguageContext.Provider value={{ lang, setLang, t: (key) => translate(lang, key) }}>

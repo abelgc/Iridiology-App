@@ -18,7 +18,7 @@ function formatDeliveredAt(deliveredAt: string | null, lang: 'en' | 'es' | 'de')
 export default function ClientReportPage() {
   const params = useParams<{ token: string }>()
   const token = params.token
-  const { t, setLang } = useLanguage()
+  const { t, lang } = useLanguage()
   const [state, setState] = useState<
     | { kind: 'loading' }
     | { kind: 'pending' }
@@ -63,7 +63,6 @@ export default function ClientReportPage() {
           deliveredAt: string | null
         }
         if (!cancelled) {
-          setLang(json.language)
           setState({
             kind: 'ready',
             report: json.report,
@@ -80,7 +79,7 @@ export default function ClientReportPage() {
     return () => {
       cancelled = true
     }
-  }, [token, setLang])
+  }, [token])
 
   async function emailMe() {
     const res = await fetch(`/api/client/reports/${token}/email`, { method: 'POST' })
@@ -105,7 +104,7 @@ export default function ClientReportPage() {
   )
 
   const isPremium = state.paymentTier === 'premium_19_90'
-  const formattedDate = formatDeliveredAt(state.deliveredAt, state.language)
+  const formattedDate = formatDeliveredAt(state.deliveredAt, lang)
 
   return (
     <main style={{ maxWidth: 1140, margin: '0 auto', padding: '32px 20px 80px' }}>
