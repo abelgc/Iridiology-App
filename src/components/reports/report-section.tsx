@@ -59,7 +59,7 @@ export function ReportSection({
   const displayContent = sectionKey === 'section_11_detected_axes' ? formatAxesAsBullets(content) : content
 
   return (
-    <div className="border rounded-lg bg-white dark:bg-gray-900 mb-4 print:border-gray-300 print:mb-6">
+    <div className="border rounded-lg bg-white dark:bg-gray-900 mb-4 print:border-gray-300 print:mb-6 print:break-inside-avoid">
       <div className="flex items-center justify-between p-4 print:p-0 print:border-b print:pb-3 cursor-pointer hover:bg-gray-50 active:bg-gray-100 dark:hover:bg-gray-800 dark:active:bg-gray-700 print:hover:bg-transparent print:active:bg-transparent" onClick={() => !isEditing && setIsExpanded(!isExpanded)}>
         <div className="flex items-center gap-3 flex-1">
           <ChevronDown

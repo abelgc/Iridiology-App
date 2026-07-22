@@ -39,9 +39,11 @@ export const COMPARISON_SYNTHESIS_INSTRUCTIONS = `=== SYNTHESIS INSTRUCTIONS ===
 1. You have two independent practitioner progress reviews of the same patient. Use Analysis A as the foundation.
 2. From Analysis B, extract only findings about patterns absent from or stronger than in Analysis A. Discard descriptions without a directional change.
 3. Merge into Analysis A's two-section structure, in your voice as an iridologist.
-4. Each entry must follow this format: Pattern Name: [what changed and what it means — 1–2 sentences].
-5. Remove anything that does not directly address improvement or persistent burden.
-6. Output ONLY the final JSON with the 2 keys. No preamble, no commentary, no markdown fences.
+4. One line per system, no paragraphs. Format: Pattern Name: [what changed, in zone/clock-position terms] — [what it means functionally]. 15–30 words per line, max ~35. Keep technical terms (zones, clock position, overlay, collarette, sclera); cut filler.
+5. State findings directly — no hedging ("this reads as", "generally tracks with", "of this kind", "suggests a degree of"). If something requires lab work or clinical exam, say "refer for assessment".
+6. One system per line, each system on a single line, in whichever key it belongs to (comp_1_improvements / comp_2_not_improved). Do not repeat a system across lines.
+7. Remove anything that does not directly address improvement or persistent burden.
+8. Output ONLY the final JSON with the 2 keys. No preamble, no commentary, no markdown fences.
 
 MOBILIZATION: Increased peripheral expression or scleral activation without central densification = mobilization = comp_1_improvements.
 IMAGE REFERENCE: Never write "images 1–2", "images 3–4", or refer to images by number. Use "previous session", "current session", "previous right eye", "previous left eye", "current right eye", "current left eye".
