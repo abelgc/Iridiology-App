@@ -40,7 +40,7 @@ export async function POST(
     return NextResponse.json({ error: 'report_not_found' }, { status: 404 })
   }
 
-  const pdfBuffer = await generateReportPdf(reportForPdf, data.language, data.payment_tier === 'premium_19_90')
+  const pdfBuffer = await generateReportPdf(reportForPdf, data.language, data.payment_tier === 'premium_2990')
 
   const result = await sendReportEmail({
     to: data.email,

@@ -70,7 +70,7 @@ export async function POST(
   // the already tier-filtered result — translating the raw prefix lines first would risk the
   // model rewording "Vitamins:" and permanently breaking that match for this cached entry,
   // which would silently leak premium-only content to a basic-tier client.
-  const isPremium = data.payment_tier === 'premium_19_90'
+  const isPremium = data.payment_tier === 'premium_2990'
   const toTranslate: Record<string, string> = { ...original }
   if (toTranslate.section_14_recommendations) {
     toTranslate.section_14_recommendations = consolidateRecommendationsForTier(

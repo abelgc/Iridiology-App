@@ -72,7 +72,7 @@ vi.mock('@vercel/functions', () => ({
 const baseRow = {
   report_download_token: 'tok-1',
   status: 'stage2_processing',
-  payment_tier: 'premium_19_90',
+  payment_tier: 'premium_2990',
   language: 'en',
   email: 'client@example.com',
   date_of_birth: null,

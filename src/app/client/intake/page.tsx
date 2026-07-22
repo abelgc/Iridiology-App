@@ -5,17 +5,17 @@ import { useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useLanguage } from '@/lib/i18n-context'
 import { IntakeForm } from '@/components/client/intake-form'
-import type { PaymentTier } from '@/types/client-analysis'
+import { formatTierPrice, type PaymentTier } from '@/types/client-analysis'
 import type { ClientIntakeInput } from '@/lib/validators/client-intake'
 
 function IntakeContent() {
-  const { t } = useLanguage()
+  const { t, lang } = useLanguage()
   const router = useRouter()
   const searchParams = useSearchParams()
   const tier = searchParams.get('tier') as PaymentTier | null
 
   useEffect(() => {
-    if (tier !== 'basic_12' && tier !== 'premium_19_90') {
+    if (tier !== 'basic_1990' && tier !== 'premium_2990') {
       router.replace('/client')
     }
   }, [tier, router])
@@ -34,9 +34,9 @@ function IntakeContent() {
     router.push(`/client/intake/payment?token=${json.report_download_token}`)
   }
 
-  if (tier !== 'basic_12' && tier !== 'premium_19_90') return null
+  if (tier !== 'basic_1990' && tier !== 'premium_2990') return null
 
-  const isPremium = tier === 'premium_19_90'
+  const isPremium = tier === 'premium_2990'
 
   return (
     <>
@@ -45,7 +45,7 @@ function IntakeContent() {
         <div style={{ position: 'relative', maxWidth: '720px', margin: '0 auto' }}>
           <div className={`plan-pill${isPremium ? ' is-premium' : ''}`}>
             <span className="plan-pill-badge">
-              {isPremium ? `${t('tierPremiumTag')} · ${t('tierPremiumPrice')}` : `${t('tierBasicTag')} · ${t('tierBasicPrice')}`}
+              {isPremium ? `${t('tierPremiumTag')} · ${formatTierPrice(tier, lang)}` : `${t('tierBasicTag')} · ${formatTierPrice(tier, lang)}`}
             </span>
             <span>{t('intakePlanSuffix')}</span>
           </div>

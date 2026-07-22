@@ -3,7 +3,7 @@ import { clientIntakeSchema } from '@/lib/validators/client-intake'
 
 const baseValid = {
   language: 'en',
-  payment_tier: 'basic_12',
+  payment_tier: 'basic_1990',
   full_name: 'Jane Doe',
   email: 'jane@example.com',
   main_complaint: 'Persistent fatigue',

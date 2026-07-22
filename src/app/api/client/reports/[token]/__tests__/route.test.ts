@@ -135,7 +135,7 @@ describe('GET /api/client/reports/[token]', () => {
       language: 'en',
       status: 'completed',
       report_id: 'rX',
-      payment_tier: 'basic_12',
+      payment_tier: 'basic_1990',
       report_delivered_at: new Date().toISOString(),
       reports: { id: 'rX', report_content: { section_1_general_terrain: 'done' }, client_report_content: null },
     }

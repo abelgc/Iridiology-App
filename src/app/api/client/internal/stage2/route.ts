@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
           let enhancedReport = finalReport
 
           if (
-            row.payment_tier === 'premium_19_90' &&
+            row.payment_tier === 'premium_2990' &&
             shouldEnhanceWithJyotish({
               date_of_birth: row.date_of_birth,
               country_of_birth: row.country_of_birth,
@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
     if (row.email && savedClientReport) {
       try {
         const pdfBuffer = await Promise.race([
-          generateReportPdf(savedClientReport, row.language, row.payment_tier === 'premium_19_90'),
+          generateReportPdf(savedClientReport, row.language, row.payment_tier === 'premium_2990'),
           new Promise<Buffer>((_, reject) =>
             setTimeout(() => reject(new Error('pdf_generation_timeout')), 60000),
           ),

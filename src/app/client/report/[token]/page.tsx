@@ -103,7 +103,7 @@ export default function ClientReportPage() {
     </div>
   )
 
-  const isPremium = state.paymentTier === 'premium_19_90'
+  const isPremium = state.paymentTier === 'premium_2990'
   const formattedDate = formatDeliveredAt(state.deliveredAt, lang)
 
   return (

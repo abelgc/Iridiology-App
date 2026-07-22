@@ -10,7 +10,7 @@ describe('IntakeForm', () => {
     const user = userEvent.setup()
     render(
       <LanguageProvider initialLang="en">
-        <IntakeForm tier="basic_12" onSubmit={onSubmit} />
+        <IntakeForm tier="basic_1990" onSubmit={onSubmit} />
       </LanguageProvider>,
     )
     await user.click(screen.getByRole('button', { name: /continue/i }))
@@ -24,7 +24,7 @@ describe('IntakeForm', () => {
     const user = userEvent.setup()
     render(
       <LanguageProvider initialLang="en">
-        <IntakeForm tier="basic_12" onSubmit={onSubmit} />
+        <IntakeForm tier="basic_1990" onSubmit={onSubmit} />
       </LanguageProvider>,
     )
     await user.type(screen.getByLabelText(/full name/i), 'Jane Doe')
@@ -45,7 +45,7 @@ describe('IntakeForm', () => {
     const user = userEvent.setup()
     const { container } = render(
       <LanguageProvider initialLang="de">
-        <IntakeForm tier="basic_12" onSubmit={onSubmit} />
+        <IntakeForm tier="basic_1990" onSubmit={onSubmit} />
       </LanguageProvider>,
     )
     // Query by name/type instead of label text: labels render in German here, so
@@ -81,7 +81,7 @@ describe('IntakeForm', () => {
       return (
         <>
           <button type="button" onClick={() => setLang('es')}>switch-to-es</button>
-          <IntakeForm tier="basic_12" onSubmit={onSubmit} />
+          <IntakeForm tier="basic_1990" onSubmit={onSubmit} />
         </>
       )
     }

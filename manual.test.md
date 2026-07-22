@@ -164,6 +164,6 @@ URL: `http://localhost:3000/client/report/<token>`
 
 ## Notes
 
-- Test both `basic_12` and `premium_19_90` tiers through the full client flow
+- Test both `basic_1990` and `premium_2990` tiers through the full client flow
 - Test in Chrome and one mobile viewport (375px width)
 - Check browser console for errors at each step

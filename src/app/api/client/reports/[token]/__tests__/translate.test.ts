@@ -5,7 +5,7 @@ const VALID_TOKEN = '00000000-0000-4000-8000-000000000000'
 let currentRow: Record<string, unknown> = {
   language: 'en',
   status: 'completed',
-  payment_tier: 'basic_12',
+  payment_tier: 'basic_1990',
   reports: {
     id: 'r1',
     report_content: {},
@@ -60,7 +60,7 @@ beforeEach(() => {
   currentRow = {
     language: 'en',
     status: 'completed',
-    payment_tier: 'basic_12',
+    payment_tier: 'basic_1990',
     reports: {
       id: 'r1',
       report_content: {},

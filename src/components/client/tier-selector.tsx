@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/lib/i18n-context'
-import type { PaymentTier } from '@/types/client-analysis'
+import { formatTierPrice, formatTierPriceParts, type PaymentTier } from '@/types/client-analysis'
 
 const Check = () => (
   <svg viewBox="0 0 12 12" fill="none" width="11" height="11">
@@ -18,9 +18,11 @@ const Arrow = () => (
 )
 
 export function TierSelector() {
-  const { t } = useLanguage()
+  const { t, lang } = useLanguage()
   const router = useRouter()
   const [selected, setSelected] = useState<PaymentTier | null>(null)
+  const basicPrice = formatTierPriceParts('basic_1990', lang)
+  const premiumPrice = formatTierPriceParts('premium_2990', lang)
 
   function pick(tier: PaymentTier) {
     setSelected(tier)
@@ -34,7 +36,7 @@ export function TierSelector() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
           {/* Basic */}
-          <div className="client-card" style={{ position: 'relative', borderRadius: '22px', padding: '28px 22px 24px', background: '#f8f0df', border: `1.5px solid ${selected === 'basic_12' ? '#3d4a2a' : '#d8c9ad'}`, color: '#2a1f14' }}>
+          <div className="client-card" style={{ position: 'relative', borderRadius: '22px', padding: '28px 22px 24px', background: '#f8f0df', border: `1.5px solid ${selected === 'basic_1990' ? '#3d4a2a' : '#d8c9ad'}`, color: '#2a1f14' }}>
             <span style={{ display: 'inline-block', fontSize: '11px', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: '12px', padding: '4px 10px', borderRadius: '99px', background: 'rgba(61,74,42,0.08)', color: '#3d4a2a' }}>
               {t('tierBasicTag')}
             </span>
@@ -46,7 +48,7 @@ export function TierSelector() {
             </p>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px dashed #d8c9ad' }}>
               <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '44px', lineHeight: 1, letterSpacing: '-0.02em', color: '#3d4a2a' }}>
-                €19<span style={{ fontSize: '22px', fontWeight: 500, opacity: 0.8 }}>.90</span>
+                €{basicPrice.whole}<span style={{ fontSize: '22px', fontWeight: 500, opacity: 0.8 }}>{basicPrice.decimal}</span>
               </span>
               <span style={{ fontSize: '13px', color: '#5d4f3f' }}>{t('tierPriceSuffix')}</span>
             </div>
@@ -60,13 +62,13 @@ export function TierSelector() {
                 </li>
               ))}
             </ul>
-            <button type="button" onClick={() => pick('basic_12')} className="cta-basic">
+            <button type="button" onClick={() => pick('basic_1990')} className="cta-basic">
               {t('tierBasicCta')}
             </button>
           </div>
 
           {/* Premium */}
-          <div className="client-card" style={{ position: 'relative', borderRadius: '22px', padding: '28px 22px 24px', background: '#3d4a2a', border: `1.5px solid ${selected === 'premium_19_90' ? '#d4a04a' : '#3d4a2a'}`, color: '#f4ead8', overflow: 'hidden' }}>
+          <div className="client-card" style={{ position: 'relative', borderRadius: '22px', padding: '28px 22px 24px', background: '#3d4a2a', border: `1.5px solid ${selected === 'premium_2990' ? '#d4a04a' : '#3d4a2a'}`, color: '#f4ead8', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse at 100% 0%, rgba(198,106,61,0.28) 0%, transparent 50%), radial-gradient(ellipse at 0% 100%, rgba(212,160,74,0.12) 0%, transparent 55%)' }} />
             <span style={{ position: 'absolute', top: '16px', right: '16px', background: '#c66a3d', color: 'white', fontSize: '10px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: '99px', zIndex: 2, boxShadow: '0 4px 12px rgba(198,106,61,0.35)' }}>
               {t('tierPremiumBadge')}
@@ -83,7 +85,7 @@ export function TierSelector() {
               </p>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '18px', paddingBottom: '18px', borderBottom: '1px dashed rgba(244,234,216,0.18)' }}>
                 <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '44px', lineHeight: 1, letterSpacing: '-0.02em', color: '#d4a04a' }}>
-                  €29<span style={{ fontSize: '22px', fontWeight: 500, opacity: 0.8 }}>.90</span>
+                  €{premiumPrice.whole}<span style={{ fontSize: '22px', fontWeight: 500, opacity: 0.8 }}>{premiumPrice.decimal}</span>
                 </span>
                 <span style={{ fontSize: '13px', color: 'rgba(244,234,216,0.6)' }}>{t('tierPriceSuffix')}</span>
               </div>
@@ -97,7 +99,7 @@ export function TierSelector() {
                   </li>
                 ))}
               </ul>
-              <button type="button" onClick={() => pick('premium_19_90')} className="cta-premium">
+              <button type="button" onClick={() => pick('premium_2990')} className="cta-premium">
                 {t('tierPremiumCta')} <Arrow />
               </button>
             </div>
@@ -140,8 +142,8 @@ export function TierSelector() {
           ))}
           <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr', alignItems: 'center', padding: '13px 16px', fontSize: '13px' }}>
             <span style={{ color: '#2a1f14', fontWeight: 500 }}>{t('compareRowPrice')}</span>
-            <span style={{ textAlign: 'center', fontFamily: 'var(--font-display)', fontSize: '17px', color: '#3d4a2a', fontWeight: 600 }}>€19.90</span>
-            <span style={{ textAlign: 'center', fontFamily: 'var(--font-display)', fontSize: '17px', color: '#a85428', fontWeight: 600 }}>€29.90</span>
+            <span style={{ textAlign: 'center', fontFamily: 'var(--font-display)', fontSize: '17px', color: '#3d4a2a', fontWeight: 600 }}>{formatTierPrice('basic_1990', lang)}</span>
+            <span style={{ textAlign: 'center', fontFamily: 'var(--font-display)', fontSize: '17px', color: '#a85428', fontWeight: 600 }}>{formatTierPrice('premium_2990', lang)}</span>
           </div>
         </div>
       </section>

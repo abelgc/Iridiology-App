@@ -21,7 +21,6 @@ export const translations = {
     // tier cards
     tierBasicTag: 'Essential',
     tierBasicTitle: 'Complete Iridology Reading',
-    tierBasicPrice: '€19.90',
     tierBasicDescription: 'A clear, honest reading to understand your natural tendencies and begin your path with confidence.',
     tierBasicFeat1: 'Full iris report with your main wellness tendencies',
     tierBasicFeat2: 'Interpretation of the emotional field reflected in your iris',
@@ -31,7 +30,6 @@ export const translations = {
     tierPremiumBadge: '★ Most Chosen',
     tierPremiumTag: 'Premium',
     tierPremiumTitle: 'Deep Personalized Reading',
-    tierPremiumPrice: '€29.90',
     tierPremiumDescription: 'A more intimate, specific look — with a personal path to follow based on your details.',
     tierPremiumFeat1: 'Everything in Essential',
     tierPremiumFeat2: 'Deeper interpretation with detail by system and personal nuance',
@@ -309,7 +307,6 @@ export const translations = {
     // tier cards
     tierBasicTag: 'Esencial',
     tierBasicTitle: 'Lectura Completa de Iridología',
-    tierBasicPrice: '€19,90',
     tierBasicDescription: 'Una lectura clara y honesta para comprender tus tendencias naturales y comenzar tu camino con confianza.',
     tierBasicFeat1: 'Informe completo del iris con tus principales tendencias de bienestar',
     tierBasicFeat2: 'Interpretación del campo emocional reflejado en tu iris',
@@ -319,7 +316,6 @@ export const translations = {
     tierPremiumBadge: '★ Más Elegido',
     tierPremiumTag: 'Premium',
     tierPremiumTitle: 'Lectura Profunda y Personalizada',
-    tierPremiumPrice: '€29,90',
     tierPremiumDescription: 'Una mirada más íntima y específica, con un camino personal a seguir basado en tus detalles.',
     tierPremiumFeat1: 'Todo lo incluido en Esencial',
     tierPremiumFeat2: 'Interpretación más profunda con detalle por sistema y matiz personal',
@@ -588,7 +584,6 @@ export const translations = {
     heroLead: 'Entdecke natürliche Tendenzen und Gleichgewichtsmuster durch deine Augen. Wähle die Lesung, die am besten zu deinem Moment passt.',
     tierBasicTag: 'Essenziell',
     tierBasicTitle: 'Vollständige Iridologie-Lesung',
-    tierBasicPrice: '€19,90',
     tierBasicDescription: 'Eine klare, ehrliche Lesung, um deine natürlichen Tendenzen zu verstehen und deinen Weg mit Zuversicht zu beginnen.',
     tierBasicFeat1: 'Vollständiger Irisbericht mit deinen wichtigsten Wellness-Tendenzen',
     tierBasicFeat2: 'Interpretation des emotionalen Feldes, das sich in deiner Iris widerspiegelt',
@@ -598,7 +593,6 @@ export const translations = {
     tierPremiumBadge: '★ Am häufigsten gewählt',
     tierPremiumTag: 'Premium',
     tierPremiumTitle: 'Tiefe persönliche Lesung',
-    tierPremiumPrice: '€29,90',
     tierPremiumDescription: 'Ein intimerer, spezifischerer Blick — mit einem persönlichen Weg, der auf deinen Details basiert.',
     tierPremiumFeat1: 'Alles aus Essenziell',
     tierPremiumFeat2: 'Tiefere Interpretation mit Detail nach System und persönlicher Nuance',
@@ -849,6 +843,12 @@ export const translations = {
 } as const
 
 export type TranslationKey = keyof typeof translations.en
+
+// Compile-time only: fails the build if es/de is missing a key that exists in en,
+// so a forgotten translation errors immediately instead of silently rendering the
+// raw key (or a blank) to that language's users.
+void (translations.es satisfies Record<TranslationKey, string>)
+void (translations.de satisfies Record<TranslationKey, string>)
 
 export function t(lang: Lang, key: TranslationKey): string {
   const dict = translations[lang] ?? translations.en

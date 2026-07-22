@@ -11,7 +11,7 @@ const analysisRow = {
   id: 'a1',
   status: 'paid',
   language: 'es',
-  payment_tier: 'basic_12',
+  payment_tier: 'basic_1990',
   email: 'jane@example.com',
   date_of_birth: '1990-05-12',
   country_of_birth: 'Mexico',

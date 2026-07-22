@@ -5,8 +5,8 @@ import type { AIProvider } from './types'
 import type { PaymentTier } from '@/types/client-analysis'
 
 export const TIER_MODELS: Record<PaymentTier, { anthropic: string; openai: string }> = {
-  premium_19_90: { anthropic: 'claude-sonnet-5', openai: 'gpt-5.6-sol' },
-  basic_12: { anthropic: 'claude-haiku-4-5-20251001', openai: 'gpt-5.6-luna' },
+  premium_2990: { anthropic: 'claude-sonnet-5', openai: 'gpt-5.6-sol' },
+  basic_1990: { anthropic: 'claude-haiku-4-5-20251001', openai: 'gpt-5.6-luna' },
 }
 
 async function getSettings(): Promise<Record<string, string>> {

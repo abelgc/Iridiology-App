@@ -46,7 +46,7 @@ describe('sendReportEmail', () => {
       to: 'user@example.com',
       lang: 'en',
       analysisId: 'analysis-uuid-123',
-      paymentTier: 'premium_19_90',
+      paymentTier: 'premium_2990',
       pdfBuffer: Buffer.from('%PDF-test'),
     })
     expect(result.ok).toBe(true)
@@ -60,7 +60,7 @@ describe('sendReportEmail', () => {
       to: 'user@example.com',
       lang: 'en',
       analysisId: 'analysis-uuid-123',
-      paymentTier: 'basic_12',
+      paymentTier: 'basic_1990',
       pdfBuffer: Buffer.from('%PDF-test'),
     })
     expect(result.ok).toBe(false)
@@ -78,7 +78,7 @@ describe('sendReportEmail', () => {
       to: 'user@example.com',
       lang: 'en',
       analysisId: 'analysis-uuid-123',
-      paymentTier: 'premium_19_90',
+      paymentTier: 'premium_2990',
       pdfBuffer: Buffer.from('%PDF-test'),
     })
 
@@ -95,7 +95,7 @@ describe('sendReportEmail', () => {
       to: 'user@example.com',
       lang: 'en',
       analysisId: 'analysis-uuid-123',
-      paymentTier: 'premium_19_90',
+      paymentTier: 'premium_2990',
       pdfBuffer: Buffer.from('%PDF-test'),
     })
 

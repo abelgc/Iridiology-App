@@ -3,7 +3,7 @@ import { healthQuestionnaireSchema } from './health-questionnaire'
 
 export const clientIntakeSchema = z.object({
   language: z.enum(['en', 'es', 'de']),
-  payment_tier: z.enum(['basic_12', 'premium_19_90']),
+  payment_tier: z.enum(['basic_1990', 'premium_2990']),
   full_name: z.string().min(1).max(255),
   email: z.string().email(),
   main_complaint: z.string().min(1).max(2000),

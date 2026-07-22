@@ -22,7 +22,7 @@ function mockFetch() {
         json: async () => ({
           language: 'en',
           report: { section_1_general_terrain: 'Original English content.' },
-          paymentTier: 'basic_12',
+          paymentTier: 'basic_1990',
           deliveredAt: null,
         }),
       })

@@ -51,7 +51,7 @@ function readyPayload() {
     json: async () => ({
       language: 'en',
       report: { summary: 'hello' },
-      paymentTier: 'basic_12',
+      paymentTier: 'basic_1990',
       deliveredAt: null,
     }),
   }

@@ -32,7 +32,7 @@ describe('POST /api/client/intake', () => {
     const { POST } = await import('@/app/api/client/intake/route')
     const body = {
       language: 'en',
-      payment_tier: 'basic_12',
+      payment_tier: 'basic_1990',
       full_name: 'Jane Doe',
       email: 'jane@example.com',
       main_complaint: 'Fatigue',
