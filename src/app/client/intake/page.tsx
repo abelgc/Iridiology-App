@@ -31,7 +31,7 @@ function IntakeContent() {
       return
     }
     const json = (await res.json()) as { report_download_token: string }
-    router.push(`/client/intake/payment?token=${json.report_download_token}`)
+    router.push(`/client/intake/payment?token=${json.report_download_token}&tier=${tier}`)
   }
 
   if (tier !== 'basic_1990' && tier !== 'premium_2990') return null
