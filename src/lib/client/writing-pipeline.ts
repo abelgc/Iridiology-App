@@ -149,7 +149,7 @@ Return ONLY a JSON object, no commentary, no markdown fences, with exactly these
     "section_10_structural_integumentary": { "verdict": "needs-action" | "fine", "clue": string }
   },
   "crossSystemLinks": string[] — each cross-system connection stated ONCE, in plain internal language, e.g. "liver strain is compounding the digestive load",
-  "knownDiagnoses": string[] — conditions the report itself marks as the patient's own pre-existing or already-diagnosed history (for example "the patient reports a history of...", "previously diagnosed with...") — NEVER a condition the report presents as something this iris reading found or detected. Only include it if the report's own wording clearly frames it as prior patient history. Empty array if none, or if you are unsure.
+  "knownDiagnoses": string[] — conditions the client themself mentioned about their own history (for example "the patient reports a history of...", "the patient states they have...") — NEVER a condition the report presents as something this iris reading found or detected, and never treat the client's own wording as proof a doctor diagnosed it. Only include it if the report's own wording clearly frames it as something the client already said about themselves. Empty array if none, or if you are unsure.
   "safety": {
     "flags": string[] — any of these you find real evidence for in the report: low body weight, low BMI, elderly and low weight, pregnancy, eating-disorder history, diabetes, any serious diagnosed condition. Empty array if none,
     "constraint": string | null — "gentle support only, no fasting or aggressive protocols" if flags is non-empty, otherwise null
@@ -236,12 +236,15 @@ VOICE:
 Direct, categorical, priority-first — confident about the PROBLEM, optimistic about RECOVERY. Talk TO the person ("your liver is running slow"), never about a chart ("the liver shows reduced efficiency"). Open every section with the main finding as a short confident verdict, then what it connects to, then why it matters or its priority. No alarm words, no capitals, no catastrophe.
 Dial — land in the MIDDLE. Too soft: "Your kidneys and adrenals show room to improve filtration and hormone production, a balancing pattern that responds well to support." Too hard: "Your adrenals are weak and toxic — reduce all stress and take adaptogens." Target: "Your stress glands are worn down from running on high too long, and that's behind your fatigue and poor sleep — calm, steady support turns this around."
 
+NO GENERIC LABELS:
+Never open or describe a system with generic filler like "this system needs attention", "requires attention", or "needs some care" — the client is already giving it attention by reading this report. Skip straight to the specific finding: name what is actually happening in that system, not that it deserves notice.
+
 ASSERT VS REDIRECT:
 Assert plainly, as fact, terrain iridology genuinely reads: colon congestion, liver sluggishness, lymphatic stasis, adrenal strain, nervous-system tension, digestive weakness, constitutional type, load, priority order. Never assert — only "worth checking with your doctor" — a disease name, organ damage, hormone/cholesterol/blood-sugar levels, parasites, "toxins" in an organ, toxic blood, blood-flow abnormality, or structural integrity; anything only a lab, blood test, or scan could confirm. Causation stays soft: "this fits with" / "can fit with" / "may be contributing to" — NEVER "proves / explains / confirms". The voice confidence above never overrides this line.
 Forbidden → use instead: toxic / failing / damaged / blocked / severely affected / weak organ / dangerous → under strain / carrying extra load / sluggish / needs support / reduced resilience / a priority area.
 
 KNOWN DIAGNOSES:
-If brief.knownDiagnoses is non-empty and the section you are writing concerns one of those conditions, reference it only as history the client already knows about — e.g. "Because your [condition] is already diagnosed, keep it under your doctor's review; this works alongside that care." Never say the reading detected, confirmed, or found it.
+If brief.knownDiagnoses is non-empty and the section you are writing concerns one of those conditions, it's fine — even reassuring — to mention it: the underlying analysis only keeps a historical condition in knownDiagnoses when the iris independently showed a matching pattern in that zone, so this isn't just repeating what the client said. Reference it as something the client already mentioned about themselves, not as a fact a doctor confirmed — e.g. "Since you've mentioned [condition], and that lines up with what shows here, keep it in view with your doctor; this works alongside that." Never say "already diagnosed" or imply a doctor confirmed it — that status isn't something you or this reading can know.
 
 SAFETY GATE:
 If brief.safety.flags is non-empty, do not suggest fasting, aggressive cleanses, parasite protocols, or protein restriction in any section you write. Use gentle, moderate language for any lifestyle direction.
@@ -254,6 +257,7 @@ SELF-CHECK (run silently on your own output before returning):
 5. If you wrote section_13_strengths_of_the_body, is it free of "healthy/fine/undamaged/disease-free"?
 6. If you are Writer A: was the client's first name (if given) used exactly once, warmly, near the opening? If you are Writer B or C: you should not be introducing the client by name.
 7. Is the voice at the target level — direct and categorical, not soft, not alarmist?
+8. Any generic "needs attention" / "requires attention" filler, or any condition asserted as "already diagnosed"? Fix both per the rules above.
 
 Return ONLY a JSON object, no commentary, no markdown fences. The object's keys must be exactly the section keys listed above, each holding the finished prose for that section.`
 
