@@ -3,15 +3,23 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { isValidReportToken } from '@/lib/client/report-token'
 
 export async function POST(request: NextRequest) {
-  if (!process.env.ENABLE_MOCK_PAYMENT) {
-    return NextResponse.json({ error: 'mock_payment_disabled' }, { status: 403 })
-  }
-
-  let body: { report_download_token?: string }
+  let body: { report_download_token?: string; discount_code?: string }
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'invalid_json' }, { status: 400 })
+  }
+
+  const secret = process.env.OWNER_TEST_DISCOUNT_CODE
+  const submittedCode = body.discount_code?.trim()
+  const validDiscountCode = !!submittedCode && !!secret && submittedCode.toUpperCase() === secret.toUpperCase()
+
+  // The owner's discount-code bypass is a real product feature and must work in
+  // every environment, including Production — it must never depend on
+  // ENABLE_MOCK_PAYMENT, which exists purely for testing and is deliberately
+  // disabled on Production.
+  if (!validDiscountCode && !process.env.ENABLE_MOCK_PAYMENT) {
+    return NextResponse.json({ error: 'mock_payment_disabled' }, { status: 403 })
   }
 
   const token = body.report_download_token
@@ -47,7 +55,7 @@ export async function POST(request: NextRequest) {
     .from('client_analyses')
     .update({
       paid_at: new Date().toISOString(),
-      is_mock_payment: true,
+      is_mock_payment: !validDiscountCode,
       status: 'paid',
       failure_reason: null,
     })

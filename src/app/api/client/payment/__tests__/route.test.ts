@@ -34,10 +34,10 @@ vi.mock('@/lib/supabase/server', () => ({
 
 const VALID_TOKEN = '00000000-0000-4000-8000-000000000000'
 
-function makeRequest(token = VALID_TOKEN) {
+function makeRequest(token = VALID_TOKEN, discountCode?: string) {
   return new Request('http://test/api/client/payment', {
     method: 'POST',
-    body: JSON.stringify({ report_download_token: token }),
+    body: JSON.stringify({ report_download_token: token, discount_code: discountCode }),
   }) as never
 }
 
@@ -46,12 +46,14 @@ beforeEach(() => {
   selectMock.mockClear()
   fromMock.mockClear()
   process.env.ENABLE_MOCK_PAYMENT = 'true'
+  delete process.env.OWNER_TEST_DISCOUNT_CODE
   selectResult = { data: null, error: null }
   updateResult = { data: null, error: null }
 })
 
 afterEach(() => {
   delete process.env.ENABLE_MOCK_PAYMENT
+  delete process.env.OWNER_TEST_DISCOUNT_CODE
 })
 
 describe('POST /api/client/payment (mock)', () => {
@@ -110,5 +112,42 @@ describe('POST /api/client/payment (mock)', () => {
     const { POST } = await import('@/app/api/client/payment/route')
     const res = await POST(makeRequest())
     expect(res.status).toBe(403)
+  })
+
+  it('accepts a valid discount code even when ENABLE_MOCK_PAYMENT is unset (must work in Production)', async () => {
+    delete process.env.ENABLE_MOCK_PAYMENT
+    process.env.OWNER_TEST_DISCOUNT_CODE = 'NARASIMHA100'
+    selectResult = { data: { report_download_token: VALID_TOKEN, status: 'intake_pending' }, error: null }
+    updateResult = { data: { report_download_token: VALID_TOKEN, status: 'paid' }, error: null }
+
+    const { POST } = await import('@/app/api/client/payment/route')
+    const res = await POST(makeRequest(VALID_TOKEN, 'narasimha100'))
+    const json = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(json.status).toBe('paid')
+    expect(updateMock).toHaveBeenCalledTimes(1)
+    expect(updateMock.mock.calls[0][0]).toMatchObject({ is_mock_payment: false })
+  })
+
+  it('rejects an invalid discount code when ENABLE_MOCK_PAYMENT is unset', async () => {
+    delete process.env.ENABLE_MOCK_PAYMENT
+    process.env.OWNER_TEST_DISCOUNT_CODE = 'NARASIMHA100'
+
+    const { POST } = await import('@/app/api/client/payment/route')
+    const res = await POST(makeRequest(VALID_TOKEN, 'WRONGCODE'))
+
+    expect(res.status).toBe(403)
+    expect(updateMock).not.toHaveBeenCalled()
+  })
+
+  it('marks is_mock_payment true for the plain ENABLE_MOCK_PAYMENT path (no discount code)', async () => {
+    selectResult = { data: { report_download_token: VALID_TOKEN, status: 'intake_pending' }, error: null }
+    updateResult = { data: { report_download_token: VALID_TOKEN, status: 'paid' }, error: null }
+
+    const { POST } = await import('@/app/api/client/payment/route')
+    await POST(makeRequest())
+
+    expect(updateMock.mock.calls[0][0]).toMatchObject({ is_mock_payment: true })
   })
 })

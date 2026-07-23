@@ -86,17 +86,34 @@ function PaymentContent() {
   async function handleContinue() {
     if (!token) return
     setSubmitting(true)
-    const res = await fetch('/api/client/payment', {
+
+    if (isFree) {
+      const res = await fetch('/api/client/payment', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ report_download_token: token, discount_code: discountCode.trim() }),
+      })
+      setSubmitting(false)
+      if (!res.ok) {
+        alert(t('error'))
+        return
+      }
+      router.push(`/client/upload?token=${token}`)
+      return
+    }
+
+    const res = await fetch('/api/client/payment/checkout-session', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ report_download_token: token }),
     })
+    const json = await res.json().catch(() => null)
     setSubmitting(false)
-    if (!res.ok) {
+    if (!res.ok || !json?.url) {
       alert(t('error'))
       return
     }
-    router.push(`/client/upload?token=${token}`)
+    window.location.href = json.url
   }
 
   return (
