@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (error || !row) {
+    console.error(`[client-intake] insert failed for tier ${data.payment_tier}:`, error?.message)
     return NextResponse.json(
       { error: 'db_insert_failed', message: error?.message },
       { status: 500 },
