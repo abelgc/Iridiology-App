@@ -218,13 +218,13 @@ export function IntakeForm({
       {/* Card: Extra context */}
       <IntakeCard icon={<IconFile />} title={t('intakeCardExtraTitle')}>
         <div className="intake-grid">
-          <IntakeField label={t('qExtraAllergies')}>
+          <IntakeField label={t('qExtraAllergies')} optional={t('intakeOptional')}>
             <input className="intake-input" placeholder={t('phKnownAllergies')} {...register('health_questionnaire.known_allergies')} />
           </IntakeField>
-          <IntakeField label={t('qExtraSurgeries')}>
+          <IntakeField label={t('qExtraSurgeries')} optional={t('intakeOptional')}>
             <textarea className="intake-textarea" rows={2} placeholder={t('phPastSurgeries')} {...register('health_questionnaire.past_surgeries')} />
           </IntakeField>
-          <IntakeField label={t('qExtraFamilyHistory')}>
+          <IntakeField label={t('qExtraFamilyHistory')} optional={t('intakeOptional')}>
             <textarea className="intake-textarea" rows={2} placeholder={t('phFamilyHistory')} {...register('health_questionnaire.family_history')} />
           </IntakeField>
         </div>
