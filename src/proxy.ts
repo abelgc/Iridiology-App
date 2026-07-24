@@ -3,11 +3,16 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function proxy(request: NextRequest) {
+  const pathname = request.nextUrl.pathname
+
+  // The bare domain is the client-facing app by default — serve /client's
+  // content without changing the visible URL and without requiring login.
+  if (pathname === '/') {
+    return NextResponse.rewrite(new URL('/client', request.url))
+  }
+
   // Bypass authentication for client routes
-  if (
-    request.nextUrl.pathname.startsWith('/client') ||
-    request.nextUrl.pathname.startsWith('/api/client')
-  ) {
+  if (pathname.startsWith('/client') || pathname.startsWith('/api/client')) {
     return NextResponse.next({ request })
   }
 
@@ -42,7 +47,6 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  const pathname = request.nextUrl.pathname
   const isLoginPage = pathname === '/login'
   const isPublicAuthPage = pathname === '/forgot-password' || pathname === '/reset-password'
 
@@ -54,7 +58,7 @@ export async function proxy(request: NextRequest) {
 
   if (user && isLoginPage) {
     const url = request.nextUrl.clone()
-    url.pathname = '/'
+    url.pathname = '/practitioner'
     return NextResponse.redirect(url)
   }
 
