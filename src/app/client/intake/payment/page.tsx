@@ -278,10 +278,6 @@ function PaymentContent() {
           <p style={{ textAlign: 'center', fontSize: 11.5, color: '#5d4f3f', marginTop: 14 }}>
             {t('paymentSecureNote')}
           </p>
-
-          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginTop: 16, padding: '12px 14px', background: '#ecdfc6', borderRadius: 12, fontSize: 12, color: '#3d4a2a', lineHeight: 1.5 }}>
-            {t('paymentGuarantee')}
-          </div>
         </section>
       </div>
     </>
