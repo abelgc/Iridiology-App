@@ -8,7 +8,13 @@ let currentRow: Record<string, unknown> = {
   language: 'es',
   status: 'completed',
   report_id: 'r1',
-  reports: { id: 'r1', report_content: { section_1_general_terrain: 'x' } },
+  reports: {
+    id: 'r1',
+    report_content: {
+      section_1_general_terrain: 'x',
+      section_15_iris_sign_patterns: 'practitioner-only jargon that must never reach the client',
+    },
+  },
 }
 
 // Per-call-index override lists. Missing/undefined entries fall back to a default:
@@ -63,7 +69,7 @@ beforeEach(() => {
 })
 
 describe('GET /api/client/reports/[token]', () => {
-  it('returns report content for valid token', async () => {
+  it('returns report content for valid token, stripping practitioner-only sections from the fallback report_content', async () => {
     const { GET } = await import('@/app/api/client/reports/[token]/route')
     const res = await GET(new Request('http://test') as never, {
       params: Promise.resolve({ token: '00000000-0000-4000-8000-000000000000' }),
@@ -71,6 +77,7 @@ describe('GET /api/client/reports/[token]', () => {
     const json = await res.json()
     expect(res.status).toBe(200)
     expect(json.report.section_1_general_terrain).toBe('x')
+    expect(json.report.section_15_iris_sign_patterns).toBeUndefined()
     expect(json.language).toBe('es')
   })
 

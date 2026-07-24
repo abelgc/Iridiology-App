@@ -8,10 +8,11 @@ import {
   IRIDOLOGY_COLOUR_FIBRE_SCLERA_GUIDE,
   IRIDOLOGY_IRIS_TERRITORY_MAP,
   IRIDOLOGY_VITAMIN_MINERAL_HERB_MAP,
+  IRIDOLOGY_IRIS_SIGN_CATALOGUE,
   buildChatSystemPrompt,
   getStandardAnalysisSystemPrompt,
 } from '../prompts'
-import { REPORT_SECTION_KEYS } from '@/types/report'
+import { REPORT_SECTION_KEYS, PRACTITIONER_ONLY_SECTION_KEYS } from '@/types/report'
 import { reportContentSchema } from '@/lib/validators/report'
 import { TIER_MODELS } from '@/lib/ai/get-provider'
 
@@ -251,14 +252,24 @@ describe('Claude Prompts', () => {
   })
 
   describe('reportContentSchema', () => {
-    it('should validate correct 13-section objects', () => {
+    it('should validate a full standard report object (14 + 1 practitioner-only)', () => {
+      const validReport: Record<string, string> = {}
+      ;[...REPORT_SECTION_KEYS, ...PRACTITIONER_ONLY_SECTION_KEYS].forEach((key) => {
+        validReport[key] = `Content for ${key}`
+      })
+
+      const result = reportContentSchema.safeParse(validReport)
+      expect(result.success).toBe(true)
+    })
+
+    it('should reject a report missing the practitioner-only section', () => {
       const validReport: Record<string, string> = {}
       REPORT_SECTION_KEYS.forEach((key) => {
         validReport[key] = `Content for ${key}`
       })
 
       const result = reportContentSchema.safeParse(validReport)
-      expect(result.success).toBe(true)
+      expect(result.success).toBe(false)
     })
 
     it('should reject objects missing sections', () => {
@@ -296,6 +307,62 @@ describe('Claude Prompts', () => {
       expect(IRIDOLOGY_VITAMIN_MINERAL_HERB_MAP).toContain('Minerals —')
       expect(IRIDOLOGY_VITAMIN_MINERAL_HERB_MAP).toContain('Herbs —')
       expect(IRIDOLOGY_VITAMIN_MINERAL_HERB_MAP).not.toContain('Shoulder joint:')
+    })
+
+    it('REGRESSION: catalogue no longer lists Silica as a vitamin (it is a mineral only)', () => {
+      const skinEntry = IRIDOLOGY_VITAMIN_MINERAL_HERB_MAP.match(/Skin: Vitamins — ([^;]+);/)![1]
+      expect(skinEntry).not.toContain('Silica')
+      const skinMinerals = IRIDOLOGY_VITAMIN_MINERAL_HERB_MAP.match(/Skin: Vitamins — [^;]+; Minerals — ([^;]+);/)![1]
+      expect(skinMinerals).toContain('Silica')
+    })
+
+    it('REGRESSION: catalogue uses one consistent name per nutrient instead of numeric/common-name duplicates', () => {
+      // Previously the same nutrient was named differently across organ entries
+      // (e.g. "Niacin" for Liver/Skin but "B3" for the nervous-system cluster),
+      // which made the same vitamin show up twice under different names once
+      // consolidated in the client report's recommendations section.
+      expect(IRIDOLOGY_VITAMIN_MINERAL_HERB_MAP).not.toMatch(/\bB3\b(?!\))/)
+      expect(IRIDOLOGY_VITAMIN_MINERAL_HERB_MAP).not.toMatch(/\bB9\b(?!\))/)
+      expect(IRIDOLOGY_VITAMIN_MINERAL_HERB_MAP).not.toMatch(/\bB5\b(?!\))/)
+      expect(IRIDOLOGY_VITAMIN_MINERAL_HERB_MAP).not.toMatch(/, G,|, G;/)
+      expect(IRIDOLOGY_VITAMIN_MINERAL_HERB_MAP).not.toContain('Chloride')
+      expect(IRIDOLOGY_VITAMIN_MINERAL_HERB_MAP).toContain('Niacin (B3)')
+      expect(IRIDOLOGY_VITAMIN_MINERAL_HERB_MAP).toContain('Folic acid (B9)')
+      expect(IRIDOLOGY_VITAMIN_MINERAL_HERB_MAP).toContain('Pantothenic acid (B5)')
+      expect(IRIDOLOGY_VITAMIN_MINERAL_HERB_MAP).toContain('Riboflavin (B2)')
+    })
+
+    it('REGRESSION: RECOMMENDATIONS groups by the same 8 body systems as sections 3-10, not by fine organ', () => {
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT_EN).toContain('Group recommendations by BODY SYSTEM')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT_EN).toContain('Hepatic System: liver, gallbladder')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT_EN).toContain('Endocrine and Hormonal System: adrenal glands, pituitary, thyroid, pancreas')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT_EN).toContain('Immune and Lymphatic System: lymphatic glands, spleen, thymus')
+    })
+
+    it('has exactly one practitioner-only section key, kept out of REPORT_SECTION_KEYS', () => {
+      expect(PRACTITIONER_ONLY_SECTION_KEYS).toHaveLength(1)
+      expect(PRACTITIONER_ONLY_SECTION_KEYS[0]).toBe('section_15_iris_sign_patterns')
+      expect(REPORT_SECTION_KEYS).not.toContain('section_15_iris_sign_patterns')
+    })
+  })
+
+  describe('IRIDOLOGY_IRIS_SIGN_CATALOGUE', () => {
+    it('names the core iris sign-pattern vocabulary', () => {
+      expect(IRIDOLOGY_IRIS_SIGN_CATALOGUE).toContain('Lacunae (closed)')
+      expect(IRIDOLOGY_IRIS_SIGN_CATALOGUE).toContain('Open lacunae')
+      expect(IRIDOLOGY_IRIS_SIGN_CATALOGUE).toContain('Crypts')
+      expect(IRIDOLOGY_IRIS_SIGN_CATALOGUE).toContain('Pigment spots')
+      expect(IRIDOLOGY_IRIS_SIGN_CATALOGUE).toContain('Radii solaris')
+      expect(IRIDOLOGY_IRIS_SIGN_CATALOGUE).toContain('Nerve rings')
+      expect(IRIDOLOGY_IRIS_SIGN_CATALOGUE).toContain('Lymphatic rosary')
+    })
+  })
+
+  describe('section_15_iris_sign_patterns prompt wiring', () => {
+    it('is included in the JSON response format as the practitioner-only 15th key', () => {
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('"section_15_iris_sign_patterns"')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('DETECTED IRIS SIGN PATTERNS')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('following 15 keys')
     })
   })
 

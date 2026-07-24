@@ -1,18 +1,20 @@
 import { z } from 'zod'
-import { REPORT_SECTION_KEYS } from '@/types/report'
+import { REPORT_SECTION_KEYS, PRACTITIONER_ONLY_SECTION_KEYS } from '@/types/report'
 import { comparisonReportContentSchema } from './comparison-report'
 
-// No optional sections - all 12 sections must be provided
+const ALL_STANDARD_SECTION_KEYS = [...REPORT_SECTION_KEYS, ...PRACTITIONER_ONLY_SECTION_KEYS] as const
+
+// No optional sections - all sections must be provided
 const OPTIONAL_SECTIONS = new Set<string>()
 
 export const reportContentSchema = z.object(
   Object.fromEntries(
-    REPORT_SECTION_KEYS.map((key) => [
+    ALL_STANDARD_SECTION_KEYS.map((key) => [
       key,
       OPTIONAL_SECTIONS.has(key) ? z.string() : z.string().min(1),
     ]),
   ),
-) as z.ZodType<Record<typeof REPORT_SECTION_KEYS[number], string>>
+) as z.ZodType<Record<typeof ALL_STANDARD_SECTION_KEYS[number], string>>
 
 export const reportContentUnionSchema = z.union([reportContentSchema, comparisonReportContentSchema])
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { isValidReportToken } from '@/lib/client/report-token'
+import { PRACTITIONER_ONLY_SECTION_KEYS } from '@/types/report'
 import { triggerStage2 } from '@/lib/client/trigger-stage2'
 
 const SELECT_COLUMNS = `
@@ -125,7 +126,11 @@ export async function GET(
   }
 
   const reports = current.reports as any
-  const report = reports.client_report_content ?? reports.report_content
+  // Belt-and-braces: strip practitioner-only sections regardless of which source object was
+  // used above — protects against both a missing client_report_content (legacy report, or the
+  // rewrite pipeline never completing) and a client_report_content that itself leaked them.
+  const report = { ...(reports.client_report_content ?? reports.report_content) }
+  for (const key of PRACTITIONER_ONLY_SECTION_KEYS) delete report[key]
 
   return NextResponse.json({
     language: current.language,
