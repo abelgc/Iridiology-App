@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation'
 
 export default function RootPage() {
-  // Redirect to practitioner app
-  redirect('/practitioner')
+  redirect('/client')
 }

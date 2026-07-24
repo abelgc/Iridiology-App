@@ -20,19 +20,21 @@ vi.mock('@/lib/supabase/server', () => ({
 }))
 
 const createSessionMock = vi.fn()
+const listPromotionCodesMock = vi.fn()
 
 vi.mock('@/lib/stripe/server', () => ({
   getStripeClient: () => ({
     checkout: { sessions: { create: createSessionMock } },
+    promotionCodes: { list: listPromotionCodesMock },
   }),
 }))
 
 const VALID_TOKEN = '00000000-0000-4000-8000-000000000000'
 
-function makeRequest(token = VALID_TOKEN) {
+function makeRequest(token = VALID_TOKEN, discountCode?: string) {
   return new NextRequest('http://test.example/api/client/payment/checkout-session', {
     method: 'POST',
-    body: JSON.stringify({ report_download_token: token }),
+    body: JSON.stringify({ report_download_token: token, ...(discountCode ? { discount_code: discountCode } : {}) }),
   })
 }
 
@@ -40,6 +42,8 @@ beforeEach(() => {
   selectMock.mockClear()
   fromMock.mockClear()
   createSessionMock.mockReset()
+  listPromotionCodesMock.mockReset()
+  listPromotionCodesMock.mockResolvedValue({ data: [] })
   selectResult = { data: null, error: null }
 })
 
@@ -98,6 +102,44 @@ describe('POST /api/client/payment/checkout-session', () => {
 
     expect(res.status).toBe(200)
     expect(json.status).toBe('paid')
+    expect(createSessionMock).not.toHaveBeenCalled()
+  })
+
+  it('applies a valid Stripe promotion code as a discount on the session', async () => {
+    selectResult = {
+      data: { report_download_token: VALID_TOKEN, status: 'intake_pending', payment_tier: 'basic_1990' },
+      error: null,
+    }
+    listPromotionCodesMock.mockResolvedValue({ data: [{ id: 'promo_123', code: 'TESTLIVE1EUR' }] })
+    createSessionMock.mockResolvedValue({ url: 'https://checkout.stripe.com/test-session' })
+
+    const { POST } = await import('@/app/api/client/payment/checkout-session/route')
+    const res = await POST(makeRequest(VALID_TOKEN, 'TESTLIVE1EUR'))
+
+    expect(res.status).toBe(200)
+    expect(listPromotionCodesMock).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'TESTLIVE1EUR', active: true }),
+    )
+    const args = createSessionMock.mock.calls[0][0]
+    expect(args.discounts).toEqual([{ promotion_code: 'promo_123' }])
+  })
+
+  // Never trust the client's earlier "valid" check from the discount-code
+  // endpoint — re-validate against Stripe here too, since the code could have
+  // expired or been exhausted in between the two requests.
+  it('rejects an expired or unknown discount code instead of silently charging full price', async () => {
+    selectResult = {
+      data: { report_download_token: VALID_TOKEN, status: 'intake_pending', payment_tier: 'basic_1990' },
+      error: null,
+    }
+    listPromotionCodesMock.mockResolvedValue({ data: [] })
+
+    const { POST } = await import('@/app/api/client/payment/checkout-session/route')
+    const res = await POST(makeRequest(VALID_TOKEN, 'NOLONGERVALID'))
+    const json = await res.json()
+
+    expect(res.status).toBe(400)
+    expect(json.error).toBe('invalid_discount_code')
     expect(createSessionMock).not.toHaveBeenCalled()
   })
 

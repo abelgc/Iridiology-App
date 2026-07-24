@@ -46,9 +46,9 @@ describe('PaymentPage', () => {
     expect(pushMock).not.toHaveBeenCalled()
   })
 
-  it('with a discount code applied, marks paid directly and never calls Stripe', async () => {
+  it('with the owner bypass code applied, marks paid directly and never calls Stripe', async () => {
     ;(global.fetch as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ valid: true }) }) // discount-code check
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ valid: true, kind: 'owner_free' }) }) // discount-code check
       .mockResolvedValueOnce({ ok: true, json: async () => ({ status: 'paid' }) }) // mark-paid call
     const user = userEvent.setup()
     render(<PaymentPage />)
@@ -68,5 +68,32 @@ describe('PaymentPage', () => {
     )
     expect(pushMock).toHaveBeenCalledWith('/client/upload?token=test-token')
     expect(window.location.href).toBe('')
+  })
+
+  it('with a real Stripe promotion code applied, shows the reduced total and still creates a Checkout Session', async () => {
+    ;(global.fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ valid: true, kind: 'stripe_promo', amountOffCents: 1890, percentOff: null }),
+      }) // discount-code check: 18.90 off a 19.90 tier -> 1.00 total
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ url: 'https://checkout.stripe.com/test-session' }) }) // checkout-session call
+
+    const user = userEvent.setup()
+    render(<PaymentPage />)
+
+    await user.type(screen.getByPlaceholderText('paymentDiscountPlaceholder'), 'TESTLIVE1EUR')
+    await user.click(screen.getByRole('button', { name: 'paymentDiscountApply' }))
+    await screen.findByText('€1.00')
+
+    await user.click(screen.getByRole('button', { name: 'paymentCta' }))
+
+    expect(global.fetch).toHaveBeenLastCalledWith(
+      '/api/client/payment/checkout-session',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ report_download_token: 'test-token', discount_code: 'TESTLIVE1EUR' }),
+      }),
+    )
+    expect(window.location.href).toBe('https://checkout.stripe.com/test-session')
   })
 })
