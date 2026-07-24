@@ -1,6 +1,6 @@
 # Stripe integration — plan and status
 
-Last updated: 2026-07-23. This is a living status doc, not a dated snapshot — update it as steps complete.
+Last updated: 2026-07-24. This is a living status doc, not a dated snapshot — update it as steps complete.
 
 ## Context
 
@@ -48,7 +48,8 @@ Last updated: 2026-07-23. This is a living status doc, not a dated snapshot — 
   - [x] Live Stripe account activated: business profile filled in (category "Health & wellness"-type, non-medical product description), 2FA via passkey, payout schedule set to automatic/weekly, statement descriptor set to `NARASIMHA IRIDOLOGY`. Stripe Tax ("automate tax collection") explicitly skipped for now — matches the December-alta plan in Context above.
   - [x] Live restricted key (`rk_live_...`, Checkout Sessions write only) created and stored in Vercel Production as `STRIPE_SECRET_KEY`.
   - [x] Root-domain routing fix and discount-code-supports-real-Stripe-codes refactor, both on `feature/stripe-go-live` (not yet merged — see Branching above).
-  - [ ] **Next**: prove the live flow works end-to-end with one real minimal charge — cheaper than a full live tier price. A Stripe coupon `TESTLIVE1EUR` already exists (18.90€ off the Essential/basic tier, once, live mode) — enter it in the app's own discount-code box (not Stripe's page) to bring the Essential tier down to 1.00€, then pay with a real card. Confirms the live key + live webhook wiring, not just the business logic (already proven in test mode at step 9). Note: Stripe generally does not refund its own processing fee even if the charge itself is refunded afterwards — a few cents, non-recoverable, is the accepted cost of this check.
+  - [x] Live flow proven end-to-end with a real minimal charge (2026-07-24): coupon `TESTLIVE1EUR` (18.90€ off, once, live mode) plus its promotion code (a coupon alone isn't redeemable — needed a separate Promotion Code object pointing at it, easy to miss) brought the Essential tier to 1.00€ in the app's own discount box; paid with a real card, charge succeeded. Confirms the live key + real Checkout Session creation work. (A blank-screen flash on Stripe's hosted checkout page before refreshing was Stripe-side, not app-side — no errors in our logs.) Note: Stripe generally does not refund its own processing fee even if the charge itself is refunded afterwards.
+  - Along the way: found and fixed two leftover "100%"-hardcoded UI strings (`paymentDiscountRowLabel`, `paymentDiscountApplied`) that were wrong once the discount field started accepting real, often-partial Stripe discounts — not just the owner's 100%-off bypass. Also removed an unapproved "instant delivery, fully refunded" guarantee line carried over from the imported design mockup.
   - [ ] Activate PayPal, Bizum, Google Pay for real in the Stripe Dashboard (live mode). Apple Pay/Google Pay do **not** need domain registration for this app (hosted Checkout, not Elements/embedded — confirmed in Stripe's docs 2026-07-24).
   - [ ] Bizum-specific requirement found 2026-07-24: before Bizum can go live, the account needs a DNI/NIE (or company tax ID) added under Stripe's Tax settings — separate from the general account activation above.
   - [ ] Configure the live-mode webhook, pointed at Production (`narasimhasolutions.com`), no protection-bypass query param needed (Production isn't behind Vercel Authentication, unlike `staging`'s preview deployments).
@@ -59,4 +60,4 @@ Last updated: 2026-07-23. This is a living status doc, not a dated snapshot — 
 
 - The 2026-07-22 payment-tier rename (`basic_12`/`premium_19_90` → `basic_1990`/`premium_2990`) shipped a migration file (`docs/migrations/015-rename-payment-tiers.sql`) that was never actually applied to the database — every `/api/client/intake` call had been failing with a 500 in Production since that commit. Applied directly against Production on 2026-07-23; also fixed the migration file's operation order (it dropped the CHECK constraint after updating rows to the new values, which the still-active old constraint rejects).
 
-Step 10 is now the only remaining step. Domain is verified, live account is active, live key is in Vercel — next action is the €1 real-charge test described above, then live payment methods, then the merge chain to `master`.
+Step 10 is now the only remaining step. Domain verified, live account active, live key in Vercel, and the €1 real-charge test passed — what's left: activate live payment methods, configure the live webhook, remove `ENABLE_MOCK_PAYMENT` from Production, then the merge chain to `master`.
