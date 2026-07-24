@@ -10,7 +10,7 @@ const TIER_PRODUCT_NAMES: Record<PaymentTier, string> = {
 }
 
 export async function POST(request: NextRequest) {
-  let body: { report_download_token?: string }
+  let body: { report_download_token?: string; discount_code?: string }
   try {
     body = await request.json()
   } catch {
@@ -48,6 +48,20 @@ export async function POST(request: NextRequest) {
   const origin = request.nextUrl.origin
   const stripe = getStripeClient()
 
+  // Re-validate the discount code against Stripe ourselves — never trust the
+  // client's earlier "valid" response from /api/client/payment/discount-code,
+  // since the code could have expired or been exhausted since then.
+  let promotionCodeId: string | undefined
+  const discountCode = body.discount_code?.trim()
+  if (discountCode) {
+    const promos = await stripe.promotionCodes.list({ code: discountCode, active: true, limit: 1 })
+    const promo = promos.data[0]
+    if (!promo) {
+      return NextResponse.json({ error: 'invalid_discount_code' }, { status: 400 })
+    }
+    promotionCodeId = promo.id
+  }
+
   let session
   try {
     session = await stripe.checkout.sessions.create({
@@ -65,6 +79,7 @@ export async function POST(request: NextRequest) {
           quantity: 1,
         },
       ],
+      ...(promotionCodeId ? { discounts: [{ promotion_code: promotionCodeId }] } : {}),
       success_url: `${origin}/client/upload?token=${token}`,
       cancel_url: `${origin}/client/intake/payment?token=${token}&tier=${tier}`,
     })
