@@ -3,9 +3,10 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useLanguage } from '@/lib/i18n-context'
-import { formatTierPrice, formatTierPriceParts, type PaymentTier } from '@/types/client-analysis'
+import { TIER_PRICING, formatAmountCents, formatTierPrice, type PaymentTier } from '@/types/client-analysis'
 
 type DiscountState = 'idle' | 'checking' | 'applied' | 'error'
+type DiscountKind = 'owner_free' | 'stripe_promo' | null
 
 function StepDot({ done, active, num, label }: { done?: boolean; active?: boolean; num: number; label: string }) {
   return (
@@ -34,6 +35,9 @@ function PaymentContent() {
   const [discountCode, setDiscountCode] = useState('')
   const [discountState, setDiscountState] = useState<DiscountState>('idle')
   const [discountError, setDiscountError] = useState<string | null>(null)
+  const [discountKind, setDiscountKind] = useState<DiscountKind>(null)
+  const [discountAmountOffCents, setDiscountAmountOffCents] = useState<number | null>(null)
+  const [discountPercentOff, setDiscountPercentOff] = useState<number | null>(null)
 
   const validTier = tier === 'basic_1990' || tier === 'premium_2990'
 
@@ -46,8 +50,21 @@ function PaymentContent() {
   if (!token || !validTier) return null
 
   const isPremium = tier === 'premium_2990'
-  const isFree = discountState === 'applied'
-  const price = formatTierPriceParts(tier as PaymentTier, lang)
+  const hasDiscount = discountState === 'applied' && discountKind !== null
+  const tierAmountCents = Math.round(TIER_PRICING[tier as PaymentTier].amount * 100)
+  const totalCents = !hasDiscount
+    ? tierAmountCents
+    : discountKind === 'owner_free'
+      ? 0
+      : Math.max(
+          0,
+          discountAmountOffCents != null
+            ? tierAmountCents - discountAmountOffCents
+            : discountPercentOff != null
+              ? Math.round(tierAmountCents * (1 - discountPercentOff / 100))
+              : tierAmountCents,
+        )
+  const isFree = totalCents === 0
 
   async function handleApplyDiscount() {
     const code = discountCode.trim()
@@ -63,9 +80,17 @@ function PaymentContent() {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ code }),
       })
-      const json = (await res.json()) as { valid?: boolean }
+      const json = (await res.json()) as {
+        valid?: boolean
+        kind?: 'owner_free' | 'stripe_promo'
+        amountOffCents?: number | null
+        percentOff?: number | null
+      }
       if (res.ok && json.valid) {
         setDiscountState('applied')
+        setDiscountKind(json.kind ?? null)
+        setDiscountAmountOffCents(json.amountOffCents ?? null)
+        setDiscountPercentOff(json.percentOff ?? null)
         setDiscountError(null)
       } else {
         setDiscountState('error')
@@ -81,22 +106,48 @@ function PaymentContent() {
     setDiscountState('idle')
     setDiscountCode('')
     setDiscountError(null)
+    setDiscountKind(null)
+    setDiscountAmountOffCents(null)
+    setDiscountPercentOff(null)
   }
 
   async function handleContinue() {
     if (!token) return
     setSubmitting(true)
-    const res = await fetch('/api/client/payment', {
+
+    // The owner's private code skips Stripe entirely. Any other applied
+    // discount (a real Stripe promotion code) still goes through Checkout,
+    // just with the discount attached, so it creates a real transaction.
+    if (discountKind === 'owner_free') {
+      const res = await fetch('/api/client/payment', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ report_download_token: token, discount_code: discountCode.trim() }),
+      })
+      setSubmitting(false)
+      if (!res.ok) {
+        alert(t('error'))
+        return
+      }
+      router.push(`/client/upload?token=${token}`)
+      return
+    }
+
+    const res = await fetch('/api/client/payment/checkout-session', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ report_download_token: token }),
+      body: JSON.stringify({
+        report_download_token: token,
+        ...(discountKind === 'stripe_promo' ? { discount_code: discountCode.trim() } : {}),
+      }),
     })
+    const json = await res.json().catch(() => null)
     setSubmitting(false)
-    if (!res.ok) {
+    if (!res.ok || !json?.url) {
       alert(t('error'))
       return
     }
-    router.push(`/client/upload?token=${token}`)
+    window.location.href = json.url
   }
 
   return (
@@ -154,7 +205,7 @@ function PaymentContent() {
             <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#3d4a2a', marginBottom: 6 }}>
               {t('paymentDiscountLabel')}
             </label>
-            {isFree ? (
+            {discountState === 'applied' ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(90,110,58,0.12)', border: '1px solid rgba(90,110,58,0.3)', borderRadius: 10, padding: '10px 12px', fontSize: 13, color: '#3d4a2a', fontWeight: 600 }}>
                 <span>{t('paymentDiscountApplied')}</span>
                 <button
@@ -197,16 +248,16 @@ function PaymentContent() {
               <span>{t('paymentSubtotal')}</span>
               <span style={{ color: '#2a1f14', fontWeight: 500 }}>{formatTierPrice(tier as PaymentTier, lang)}</span>
             </div>
-            {isFree && (
+            {hasDiscount && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: 14, color: '#5a6e3a', marginBottom: 10 }}>
                 <span>{t('paymentDiscountRowLabel')}</span>
-                <span style={{ fontWeight: 600 }}>−{formatTierPrice(tier as PaymentTier, lang)}</span>
+                <span style={{ fontWeight: 600 }}>−{formatAmountCents(tierAmountCents - totalCents, lang)}</span>
               </div>
             )}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderTop: '1px solid #d8c9ad', paddingTop: 14, marginTop: 4 }}>
               <span style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: '#2a3520' }}>{t('paymentTotalDue')}</span>
               <span style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 600, color: '#2a3520', letterSpacing: '-0.01em' }}>
-                {isFree ? '€0' : `€${price.whole}${price.decimal}`}
+                {formatAmountCents(totalCents, lang)}
               </span>
             </div>
           </div>
@@ -227,10 +278,6 @@ function PaymentContent() {
           <p style={{ textAlign: 'center', fontSize: 11.5, color: '#5d4f3f', marginTop: 14 }}>
             {t('paymentSecureNote')}
           </p>
-
-          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginTop: 16, padding: '12px 14px', background: '#ecdfc6', borderRadius: 12, fontSize: 12, color: '#3d4a2a', lineHeight: 1.5 }}>
-            {t('paymentGuarantee')}
-          </div>
         </section>
       </div>
     </>

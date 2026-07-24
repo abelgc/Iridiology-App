@@ -1,40 +1,64 @@
 # Stripe integration — plan and status
 
-Last updated: 2026-07-22. This is a living status doc, not a dated snapshot — update it as steps complete.
+Last updated: 2026-07-24. This is a living status doc, not a dated snapshot — update it as steps complete.
 
 ## Context
 
 - Business: Narasimha Solutions, iridology reading reports. Tiers: `basic_1990` (€19.90), `premium_2990` (€29.90) — `TIER_PRICING` in `src/types/client-analysis.ts`.
 - Clients worldwide, ~80% Europe, app already in en/es/de.
-- No Stripe Tax / IVA yet — owner's business registration ("alta") is in December. Do not enable `automatic_tax` before then.
-- Domain: the final production domain isn't bought/pointed yet. Needed before activating Stripe live mode (account activation, Apple Pay domain verification, stable webhook URL).
-- Payment UI already redesigned (see `src/app/client/intake/payment/page.tsx`) — branded checkout summary, "Proceder al pago" button, still backed by the old mock endpoint (`/api/client/payment`) until this plan lands.
+- Tax: owner's manager confirmed the formal tax filing/registration ("alta") happens in December, but the owner **can already invoice/bill now** — that is no longer a blocker for going live. Still, keep `automatic_tax` OFF until December regardless (that's a separate Stripe Tax feature, not a general billing permission).
+- Domain: **narasimhasolutions.com** purchased 2026-07-23 (1 year, registrar: Raiola Networks, €13.54). Nameservers `ns1/ns2.vercel-dns.com`. **Confirmed verified (✓) on Vercel as of 2026-07-24.** No Apple Pay domain registration needed — see step 10 note below, that requirement only applies to Elements/embedded Checkout, not the hosted redirect Checkout this app uses.
+- Payment UI already redesigned (see `src/app/client/intake/payment/page.tsx`) — branded checkout summary, "Proceder al pago" button.
 - Chosen integration shape: **Stripe Checkout Sessions (Stripe-hosted page)**, not a custom card form / Payment Element. Decided for lower long-term maintenance; the owner explicitly picked this over keeping a fully custom card-entry UI.
-- Discount code: the owner's own 100%-off testing code (`OWNER_TEST_DISCOUNT_CODE` env var, checked server-side in `/api/client/payment/discount-code`, never exposed to the browser) is intentionally **separate from Stripe** — when applied, the flow should skip Stripe entirely and go straight to the existing mock-style "mark as paid" path. It is not a real customer-facing discount feature.
+- Discount code — **one input field, two kinds of code**, both entered in the app's own payment page (never Stripe's hosted page):
+  - The owner's private bypass code (`OWNER_TEST_DISCOUNT_CODE` env var) — skips Stripe entirely, marks paid directly. Not a real transaction, not customer-facing.
+  - Any real Stripe Promotion Code — validated live against Stripe (`/api/client/payment/discount-code`), shows the actual discounted total in the UI, and is applied to the real Checkout Session (`discounts: [{ promotion_code }]`) so it produces a real (reduced-amount) transaction. Added 2026-07-24 specifically so a cheap real-money test (see step 10) doesn't require a second, confusing code box on Stripe's own hosted page.
+  - Implementation note (deviates slightly from the original plan wording): the owner-code path and `ENABLE_MOCK_PAYMENT` used to share the same gate in `/api/client/payment`, which would have broken the discount code in Production once mock payment gets disabled there again. Now the server re-validates the submitted code itself and bypasses `ENABLE_MOCK_PAYMENT` independently when it's valid — see step 5 below.
+- Root domain routing fix (2026-07-24): the bare domain (`narasimhasolutions.com`) used to redirect to `/practitioner`, which the auth proxy then bounced to `/login` before any customer ever saw `/client`. `src/proxy.ts` now rewrites `/` to `/client` (no visible URL change); the practitioner login flow's post-login redirect now targets `/practitioner` directly instead of `/`. `/practitioner` itself is unchanged — still login-gated, only reached by direct/typed URL.
+- **Stripe MCP account mismatch (open issue, next session should check)**: the Stripe MCP plugin connected via OAuth to a **sandbox** account (`acct_1TRTF5EbCcZlrSyU`, fake KYC data) instead of the real live business account (`acct_1TRTEsExY5t9Cfd2`) that the owner activated by hand in the Dashboard. The MCP key currently has **no API access** to the real account. Reconnecting (disconnect the Stripe integration in Claude's settings, then reauthorize, checking the account name shown on Stripe's consent screen before accepting) would restore programmatic access if needed later.
 
 ## Branching
 
-- Work on `staging` (already created as a clone of `master`, pushed to origin).
-- Merge `staging` → `master` only once Stripe is verified working in `staging` with Stripe **test mode** keys, AND the domain + December alta are resolved (only then flip to Stripe **live** keys on `master`/Production).
-- `master` = Production = stable. Never enable `ENABLE_MOCK_PAYMENT` on Production.
+- **Current state (2026-07-24)**: `master` still has NONE of the Stripe integration work — it's frozen on the old mock-payment-only version on purpose, until everything below is proven live. `staging` has all of the test-mode work (steps 1-9). `feature/stripe-go-live` was branched from `staging` and additionally has the root-routing fix and the discount-code refactor (see Context above). **Nothing has been merged yet** — not feature→staging, not staging→master.
+- Plan: finish testing on `feature/stripe-go-live` (or merge it to `staging` first, tester's call) → once the live flow is proven with a real minimal charge → merge `staging` → `master`.
+- `master` = Production = stable. Never enable `ENABLE_MOCK_PAYMENT` on Production. **Currently a temporary exception**: `ENABLE_MOCK_PAYMENT` was re-enabled on Production on 2026-07-23 as a stop-gap so the owner could test the payment step before Stripe was ready. **Must be removed from Production** as part of step 10, once Stripe live is confirmed working there.
 
-## Vercel env vars already set (as of 2026-07-22)
+## Vercel env vars
 
-- `OWNER_TEST_DISCOUNT_CODE` — Production. Value: `NARASIMHA100` (reused deliberately from the design mockup after the owner's explicit call).
+- `OWNER_TEST_DISCOUNT_CODE` — Production. Value: `NARASIMHA100`.
 - `ANTHROPIC_API_KEY` — Production (backup copy of the value already stored in the admin Settings DB table, which takes priority).
-- `ENABLE_MOCK_PAYMENT` — Preview (`staging` branch only) and Development. **Not set on Production.**
+- `ENABLE_MOCK_PAYMENT` — Preview (`staging` branch only), Development, **and temporarily Production** (see Branching note above — remove at step 10).
+- `STRIPE_SECRET_KEY` — Preview (`staging` branch only) and Development: restricted test-mode key (`rk_test_...`), scope: Checkout Sessions write only. **Production (added 2026-07-24)**: restricted **live-mode** key (`rk_live_...`), same scope (Checkout Sessions write only, template "One-time payments" pared down to just that one permission).
+- `STRIPE_WEBHOOK_SECRET` — Preview (`staging` branch only). Signing secret (`whsec_...`) for the "empowering-celebration" test-mode webhook endpoint. Not yet set on Production — still pending, see step 10.
+- **Vercel Deployment Protection bypass**: Preview deployments (staging) have Vercel Authentication enabled, which blocks external callers like Stripe's webhook with a 401 — this is a Preview-only concern, confirmed Production is publicly reachable without it. Fixed by enabling "Protection Bypass for Automation" on the project (`vercel project protection enable iridiology-app --protection-bypass`) and appending `?x-vercel-protection-bypass=<secret>` to the webhook URL configured in Stripe. Not needed once the webhook points at Production.
 
 ## Steps
 
-- [ ] 1. Install the Stripe SDK (`stripe` npm package), create the server-side Stripe client.
-- [ ] 2. Create a **restricted API key** (`rk_`) in the Stripe Dashboard with minimal scopes (Checkout Sessions write, Webhooks read) — use this instead of the full secret key.
-- [ ] 3. New endpoint to create a Checkout Session: takes `{report_download_token, tier}`, looks up the real price from `TIER_PRICING`, currency EUR, `success_url`/`cancel_url` carrying the token back into the app, **no `automatic_tax`** (per the December constraint above), **never pass `payment_method_types`** (let Stripe's dynamic payment methods show Visa/Mastercard/PayPal/etc. automatically per customer).
-- [ ] 4. Activate PayPal in the Stripe Dashboard (Settings → Payment methods) — a Dashboard config step, no code.
-- [ ] 5. Payment page's "Proceder al pago" button calls this new endpoint and redirects the browser to `session.url` — **except** when the owner's discount code is applied, in which case keep today's direct mock-style "mark as paid" path (no Stripe involved at all for that case).
-- [ ] 6. Webhook endpoint (`checkout.session.completed`) — becomes the **only** place that marks `client_analyses.status = 'paid'`, replacing today's client-asserted mock POST. Verify the Stripe webhook signature.
-- [ ] 7. Guard the webhook against duplicate delivery (Stripe retries webhooks) — use the Stripe event id, in addition to the same `status`-guarded CAS pattern already used in `/api/client/payment`, `/api/client/upload`, and `/api/client/internal/stage2`.
-- [ ] 8. Configure the webhook URL in Stripe, pointed at `staging` first.
-- [ ] 9. Test the whole flow in `staging` using Stripe's test-mode card numbers (fake money, real flow) — this replaces using the mock to test the payment step itself.
-- [ ] 10. Once verified: switch Stripe keys from test to live in Production, activate PayPal for real, merge `staging` → `master`. **Blocked on**: final domain purchased/pointed, and the owner's December business registration (alta) completed.
+- [x] 1. Install the Stripe SDK (`stripe` npm package), create the server-side Stripe client. — `src/lib/stripe/server.ts`.
+- [x] 2. Create a **restricted API key** (`rk_`) in the Stripe Dashboard with minimal scopes (Checkout Sessions write only — Webhooks read turned out unnecessary, signature verification is local HMAC, no API call).
+- [x] 3. New endpoint to create a Checkout Session — `src/app/api/client/payment/checkout-session/route.ts`. Deviates from the original plan wording: derives the tier from the `client_analyses` row itself rather than trusting a client-supplied `tier` in the request body, so a tampered request can't get a cheaper price. No `automatic_tax`, no explicit `payment_method_types`.
+- [x] 4. PayPal, Bizum, Google Pay, and Apple Pay activated in the Stripe Dashboard (test mode).
+- [x] 5. Payment page wired — `src/app/client/intake/payment/page.tsx`. Discount code re-validated server-side in `/api/client/payment`, independent of `ENABLE_MOCK_PAYMENT` (see Context above for why).
+- [x] 6. Webhook endpoint — `src/app/api/client/payment/webhook/route.ts`. Verifies the Stripe signature, marks `client_analyses.status = 'paid'` on `checkout.session.completed`.
+- [x] 7. Duplicate-delivery guard — reuses the existing `status = 'intake_pending'` CAS pattern (Option A: no separate events-processed table, since this webhook's only side effect today is the status flip). Uses a plain array `select()` instead of `.single()` so a genuine DB failure (500, triggers a Stripe retry) is distinguishable from an already-handled delivery (200, no retry).
+- [x] 8. Webhook configured in Stripe test mode, pointed at `staging`, with the Vercel protection-bypass query param (see Vercel env vars above).
+- [x] 9. Full flow tested in `staging` with Stripe's `4242 4242 4242 4242` test card — confirmed `client_analyses.status = 'paid'`, `is_mock_payment = false`, `paid_at` set correctly via the webhook.
+- [ ] 10. Go live in Production. Domain blocker is gone (verified ✓ 2026-07-24); this step is now in progress, broken down below.
+  - [x] Domain verified live on Vercel.
+  - [x] Live Stripe account activated: business profile filled in (category "Health & wellness"-type, non-medical product description), 2FA via passkey, payout schedule set to automatic/weekly, statement descriptor set to `NARASIMHA IRIDOLOGY`. Stripe Tax ("automate tax collection") explicitly skipped for now — matches the December-alta plan in Context above.
+  - [x] Live restricted key (`rk_live_...`, Checkout Sessions write only) created and stored in Vercel Production as `STRIPE_SECRET_KEY`.
+  - [x] Root-domain routing fix and discount-code-supports-real-Stripe-codes refactor, both on `feature/stripe-go-live` (not yet merged — see Branching above).
+  - [x] Live flow proven end-to-end with a real minimal charge (2026-07-24): coupon `TESTLIVE1EUR` (18.90€ off, once, live mode) plus its promotion code (a coupon alone isn't redeemable — needed a separate Promotion Code object pointing at it, easy to miss) brought the Essential tier to 1.00€ in the app's own discount box; paid with a real card, charge succeeded. Confirms the live key + real Checkout Session creation work. (A blank-screen flash on Stripe's hosted checkout page before refreshing was Stripe-side, not app-side — no errors in our logs.) Note: Stripe generally does not refund its own processing fee even if the charge itself is refunded afterwards.
+  - Along the way: found and fixed two leftover "100%"-hardcoded UI strings (`paymentDiscountRowLabel`, `paymentDiscountApplied`) that were wrong once the discount field started accepting real, often-partial Stripe discounts — not just the owner's 100%-off bypass. Also removed an unapproved "instant delivery, fully refunded" guarantee line carried over from the imported design mockup.
+  - [x] Google Pay and Apple Pay activated live (2026-07-24). Apple Pay is on by default; Google Pay had to be turned on manually (off by default) at `dashboard.stripe.com/settings/payment_methods`. Neither needs domain registration for this app (hosted Checkout, not Elements/embedded — confirmed in Stripe's docs).
+  - [ ] **PayPal deliberately deferred to December**, alongside the business registration ("alta"): PayPal requires a PayPal **Business** account (not personal) to receive payments through Stripe, and the owner doesn't want to create one improvised now. Revisit this when the alta happens — a business PayPal account will make more sense tied to the registered business anyway.
+  - [ ] Bizum-specific requirement found 2026-07-24: before Bizum can go live, the account needs a DNI/NIE (or company tax ID) added under Stripe's Tax settings — separate from the general account activation above. Not yet decided whether to do this now or defer alongside PayPal.
+  - [ ] Configure the live-mode webhook, pointed at Production (`narasimhasolutions.com`), no protection-bypass query param needed (Production isn't behind Vercel Authentication, unlike `staging`'s preview deployments).
+  - [ ] Remove `ENABLE_MOCK_PAYMENT` from Production.
+  - [ ] Merge `feature/stripe-go-live` → `staging` → `master`.
 
-Steps 1–9 have no external blockers and can be done in any session. Step 10 is the only one gated on the domain/December items above.
+## Also fixed along the way (unrelated to Stripe, found during testing)
+
+- The 2026-07-22 payment-tier rename (`basic_12`/`premium_19_90` → `basic_1990`/`premium_2990`) shipped a migration file (`docs/migrations/015-rename-payment-tiers.sql`) that was never actually applied to the database — every `/api/client/intake` call had been failing with a 500 in Production since that commit. Applied directly against Production on 2026-07-23; also fixed the migration file's operation order (it dropped the CHECK constraint after updating rows to the new values, which the still-active old constraint rejects).
+
+Step 10 is now the only remaining step. Domain verified, live account active, live key in Vercel, and the €1 real-charge test passed — what's left: activate live payment methods, configure the live webhook, remove `ENABLE_MOCK_PAYMENT` from Production, then the merge chain to `master`.
