@@ -23,8 +23,24 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
+  // Required so the share image resolves to an absolute URL — link previews
+  // reject a relative one. Without Open Graph tags, scrapers fell back to the
+  // favicon, which only worked while that file happened to be 1024x1024.
+  metadataBase: new URL("https://narasimhasolutions.com"),
   title: "Narasimha Solutions — Iridology Analysis",
   description: "Professional iris analysis by Narasimha Solutions",
+  openGraph: {
+    title: "Narasimha Solutions — Iridology Analysis",
+    description: "Professional iris analysis by Narasimha Solutions",
+    url: "https://narasimhasolutions.com",
+    siteName: "Narasimha Solutions",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Narasimha Solutions — Iridology Analysis",
+    description: "Professional iris analysis by Narasimha Solutions",
+  },
 };
 
 export default function RootLayout({
