@@ -35,11 +35,27 @@ export const metadata: Metadata = {
     url: "https://narasimhasolutions.com",
     siteName: "Narasimha Solutions",
     type: "website",
+    locale: "es_ES",
+    // Declared explicitly rather than via the opengraph-image file convention:
+    // that convention emits a hashed query string (?opengraph-image.<hash>.png)
+    // and the URL changes on every deploy that touches the file. Messaging
+    // crawlers handle a plain static path far more reliably, and a stable URL
+    // keeps already-cached previews pointing somewhere that still exists.
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        type: "image/png",
+        alt: "Narasimha Solutions",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Narasimha Solutions — Iridology Analysis",
     description: "Professional iris analysis by Narasimha Solutions",
+    images: ["/og.png"],
   },
 };
 
