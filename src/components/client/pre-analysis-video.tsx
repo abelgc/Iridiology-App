@@ -1,15 +1,37 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useLanguage } from '@/lib/i18n-context'
+
+// Safety ceiling only. The clip is ~15s but must buffer 4.3MB while the iris
+// upload POST is still in flight, so allow headroom. This fires ONLY if the
+// video never ends (blocked, stalled, failed to load). It must never be the
+// normal way off this screen.
+const MAX_WAIT_MS = 30000
 
 export function PreAnalysisVideo({ onContinue }: { onContinue: () => void }) {
   const { t } = useLanguage()
+  const onContinueRef = useRef(onContinue)
+  const advancedRef = useRef(false)
+
+  // Track the latest callback without re-arming the safety timer on every
+  // parent re-render (handleVideoContinue is a new function each render).
+  useEffect(() => {
+    onContinueRef.current = onContinue
+  }, [onContinue])
+
+  // First trigger wins, and only once: video ended, user pressed Continue,
+  // the video errored, or the safety ceiling elapsed.
+  const advance = useCallback(() => {
+    if (advancedRef.current) return
+    advancedRef.current = true
+    onContinueRef.current()
+  }, [])
 
   useEffect(() => {
-    const timer = setTimeout(onContinue, 10000)
+    const timer = setTimeout(advance, MAX_WAIT_MS)
     return () => clearTimeout(timer)
-  }, [onContinue])
+  }, [advance])
 
   const steps = [
     { key: 'preAnalysisVideoStep0' as const, status: 'done' as const },
@@ -311,8 +333,10 @@ export function PreAnalysisVideo({ onContinue }: { onContinue: () => void }) {
               poster="/intro-poster.jpg"
               autoPlay
               muted
-              loop
               playsInline
+              preload="auto"
+              onEnded={advance}
+              onError={advance}
             />
             <div className="pav-caption">
               <span className="pav-caption-badge">N</span>
@@ -323,7 +347,7 @@ export function PreAnalysisVideo({ onContinue }: { onContinue: () => void }) {
         </div>
 
         <div className="pav-cta">
-          <button type="button" onClick={onContinue} className="pav-continue">
+          <button type="button" onClick={advance} className="pav-continue">
             {t('continue')}
           </button>
         </div>
