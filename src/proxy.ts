@@ -70,5 +70,8 @@ export const config = {
   // live under /client (already exempt above), but the assets they load sit at
   // the domain root — a client is never logged in, so an unexempt /intro.mp4
   // gets redirected to /login and the <video> receives HTML instead of video.
-  matcher: ['/((?!_next|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|mp4|webm|mov)$|client).*)'],
+  // .txt/.xml/.json cover robots.txt, sitemap.xml and web manifests. Crawlers
+  // fetch robots.txt before generating a link preview; redirecting that to
+  // /login makes them abandon the scrape, so shared links lose their card.
+  matcher: ['/((?!_next|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|mp4|webm|mov|txt|xml|json|webmanifest)$|client).*)'],
 }
