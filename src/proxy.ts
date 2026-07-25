@@ -66,5 +66,9 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$|client).*)'],
+  // Static media must be exempt from the auth check too. Client-facing pages
+  // live under /client (already exempt above), but the assets they load sit at
+  // the domain root — a client is never logged in, so an unexempt /intro.mp4
+  // gets redirected to /login and the <video> receives HTML instead of video.
+  matcher: ['/((?!_next|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|mp4|webm|mov)$|client).*)'],
 }

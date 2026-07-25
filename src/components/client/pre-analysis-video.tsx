@@ -9,6 +9,10 @@ import { useLanguage } from '@/lib/i18n-context'
 // normal way off this screen.
 const MAX_WAIT_MS = 30000
 
+// The clip runs ~15s. If the media ever fails to load again, hold the screen for
+// that same window instead of skipping instantly — the wait is deliberate.
+const VIDEO_MS = 15500
+
 export function PreAnalysisVideo({ onContinue }: { onContinue: () => void }) {
   const { t } = useLanguage()
   const onContinueRef = useRef(onContinue)
@@ -28,7 +32,17 @@ export function PreAnalysisVideo({ onContinue }: { onContinue: () => void }) {
     onContinueRef.current()
   }, [])
 
+  const startedAtRef = useRef(0)
+
+  // On media failure, wait out the remainder of the intended video window
+  // rather than jumping straight to the analysing screen.
+  const advanceAfterVideoWindow = useCallback(() => {
+    const elapsed = Date.now() - startedAtRef.current
+    setTimeout(advance, Math.max(0, VIDEO_MS - elapsed))
+  }, [advance])
+
   useEffect(() => {
+    startedAtRef.current = Date.now()
     const timer = setTimeout(advance, MAX_WAIT_MS)
     return () => clearTimeout(timer)
   }, [advance])
@@ -336,7 +350,7 @@ export function PreAnalysisVideo({ onContinue }: { onContinue: () => void }) {
               playsInline
               preload="auto"
               onEnded={advance}
-              onError={advance}
+              onError={advanceAfterVideoWindow}
             />
             <div className="pav-caption">
               <span className="pav-caption-badge">N</span>
