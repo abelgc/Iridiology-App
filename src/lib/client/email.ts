@@ -57,15 +57,29 @@ export async function sendReportEmail(params: {
     claimId = inserted.id
   } else {
     // A row already exists for this analysis — only re-claim a previously FAILED attempt.
-    const { data: existing } = await supabase
+    const { data: existing, error: lookupError } = await supabase
       .from('email_send_log')
       .select('id, status')
       .eq('analysis_id', params.analysisId)
       .single()
 
-    if (!existing || existing.status !== 'failed') {
-      // Already sent, or another attempt is currently in flight — don't send again.
+    // Not knowing is not the same as having sent it. The old code collapsed both into
+    // ok:true, so a Supabase outage surfaced to the client as "Report sent to your email"
+    // for an email that was never attempted. Report the uncertainty instead — the caller
+    // turns a non-ok result into a visible failure, which is the honest thing to show.
+    if (lookupError || !existing) {
+      return { ok: false, error: 'send_state_unknown' }
+    }
+
+    // Genuinely already delivered: saying so is true, and re-sending would duplicate it.
+    if (existing.status === 'sent') {
       return { ok: true, id: 'already_sent' }
+    }
+
+    // Another invocation holds the claim right now. Correct not to send a second copy,
+    // but nothing has been delivered yet, so this must not be dressed up as success.
+    if (existing.status !== 'failed') {
+      return { ok: false, error: 'send_in_progress' }
     }
 
     const { data: reclaimed } = await supabase
@@ -77,7 +91,9 @@ export async function sendReportEmail(params: {
       .single()
 
     if (!reclaimed) {
-      return { ok: true, id: 'already_sent' }
+      // Someone else won the re-claim between our read and this write. Backing off is
+      // right — but they are still sending, so this is 'in progress', not 'delivered'.
+      return { ok: false, error: 'send_in_progress' }
     }
     claimId = reclaimed.id
   }
