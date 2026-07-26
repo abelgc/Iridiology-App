@@ -172,6 +172,8 @@ describe('POST /api/client/upload', () => {
   })
 
   it('refuses unpaid analyses', async () => {
+    // Backwards compatibility: a genuinely unpaid row must still get the bare 402
+    // payment_required. Only statuses past 'paid' are re-routed to the 409 onward path.
     selectSingle.mockResolvedValueOnce({
       data: { ...analysisRow, status: 'intake_pending' },
       error: null,
@@ -179,6 +181,27 @@ describe('POST /api/client/upload', () => {
     const { POST } = await import('@/app/api/client/upload/route')
     const res = await POST(makeRequest())
     expect(res.status).toBe(402)
+    const json = await res.json()
+    expect(json.error).toBe('payment_required')
+    expect(mockAnalyzeDual).not.toHaveBeenCalled()
+  })
+
+  it('REGRESSION (2026-07-26): a row already analysing returns 409 already_processing with the token, not a bare 402 payment_required', async () => {
+    // A client who reloaded during the video re-submits their photos. The row has already
+    // moved 'paid' -> 'analyzing', so the old code answered 402 payment_required and the
+    // page showed "something went wrong" to someone whose analysis was running fine.
+    selectSingle.mockResolvedValueOnce({
+      data: { ...analysisRow, status: 'analyzing' },
+      error: null,
+    })
+    const { POST } = await import('@/app/api/client/upload/route')
+    const res = await POST(makeRequest())
+    expect(res.status).toBe(409)
+    const json = await res.json()
+    expect(json.error).toBe('already_processing')
+    expect(json.status).toBe('analyzing')
+    expect(json.report_download_token).toBe('00000000-0000-4000-8000-000000000000')
+    expect(mockAnalyzeDual).not.toHaveBeenCalled()
   })
 
   it('returns 409 and never runs the analysis when the initial "analyzing" CAS finds 0 rows', async () => {
@@ -191,6 +214,19 @@ describe('POST /api/client/upload', () => {
     const json = await res.json()
     expect(json.error).toBe('already_processing')
     expect(mockAnalyzeDual).not.toHaveBeenCalled()
+  })
+
+  it('gives the CAS-race 409 the same status + token body as the already-analysing 409, so the client is sent onward identically either way', async () => {
+    updateCallResults = [{ data: null, error: null }]
+    const { POST } = await import('@/app/api/client/upload/route')
+    const res = await POST(makeRequest())
+    expect(res.status).toBe(409)
+    const json = await res.json()
+    expect(json).toMatchObject({
+      error: 'already_processing',
+      status: 'analyzing',
+      report_download_token: '00000000-0000-4000-8000-000000000000',
+    })
   })
 
   it('does not throw and treats the failed-write CAS as a no-op when the row already progressed', async () => {
