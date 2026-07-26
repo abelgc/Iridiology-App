@@ -36,9 +36,21 @@ export async function POST(request: NextRequest) {
   // Already progressed past payment (e.g. back-button replay, or an already-paid
   // row) — same idempotent no-op as the mock endpoint, so a retried click never
   // creates a second Stripe session for a row that's already moved on.
+  //
+  // This is a SUCCESS for the customer: they have paid, they just need to move
+  // on. Say so explicitly. The old response was a bare {token, status} and the
+  // page had to infer "already paid" from the *absence* of `url`; it inferred
+  // "failure" instead and showed a paying customer "Algo salió mal"
+  // (2026-07-26 live-demo incident). Never make the page guess from a missing
+  // field again — state the outcome and the destination.
   if (row.status !== 'intake_pending') {
     return NextResponse.json(
-      { report_download_token: row.report_download_token, status: row.status },
+      {
+        outcome: 'already_paid',
+        redirect_to: `/client/upload?token=${row.report_download_token}`,
+        report_download_token: row.report_download_token,
+        status: row.status,
+      },
       { status: 200 },
     )
   }
@@ -88,5 +100,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'stripe_session_failed' }, { status: 500 })
   }
 
-  return NextResponse.json({ url: session.url }, { status: 200 })
+  // `url` stays for backwards compatibility; `outcome`/`redirect_to` are the
+  // contract the page reads, so both 200 shapes describe themselves.
+  return NextResponse.json(
+    { outcome: 'checkout_session', redirect_to: session.url, url: session.url },
+    { status: 200 },
+  )
 }

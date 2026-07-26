@@ -72,6 +72,22 @@ describe('POST /api/client/payment/checkout-session', () => {
     expect(args.automatic_tax).toBeUndefined()
   })
 
+  it('states the outcome and destination on the happy path too, so both 200 shapes are self-describing', async () => {
+    selectResult = {
+      data: { report_download_token: VALID_TOKEN, status: 'intake_pending', payment_tier: 'basic_1990' },
+      error: null,
+    }
+    createSessionMock.mockResolvedValue({ url: 'https://checkout.stripe.com/test-session' })
+
+    const { POST } = await import('@/app/api/client/payment/checkout-session/route')
+    const res = await POST(makeRequest())
+    const json = await res.json()
+
+    expect(json.outcome).toBe('checkout_session')
+    expect(json.redirect_to).toBe('https://checkout.stripe.com/test-session')
+    expect(json.url).toBe('https://checkout.stripe.com/test-session')
+  })
+
   it('returns 404 when the token is not found', async () => {
     selectResult = { data: null, error: { message: 'not found' } }
 
@@ -102,6 +118,27 @@ describe('POST /api/client/payment/checkout-session', () => {
 
     expect(res.status).toBe(200)
     expect(json.status).toBe('paid')
+    expect(createSessionMock).not.toHaveBeenCalled()
+  })
+
+  // The bare {report_download_token, status} shape made "already paid" look
+  // identical to "no url came back" from the page's point of view, which is how
+  // a successful purchase got rendered as "Algo salió mal" during a live demo.
+  // The destination is now stated by the server instead of inferred from a
+  // missing field.
+  it('REGRESSION (2026-07-26 live-demo incident): an already-paid row returns an explicit forward destination, not just a bare status', async () => {
+    selectResult = {
+      data: { report_download_token: VALID_TOKEN, status: 'paid', payment_tier: 'premium_2990' },
+      error: null,
+    }
+
+    const { POST } = await import('@/app/api/client/payment/checkout-session/route')
+    const res = await POST(makeRequest())
+    const json = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(json.outcome).toBe('already_paid')
+    expect(json.redirect_to).toBe(`/client/upload?token=${VALID_TOKEN}`)
     expect(createSessionMock).not.toHaveBeenCalled()
   })
 

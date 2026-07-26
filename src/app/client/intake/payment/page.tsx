@@ -8,6 +8,17 @@ import { TIER_PRICING, formatAmountCents, formatTierPrice, type PaymentTier } fr
 type DiscountState = 'idle' | 'checking' | 'applied' | 'error'
 type DiscountKind = 'owner_free' | 'stripe_promo' | null
 
+// The server states where an already-paid order should go next, but a
+// destination is still untrusted input: only follow a same-origin in-app path,
+// so router.push can never become an open redirect. Anything else falls back to
+// the upload step for this token.
+function forwardPath(redirectTo: unknown, token: string): string {
+  const fallback = `/client/upload?token=${token}`
+  if (typeof redirectTo !== 'string') return fallback
+  if (!redirectTo.startsWith('/') || redirectTo.startsWith('//')) return fallback
+  return redirectTo
+}
+
 function StepDot({ done, active, num, label }: { done?: boolean; active?: boolean; num: number; label: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11.5, fontWeight: 600, letterSpacing: '0.04em', color: active ? '#3d4a2a' : '#5d4f3f', textTransform: 'uppercase' }}>
@@ -111,43 +122,87 @@ function PaymentContent() {
     setDiscountPercentOff(null)
   }
 
+  // Every failure below used to raise the same bare t('error'), so six distinct
+  // situations were indistinguishable to the customer and to the owner watching
+  // over their shoulder. New user-facing sentences would need verified en/es/de
+  // copy, so instead each failure carries a short, stable diagnostic code that
+  // can be read out over the phone and grepped in the console.
+  function failWith(code: string) {
+    console.error('[payment] could not start payment:', code)
+    setSubmitting(false)
+    alert(`${t('error')} (${code})`)
+  }
+
   async function handleContinue() {
     if (!token) return
     setSubmitting(true)
 
-    // The owner's private code skips Stripe entirely. Any other applied
-    // discount (a real Stripe promotion code) still goes through Checkout,
-    // just with the discount attached, so it creates a real transaction.
-    if (discountKind === 'owner_free') {
-      const res = await fetch('/api/client/payment', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ report_download_token: token, discount_code: discountCode.trim() }),
-      })
-      setSubmitting(false)
-      if (!res.ok) {
-        alert(t('error'))
+    try {
+      // The owner's private code skips Stripe entirely. Any other applied
+      // discount (a real Stripe promotion code) still goes through Checkout,
+      // just with the discount attached, so it creates a real transaction.
+      if (discountKind === 'owner_free') {
+        const res = await fetch('/api/client/payment', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ report_download_token: token, discount_code: discountCode.trim() }),
+        })
+        if (!res.ok) {
+          failWith(`free-order-${res.status}`)
+          return
+        }
+        // Deliberately leave `submitting` true while navigating away, so a
+        // second click can't fire a second payment request mid-navigation.
+        router.push(`/client/upload?token=${token}`)
         return
       }
-      router.push(`/client/upload?token=${token}`)
-      return
-    }
 
-    const res = await fetch('/api/client/payment/checkout-session', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        report_download_token: token,
-        ...(discountKind === 'stripe_promo' ? { discount_code: discountCode.trim() } : {}),
-      }),
-    })
-    const json = await res.json().catch(() => null)
-    setSubmitting(false)
-    if (!res.ok || !json?.url) {
-      alert(t('error'))
-      return
+      const res = await fetch('/api/client/payment/checkout-session', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          report_download_token: token,
+          ...(discountKind === 'stripe_promo' ? { discount_code: discountCode.trim() } : {}),
+        }),
+      })
+      const json = await res.json().catch(() => null)
+
+      // The order is already paid (back-button replay, reload-then-retry). That
+      // is a success, not a failure: carry the customer forward instead of
+      // showing them an error on a purchase they already completed.
+      //
+      // `outcome` is the contract. The `status` fallback covers the rolling-
+      // deploy window, where this bundle can be talking to a still-warm server
+      // instance that only sends the old bare {token, status} shape — the route
+      // only ever answers 200-without-a-url for a row that has moved past
+      // intake_pending, i.e. one that has been paid for.
+      const alreadyPaid =
+        res.ok && !json?.url && (json?.outcome === 'already_paid' || typeof json?.status === 'string')
+      if (alreadyPaid) {
+        router.push(forwardPath(json.redirect_to, token))
+        return
+      }
+
+      if (!res.ok) {
+        failWith(typeof json?.error === 'string' ? json.error : `http-${res.status}`)
+        return
+      }
+
+      // 200 with neither a checkout URL nor a stated outcome: the server has
+      // told us nothing actionable, which is a real failure — but a *different*
+      // one from "already paid", and it must never be confused with it again.
+      if (!json?.url) {
+        failWith('no-destination')
+        return
+      }
+
+      window.location.href = json.url
+    } catch {
+      // A dropped connection used to reject with nothing catching it:
+      // `submitting` stayed true, the button stayed disabled, and the customer
+      // was left staring at a dead page with no message at all.
+      failWith('network')
     }
-    window.location.href = json.url
   }
 
   return (
