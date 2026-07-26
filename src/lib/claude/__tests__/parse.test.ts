@@ -75,9 +75,14 @@ describe('parseReportResponse', () => {
   })
 
   it('returns validation_failed when JSON is well-formed but missing a required section', () => {
+    // section_15 is practitioner-only and deliberately NOT in REPORT_SECTION_KEYS, so
+    // omitting it leaves a complete, valid 14-section report. This test used to hand a
+    // valid document to the validator and then assert it was rejected — it never once
+    // exercised the missing-required-section path it is named for. Omit a genuinely
+    // required section instead.
     const obj: Record<string, string> = {}
     for (const key of ALL_15_KEYS) {
-      if (key === 'section_15_iris_sign_patterns') continue
+      if (key === 'section_7_hepatic') continue
       obj[key] = `Content for ${key}.`
     }
     const result = parseReportResponse(JSON.stringify(obj))
@@ -101,9 +106,14 @@ describe('parseReportResponse', () => {
   })
 
   it('does NOT recover trailing garbage when the JSON prefix itself is missing a required section — the Zod re-validation guard actually blocks a shorter, invalid document', () => {
+    // section_15 is practitioner-only and deliberately NOT in REPORT_SECTION_KEYS, so
+    // omitting it leaves a complete, valid 14-section report. This test used to hand a
+    // valid document to the validator and then assert it was rejected — it never once
+    // exercised the missing-required-section path it is named for. Omit a genuinely
+    // required section instead.
     const obj: Record<string, string> = {}
     for (const key of ALL_15_KEYS) {
-      if (key === 'section_15_iris_sign_patterns') continue
+      if (key === 'section_7_hepatic') continue
       obj[key] = `Content for ${key}.`
     }
     const incompleteWithTrailingGarbage = JSON.stringify(obj) + '\n```\n\nLet me try again from scratch.'
