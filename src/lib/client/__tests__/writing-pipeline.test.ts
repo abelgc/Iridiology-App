@@ -345,6 +345,110 @@ describe('rewriteReportForClient', () => {
     await expect(rewriteReportForClient(mockReport, 'en', 'Jane')).rejects.toThrow('writer B failed')
   })
 
+  it('REGRESSION (2026-07-26 live-demo incident): retries a writer once when it returns malformed JSON, instead of failing the whole report', async () => {
+    let writerBAttempts = 0
+    createMock.mockImplementation((params: any) => {
+      const system: string = params.system
+      if (system.includes('You are the Planner')) {
+        return Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(plannerFixture) }] })
+      }
+      if (system.includes('You are Writer A')) {
+        return Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(writerAFixture) }] })
+      }
+      if (system.includes('You are Writer B')) {
+        writerBAttempts += 1
+        if (writerBAttempts === 1) {
+          // Exactly the production failure: a complete JSON object followed by the model
+          // carrying on in prose. JSON.parse throws "Unexpected non-whitespace character
+          // after JSON at position N", which killed stage 2 mid-demo on 2026-07-26.
+          return Promise.resolve({
+            content: [
+              {
+                type: 'text',
+                text: `${JSON.stringify(writerBFixture)}\n\`\`\`\n\nI need to provide the full JSON with all keys. Let me complete`,
+              },
+            ],
+          })
+        }
+        return Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(writerBFixture) }] })
+      }
+      if (system.includes('You are Writer C')) {
+        return Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(writerCFixture) }] })
+      }
+      throw new Error('unexpected call')
+    })
+
+    const result = await rewriteReportForClient(mockReport, 'en', 'Jane')
+
+    expect(writerBAttempts).toBe(2)
+    expect(result.section_7_hepatic).toBe(writerBFixture.section_7_hepatic)
+    // The other two writers must not be re-run just because B stumbled.
+    expect(result.section_1_general_terrain).toBe(writerAFixture.section_1_general_terrain)
+    expect(result.section_12_conclusion).toBe(writerCFixture.section_12_conclusion)
+  })
+
+  it('does not retry a writer when it fails with a non-retryable billing/auth error (400 invalid_request_error) — fails fast', async () => {
+    const billingError = Object.assign(
+      new Error('400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."}}'),
+      { status: 400, error: { type: 'error', error: { type: 'invalid_request_error' } } },
+    )
+    let writerBAttempts = 0
+    createMock.mockImplementation((params: any) => {
+      const system: string = params.system
+      if (system.includes('You are the Planner')) {
+        return Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(plannerFixture) }] })
+      }
+      if (system.includes('You are Writer A')) {
+        return Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(writerAFixture) }] })
+      }
+      if (system.includes('You are Writer B')) {
+        writerBAttempts += 1
+        return Promise.reject(billingError)
+      }
+      if (system.includes('You are Writer C')) {
+        return Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(writerCFixture) }] })
+      }
+      throw new Error('unexpected call')
+    })
+
+    // A second attempt would fail identically and just burn another paid call on a run
+    // that was doomed from the first one — the same reasoning runPlanner already applies.
+    await expect(rewriteReportForClient(mockReport, 'en', 'Jane')).rejects.toBe(billingError)
+    expect(writerBAttempts).toBe(1)
+  })
+
+  it('retries only the writer that failed, not all three — one stumble costs 5 model calls, not 7', async () => {
+    let writerBAttempts = 0
+    createMock.mockImplementation((params: any) => {
+      const system: string = params.system
+      if (system.includes('You are the Planner')) {
+        return Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(plannerFixture) }] })
+      }
+      if (system.includes('You are Writer A')) {
+        return Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(writerAFixture) }] })
+      }
+      if (system.includes('You are Writer B')) {
+        writerBAttempts += 1
+        if (writerBAttempts === 1) return Promise.reject(new Error('transient writer B failure'))
+        return Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(writerBFixture) }] })
+      }
+      if (system.includes('You are Writer C')) {
+        return Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(writerCFixture) }] })
+      }
+      throw new Error('unexpected call')
+    })
+
+    await rewriteReportForClient(mockReport, 'en', 'Jane')
+
+    // 1 planner + A + B + B(retry) + C. Retrying at the Promise.all level instead would
+    // re-run A and C too and cost 7, throwing away work that already succeeded.
+    expect(createMock).toHaveBeenCalledTimes(5)
+    const writerACalls = createMock.mock.calls.filter((c: any) => c[0].system.includes('You are Writer A'))
+    const writerCCalls = createMock.mock.calls.filter((c: any) => c[0].system.includes('You are Writer C'))
+    expect(writerACalls).toHaveLength(1)
+    expect(writerCCalls).toHaveLength(1)
+  })
+
   it('throws if the Anthropic client itself throws', async () => {
     const { default: Anthropic } = await import('@anthropic-ai/sdk')
     vi.mocked(Anthropic).mockImplementationOnce(function () {

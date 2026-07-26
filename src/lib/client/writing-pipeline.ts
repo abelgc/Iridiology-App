@@ -290,17 +290,37 @@ async function runWriter(
   group: WriterGroup,
   lang: string
 ): Promise<Partial<ReportContent>> {
-  const raw = await callClaude(client, buildWriterPrompt(group, lang), JSON.stringify(brief), 1600)
-  const parsed = JSON.parse(sanitizeJsonControlCharacters(stripJsonFence(raw)))
-  const result: Partial<ReportContent> = {}
-  for (const key of group.keys) {
-    const value = parsed[key]
-    if (typeof value !== 'string' || value.trim().length === 0) {
-      throw new Error(`writer ${group.role} returned no content for ${key}`)
+  const systemPrompt = buildWriterPrompt(group, lang)
+  const userContent = JSON.stringify(brief)
+
+  const attempt = async (): Promise<Partial<ReportContent>> => {
+    const raw = await callClaude(client, systemPrompt, userContent, 1600)
+    const parsed = JSON.parse(sanitizeJsonControlCharacters(stripJsonFence(raw)))
+    const result: Partial<ReportContent> = {}
+    for (const key of group.keys) {
+      const value = parsed[key]
+      if (typeof value !== 'string' || value.trim().length === 0) {
+        throw new Error(`writer ${group.role} returned no content for ${key}`)
+      }
+      result[key] = value
     }
-    result[key] = value
+    return result
   }
-  return result
+
+  try {
+    return await attempt()
+  } catch (error) {
+    if (isNonRetryableAIError(error)) {
+      // A 400 invalid_request_error (e.g. exhausted account credit) or a 401 auth error
+      // fails identically on a second attempt — don't burn another paid call on a run
+      // that was doomed from the first. Same reasoning as runPlanner.
+      throw error
+    }
+    // One retry, mirroring runPlanner: the three writers run in parallel, so one
+    // malformed-JSON response takes the whole report down with it. A model trailing
+    // prose after its JSON is exactly what broke stage 2 live on 2026-07-26.
+    return await attempt()
+  }
 }
 
 export async function rewriteReportForClient(
