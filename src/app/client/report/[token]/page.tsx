@@ -29,6 +29,11 @@ export default function ClientReportPage() {
 
   useEffect(() => {
     let cancelled = false
+    // The pending poll's handle, so leaving the page actually stops the polling instead of
+    // only suppressing its render. `cancelled` alone still let a queued timer fire one more
+    // request from a component that no longer exists — measured, 2 fetches after unmount
+    // instead of 1.
+    let timer: ReturnType<typeof setTimeout> | undefined
     let elapsedMs = 0
     let delayMs = 3000 // starts at 3s, backs off up to 20s — same ~6min total wait budget as before
     const POLL_CEILING_MS = 360000
@@ -48,7 +53,10 @@ export default function ClientReportPage() {
             return
           }
           if (!cancelled) setState({ kind: 'pending' })
-          setTimeout(load, delayMs)
+          // Guarded as well as cleared: the unmount may have happened while this request
+          // was in flight, in which case the cleanup has already run and there would be
+          // nothing left to cancel the timer we are about to create.
+          if (!cancelled) timer = setTimeout(load, delayMs)
           delayMs = Math.min(delayMs * 1.3, POLL_MAX_DELAY_MS)
           return
         }
@@ -78,6 +86,7 @@ export default function ClientReportPage() {
     load()
     return () => {
       cancelled = true
+      if (timer !== undefined) clearTimeout(timer)
     }
   }, [token])
 

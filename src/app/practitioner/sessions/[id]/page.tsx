@@ -128,6 +128,13 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
       cancelled = true
       clearTimeout(timeoutId)
     }
+    // `session` is deliberately NOT a dependency, only `session?.status`. The poll calls
+    // setSession(data) on every tick, producing a new object each time; depending on the
+    // object would restart this effect on every tick, resetting `elapsedMs` and `delayMs`
+    // with it. The backoff would never grow and POLL_CEILING_MS would never be reached —
+    // the poll would run forever instead of stopping after five minutes. The status is the
+    // only part of `session` this effect reads, and it is what should retrigger it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.status])
 
   if (!sessionId) {

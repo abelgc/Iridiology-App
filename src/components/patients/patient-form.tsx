@@ -73,9 +73,13 @@ export function PatientForm({ patient, onSubmit, isLoading }: PatientFormProps) 
     },
   })
 
+  // `form` belongs in the deps and is safe there: react-hook-form keeps its return value
+  // in a ref, so the object and its methods are the same across renders — measured, not
+  // assumed. Omitting it was the usual worry that a changing identity would restart the
+  // effect on every keystroke; that cannot happen here.
   useEffect(() => {
     form.setValue('time_of_day', composeTimeString(timeHour, timeMinute, timePeriod))
-  }, [timeHour, timeMinute, timePeriod])
+  }, [form, timeHour, timeMinute, timePeriod])
 
   const handleSubmit = async (data: PatientCreateInput) => {
     setSubmitting(true)
@@ -94,7 +98,7 @@ export function PatientForm({ patient, onSubmit, isLoading }: PatientFormProps) 
         <FormField
           control={form.control}
           name="full_name"
-          render={({ field }: any) => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel>Full Name *</FormLabel>
               <FormControl>
@@ -108,7 +112,7 @@ export function PatientForm({ patient, onSubmit, isLoading }: PatientFormProps) 
         <FormField
           control={form.control}
           name="date_of_birth"
-          render={({ field }: any) => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel>Date of Birth</FormLabel>
               <FormControl>
@@ -122,7 +126,7 @@ export function PatientForm({ patient, onSubmit, isLoading }: PatientFormProps) 
         <FormField
           control={form.control}
           name="country_of_birth"
-          render={({ field }: any) => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel>Country of Birth (optional)</FormLabel>
               <FormControl>
@@ -136,7 +140,7 @@ export function PatientForm({ patient, onSubmit, isLoading }: PatientFormProps) 
         <FormField
           control={form.control}
           name="city_of_birth"
-          render={({ field }: any) => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel>City of Birth (optional)</FormLabel>
               <FormControl>
@@ -185,7 +189,7 @@ export function PatientForm({ patient, onSubmit, isLoading }: PatientFormProps) 
         <FormField
           control={form.control}
           name="gender"
-          render={({ field }: any) => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel>Gender</FormLabel>
               <Select value={field.value || ''} onValueChange={field.onChange}>
@@ -209,7 +213,7 @@ export function PatientForm({ patient, onSubmit, isLoading }: PatientFormProps) 
         <FormField
           control={form.control}
           name="email"
-          render={({ field }: any) => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
@@ -223,7 +227,7 @@ export function PatientForm({ patient, onSubmit, isLoading }: PatientFormProps) 
         <FormField
           control={form.control}
           name="phone"
-          render={({ field }: any) => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel>Phone</FormLabel>
               <FormControl>
@@ -237,7 +241,7 @@ export function PatientForm({ patient, onSubmit, isLoading }: PatientFormProps) 
         <FormField
           control={form.control}
           name="general_history"
-          render={({ field }: any) => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel>General History</FormLabel>
               <FormControl>
@@ -251,7 +255,7 @@ export function PatientForm({ patient, onSubmit, isLoading }: PatientFormProps) 
         <FormField
           control={form.control}
           name="notes"
-          render={({ field }: any) => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel>Notes</FormLabel>
               <FormControl>

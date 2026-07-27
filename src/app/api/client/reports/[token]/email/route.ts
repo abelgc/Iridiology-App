@@ -50,7 +50,12 @@ export async function POST(
     pdfBuffer,
   })
 
-  if (!result.ok && result.error !== 'already_sent' as any) {
+  // `already_sent` used to be excluded here, but it was only ever an `id`, never an
+  // `error` — so the comparison was always true and the `as any` existed purely to make an
+  // impossible comparison type-check. sendReportEmail no longer returns it at all: since
+  // 2026-07-27 a repeat request genuinely re-sends. Any non-ok result is now a real
+  // failure and the client is told so, rather than being shown a false confirmation.
+  if (!result.ok) {
     return NextResponse.json({ error: 'email_failed', detail: result.error }, { status: 502 })
   }
   return NextResponse.json({ ok: true, id: result.id })

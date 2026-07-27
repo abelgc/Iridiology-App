@@ -20,7 +20,14 @@
     ],
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    // Vitest injects describe/it/expect as globals (`globals: true` in both vitest
+    // configs). Without this TypeScript reported every test file as broken — 207
+    // "Cannot find name 'expect'" errors — while the tests themselves ran perfectly.
+    // That much false noise hides the type errors that matter.
+    // Note: declaring `types` stops the automatic pickup of everything under
+    // node_modules/@types, so `node` is listed explicitly.
+    "types": ["vitest/globals", "node"]
   },
   "include": [
     "next-env.d.ts",

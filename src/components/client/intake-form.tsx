@@ -1,15 +1,34 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm, Controller, type Control, type FieldPath } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useLanguage } from '@/lib/i18n-context'
 import {
   clientIntakeSchema,
   type ClientIntakeInput,
 } from '@/lib/validators/client-intake'
+import type { HealthQuestionnaire } from '@/lib/validators/health-questionnaire'
 import type { PaymentTier } from '@/types/client-analysis'
 import type { TranslationKey } from '@/lib/i18n'
+
+/**
+ * The checkbox names for one body system, taken from the schema itself rather than typed
+ * as `string`. Every question list below was `{ key: TranslationKey; field: string }[]`,
+ * so a misspelt field — `blaoting` for `bloating` — compiled cleanly and silently dropped
+ * the client's answer. That is the same shape of failure as the intake form that died
+ * without a word during a live demo: no error, just missing data. Now it is a build error.
+ */
+type SystemField<S extends keyof HealthQuestionnaire> = Extract<
+  keyof NonNullable<HealthQuestionnaire[S]>,
+  string
+>
+
+/** A question list for one body system, with its field names pinned to that system. */
+type Questions<S extends keyof HealthQuestionnaire> = {
+  key: TranslationKey
+  field: SystemField<S>
+}[]
 
 export function IntakeForm({
   tier,
@@ -145,73 +164,73 @@ export function IntakeForm({
       {/* 12 body system cards */}
       <SystemCard icon={<IconDigestive />} title={t('qSectionDigestive')} sub={t('intakeCardSystemSub')}>
         {digestiveQuestions.map(({ key, field }) => (
-          <CheckTile key={field} label={t(key)} name={`health_questionnaire.digestive.${field}` as any} control={control} />
+          <CheckTile key={field} label={t(key)} name={`health_questionnaire.digestive.${field}`} control={control} />
         ))}
       </SystemCard>
 
       <SystemCard icon={<IconHeart />} title={t('qSectionCardiovascular')} sub={t('intakeCardSystemSub')}>
         {cardiovascularQuestions.map(({ key, field }) => (
-          <CheckTile key={field} label={t(key)} name={`health_questionnaire.cardiovascular.${field}` as any} control={control} />
+          <CheckTile key={field} label={t(key)} name={`health_questionnaire.cardiovascular.${field}`} control={control} />
         ))}
       </SystemCard>
 
       <SystemCard icon={<IconWind />} title={t('qSectionRespiratory')} sub={t('intakeCardSystemSub')}>
         {respiratoryQuestions.map(({ key, field }) => (
-          <CheckTile key={field} label={t(key)} name={`health_questionnaire.respiratory.${field}` as any} control={control} />
+          <CheckTile key={field} label={t(key)} name={`health_questionnaire.respiratory.${field}`} control={control} />
         ))}
       </SystemCard>
 
       <SystemCard icon={<IconZap />} title={t('qSectionNervous')} sub={t('intakeCardSystemSub')}>
         {nervousQuestions.map(({ key, field }) => (
-          <CheckTile key={field} label={t(key)} name={`health_questionnaire.nervous.${field}` as any} control={control} />
+          <CheckTile key={field} label={t(key)} name={`health_questionnaire.nervous.${field}`} control={control} />
         ))}
       </SystemCard>
 
       <SystemCard icon={<IconActivity />} title={t('qSectionMusculoskeletal')} sub={t('intakeCardSystemSub')}>
         {musculoskeletalQuestions.map(({ key, field }) => (
-          <CheckTile key={field} label={t(key)} name={`health_questionnaire.musculoskeletal.${field}` as any} control={control} />
+          <CheckTile key={field} label={t(key)} name={`health_questionnaire.musculoskeletal.${field}`} control={control} />
         ))}
       </SystemCard>
 
       <SystemCard icon={<IconThermometer />} title={t('qSectionEndocrine')} sub={t('intakeCardSystemSub')}>
         {endocrineQuestions.map(({ key, field }) => (
-          <CheckTile key={field} label={t(key)} name={`health_questionnaire.endocrine.${field}` as any} control={control} />
+          <CheckTile key={field} label={t(key)} name={`health_questionnaire.endocrine.${field}`} control={control} />
         ))}
       </SystemCard>
 
       <SystemCard icon={<IconDroplet />} title={t('qSectionUrinary')} sub={t('intakeCardSystemSub')}>
         {urinaryQuestions.map(({ key, field }) => (
-          <CheckTile key={field} label={t(key)} name={`health_questionnaire.urinary.${field}` as any} control={control} />
+          <CheckTile key={field} label={t(key)} name={`health_questionnaire.urinary.${field}`} control={control} />
         ))}
       </SystemCard>
 
       <SystemCard icon={<IconSun />} title={t('qSectionReproductive')} sub={t('intakeCardSystemSub')}>
         {reproductiveQuestions.map(({ key, field }) => (
-          <CheckTile key={field} label={t(key)} name={`health_questionnaire.reproductive.${field}` as any} control={control} />
+          <CheckTile key={field} label={t(key)} name={`health_questionnaire.reproductive.${field}`} control={control} />
         ))}
       </SystemCard>
 
       <SystemCard icon={<IconShield />} title={t('qSectionSkinLymphatic')} sub={t('intakeCardSystemSub')}>
         {skinLymphaticQuestions.map(({ key, field }) => (
-          <CheckTile key={field} label={t(key)} name={`health_questionnaire.skin_lymphatic.${field}` as any} control={control} />
+          <CheckTile key={field} label={t(key)} name={`health_questionnaire.skin_lymphatic.${field}`} control={control} />
         ))}
       </SystemCard>
 
       <SystemCard icon={<IconEye />} title={t('qSectionSensory')} sub={t('intakeCardSystemSub')}>
         {sensoryQuestions.map(({ key, field }) => (
-          <CheckTile key={field} label={t(key)} name={`health_questionnaire.sensory.${field}` as any} control={control} />
+          <CheckTile key={field} label={t(key)} name={`health_questionnaire.sensory.${field}`} control={control} />
         ))}
       </SystemCard>
 
       <SystemCard icon={<IconBrain />} title={t('qSectionMentalEmotional')} sub={t('intakeCardSystemSub')}>
         {mentalEmotionalQuestions.map(({ key, field }) => (
-          <CheckTile key={field} label={t(key)} name={`health_questionnaire.mental_emotional.${field}` as any} control={control} />
+          <CheckTile key={field} label={t(key)} name={`health_questionnaire.mental_emotional.${field}`} control={control} />
         ))}
       </SystemCard>
 
       <SystemCard icon={<IconShieldCheck />} title={t('qSectionImmune')} sub={t('intakeCardSystemSub')}>
         {immuneQuestions.map(({ key, field }) => (
-          <CheckTile key={field} label={t(key)} name={`health_questionnaire.immune.${field}` as any} control={control} />
+          <CheckTile key={field} label={t(key)} name={`health_questionnaire.immune.${field}`} control={control} />
         ))}
       </SystemCard>
 
@@ -344,8 +363,10 @@ function CheckTile({
   control,
 }: {
   label: string
-  name: any
-  control: any
+  // Typed against the form's own shape, so a path that does not exist on ClientIntakeInput
+  // is a build error rather than a checkbox that quietly saves nowhere.
+  name: FieldPath<ClientIntakeInput>
+  control: Control<ClientIntakeInput>
 }) {
   return (
     <Controller
@@ -392,7 +413,7 @@ const IconFile = () => <SvgWrap><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h
 
 /* ===== Question arrays (unchanged from original) ===== */
 
-const digestiveQuestions: { key: TranslationKey; field: string }[] = [
+const digestiveQuestions: Questions<'digestive'> = [
   { key: 'qDigConstipation', field: 'constipation' },
   { key: 'qDigDiarrhea', field: 'diarrhea' },
   { key: 'qDigBloating', field: 'bloating' },
@@ -405,7 +426,7 @@ const digestiveQuestions: { key: TranslationKey; field: string }[] = [
   { key: 'qDigBadBreath', field: 'bad_breath' },
 ]
 
-const cardiovascularQuestions: { key: TranslationKey; field: string }[] = [
+const cardiovascularQuestions: Questions<'cardiovascular'> = [
   { key: 'qCardPalpitations', field: 'palpitations' },
   { key: 'qCardChestPain', field: 'chest_pain' },
   { key: 'qCardHypertension', field: 'hypertension' },
@@ -415,7 +436,7 @@ const cardiovascularQuestions: { key: TranslationKey; field: string }[] = [
   { key: 'qCardBruising', field: 'frequent_bruising' },
 ]
 
-const respiratoryQuestions: { key: TranslationKey; field: string }[] = [
+const respiratoryQuestions: Questions<'respiratory'> = [
   { key: 'qRespAsthma', field: 'asthma' },
   { key: 'qRespFrequentColds', field: 'frequent_colds' },
   { key: 'qRespChronicCough', field: 'chronic_cough' },
@@ -425,7 +446,7 @@ const respiratoryQuestions: { key: TranslationKey; field: string }[] = [
   { key: 'qRespBronchitis', field: 'bronchitis' },
 ]
 
-const nervousQuestions: { key: TranslationKey; field: string }[] = [
+const nervousQuestions: Questions<'nervous'> = [
   { key: 'qNervHeadaches', field: 'headaches' },
   { key: 'qNervMigraines', field: 'migraines' },
   { key: 'qNervInsomnia', field: 'insomnia' },
@@ -438,7 +459,7 @@ const nervousQuestions: { key: TranslationKey; field: string }[] = [
   { key: 'qNervStress', field: 'chronic_stress' },
 ]
 
-const musculoskeletalQuestions: { key: TranslationKey; field: string }[] = [
+const musculoskeletalQuestions: Questions<'musculoskeletal'> = [
   { key: 'qMuscJointPain', field: 'joint_pain' },
   { key: 'qMuscBackPain', field: 'back_pain' },
   { key: 'qMuscArthritis', field: 'arthritis' },
@@ -449,7 +470,7 @@ const musculoskeletalQuestions: { key: TranslationKey; field: string }[] = [
   { key: 'qMuscFibromyalgia', field: 'fibromyalgia' },
 ]
 
-const endocrineQuestions: { key: TranslationKey; field: string }[] = [
+const endocrineQuestions: Questions<'endocrine'> = [
   { key: 'qEndoThyroid', field: 'thyroid_problems' },
   { key: 'qEndoDiabetes', field: 'diabetes' },
   { key: 'qEndoWeightGain', field: 'weight_gain' },
@@ -460,7 +481,7 @@ const endocrineQuestions: { key: TranslationKey; field: string }[] = [
   { key: 'qEndoAdrenal', field: 'adrenal_issues' },
 ]
 
-const urinaryQuestions: { key: TranslationKey; field: string }[] = [
+const urinaryQuestions: Questions<'urinary'> = [
   { key: 'qUrinKidneyStones', field: 'kidney_stones' },
   { key: 'qUrinFreqUrin', field: 'frequent_urination' },
   { key: 'qUrinInfections', field: 'urinary_infections' },
@@ -469,7 +490,7 @@ const urinaryQuestions: { key: TranslationKey; field: string }[] = [
   { key: 'qUrinKidneyPain', field: 'kidney_pain' },
 ]
 
-const reproductiveQuestions: { key: TranslationKey; field: string }[] = [
+const reproductiveQuestions: Questions<'reproductive'> = [
   { key: 'qReprodMenstrual', field: 'menstrual_irregularities' },
   { key: 'qReprodMenopause', field: 'menopause_symptoms' },
   { key: 'qReprodLibido', field: 'libido_changes' },
@@ -478,7 +499,7 @@ const reproductiveQuestions: { key: TranslationKey; field: string }[] = [
   { key: 'qReprodHormonal', field: 'hormonal_imbalance' },
 ]
 
-const skinLymphaticQuestions: { key: TranslationKey; field: string }[] = [
+const skinLymphaticQuestions: Questions<'skin_lymphatic'> = [
   { key: 'qSkinAcne', field: 'acne' },
   { key: 'qSkinEczema', field: 'eczema' },
   { key: 'qSkinPsoriasis', field: 'psoriasis' },
@@ -490,7 +511,7 @@ const skinLymphaticQuestions: { key: TranslationKey; field: string }[] = [
   { key: 'qSkinNails', field: 'nail_problems' },
 ]
 
-const sensoryQuestions: { key: TranslationKey; field: string }[] = [
+const sensoryQuestions: Questions<'sensory'> = [
   { key: 'qSensVision', field: 'vision_problems' },
   { key: 'qSensHearing', field: 'hearing_loss' },
   { key: 'qSensTinnitus', field: 'tinnitus' },
@@ -500,7 +521,7 @@ const sensoryQuestions: { key: TranslationKey; field: string }[] = [
   { key: 'qSensEarInfect', field: 'ear_infections' },
 ]
 
-const mentalEmotionalQuestions: { key: TranslationKey; field: string }[] = [
+const mentalEmotionalQuestions: Questions<'mental_emotional'> = [
   { key: 'qMentStress', field: 'chronic_stress' },
   { key: 'qMentMoodSwings', field: 'mood_swings' },
   { key: 'qMentPanic', field: 'panic_attacks' },
@@ -510,7 +531,7 @@ const mentalEmotionalQuestions: { key: TranslationKey; field: string }[] = [
   { key: 'qMentBurnout', field: 'burnout' },
 ]
 
-const immuneQuestions: { key: TranslationKey; field: string }[] = [
+const immuneQuestions: Questions<'immune'> = [
   { key: 'qImmuAutoimmune', field: 'autoimmune_disease' },
   { key: 'qImmuAllergies', field: 'frequent_allergies' },
   { key: 'qImmuCFS', field: 'chronic_fatigue_syndrome' },

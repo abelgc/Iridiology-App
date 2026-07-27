@@ -46,7 +46,17 @@ interface FormFieldProps<
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
 > extends ControllerProps<TFieldValues, TName> {}
 
-const FormField = ({ ...props }: any) => (
+// Generic, not `any`. FormFieldProps was declared right above and never used, so every
+// consumer lost its types at this one line: `render={({ field }) => ...}` gave `field` an
+// implicit any, and `name` accepted any string at all. Nine `: any` annotations in
+// patient-form.tsx existed purely to silence the fallout. Threading the generics through
+// means a field name that does not exist on the form is a build error.
+const FormField = <
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+>(
+  props: FormFieldProps<TFieldValues, TName>,
+) => (
   <FormFieldContext.Provider value={{ name: props.name }}>
     <Controller {...props} />
   </FormFieldContext.Provider>
