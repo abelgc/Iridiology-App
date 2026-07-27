@@ -71,22 +71,24 @@ export async function sendReportEmail(params: {
       return { ok: false, error: 'send_state_unknown' }
     }
 
-    // Genuinely already delivered: saying so is true, and re-sending would duplicate it.
-    if (existing.status === 'sent') {
-      return { ok: true, id: 'already_sent' }
-    }
-
-    // Another invocation holds the claim right now. Correct not to send a second copy,
-    // but nothing has been delivered yet, so this must not be dressed up as success.
-    if (existing.status !== 'failed') {
+    // 'pending' is the only status that must block: another invocation holds the claim
+    // right now — the automatic post-analysis send racing a manual resend, or a
+    // double-click. That race is the whole reason the claim exists.
+    if (existing.status === 'pending') {
       return { ok: false, error: 'send_in_progress' }
     }
 
+    // 'sent' or 'failed' — either way this is a fresh, deliberate request, so honour it.
+    // Refusing to re-send from 'sent' turned the client's "email me my report" button
+    // into a no-op that still reported success: reported live on 2026-07-27, the client
+    // pressed it after the automatic email and nothing ever arrived. Delivering a second
+    // copy of a report someone explicitly asked for again is the correct outcome; the
+    // dedup exists to stop concurrent sends, not to cap a client at one copy for life.
     const { data: reclaimed } = await supabase
       .from('email_send_log')
       .update({ status: 'pending' })
       .eq('id', existing.id)
-      .eq('status', 'failed') // CAS: only proceed if it's still 'failed' as we just read
+      .eq('status', existing.status) // CAS on exactly the status we just read
       .select('id')
       .single()
 

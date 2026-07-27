@@ -70,9 +70,11 @@ describe('sendReportEmail', () => {
     expect(sendMock).not.toHaveBeenCalled()
   })
 
-  it('does not send twice when a log row already exists as "sent" (claim-first dedup)', async () => {
-    // Simulate: the claim insert fails (UNIQUE violation — a row already exists), and the
-    // follow-up lookup finds it already marked 'sent'.
+  it('REGRESSION (2026-07-27): re-sends when the client asks again after a successful send', async () => {
+    // The "email me my report" button is a request for a new send, not a question about
+    // history. Refusing forever because a copy went out once — while telling the client it
+    // was sent — is the same lie in a different shape. Reported live: the client pressed it
+    // after receiving the automatic email and nothing ever arrived.
     insertResult = { data: null, error: { message: 'duplicate key value violates unique constraint' } }
     existingRowResult = { data: { id: 'log-1', status: 'sent' }, error: null }
 
@@ -84,9 +86,8 @@ describe('sendReportEmail', () => {
       pdfBuffer: Buffer.from('%PDF-test'),
     })
 
+    expect(sendMock).toHaveBeenCalledTimes(1)
     expect(result.ok).toBe(true)
-    expect(result.id).toBe('already_sent')
-    expect(sendMock).not.toHaveBeenCalled()
   })
 
   it('does not send twice when another attempt is currently "pending" (in flight), and does not claim it was sent', async () => {
