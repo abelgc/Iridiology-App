@@ -174,7 +174,6 @@ describe('SessionDetailPage polling/backoff', () => {
     }
 
     // Report the real observed sequence of setTimeout delay arguments.
-    // eslint-disable-next-line no-console
     console.log('Observed setTimeout delays:', observedDelays)
 
     // The delay eventually reaches and stays at the 20000ms cap.

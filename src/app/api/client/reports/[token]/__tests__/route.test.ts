@@ -18,15 +18,27 @@ let selectCallIndex = 0
 let updateCallResults: any[] = []
 let updateCallIndex = 0
 
-function updateChain(finalResult: any): any {
+function updateChain(finalResult: any, filters: Array<{ column: string; value: unknown }>): any {
   const c: any = {
-    eq: () => c,
+    eq: (column: string, value: unknown) => {
+      filters.push({ column, value })
+      return c
+    },
     select: () => c,
     single: () => Promise.resolve(finalResult),
   }
   return c
 }
 const updateMock = vi.fn()
+// Every update(), paired with the WHERE clause it was issued with. All three writes in
+// this route are compare-and-swaps against a value read moments earlier — the status AND
+// the exact timestamp, or the exact retry_count. Those clauses are the only thing that
+// distinguishes "this row is genuinely still stuck" from "stage 2 finished under us";
+// an `eq` that records nothing hides every way of getting them wrong.
+type UpdateCall = { payload: any; filters: Array<{ column: string; value: unknown }> }
+let updateCalls: UpdateCall[] = []
+const whereOf = (call: UpdateCall) =>
+  Object.fromEntries(call.filters.map((f) => [f.column, f.value]))
 
 vi.mock('@/lib/supabase/server', () => ({
   createAdminClient: () => ({
@@ -42,12 +54,14 @@ vi.mock('@/lib/supabase/server', () => ({
       }),
       update: (...args: unknown[]) => {
         updateMock(...args)
+        const filters: Array<{ column: string; value: unknown }> = []
+        updateCalls.push({ payload: args[0], filters })
         const result = updateCallResults[updateCallIndex] ?? {
           data: { report_download_token: 'x' },
           error: null,
         }
         updateCallIndex++
-        return updateChain(result)
+        return updateChain(result, filters)
       },
     }),
   }),
@@ -58,6 +72,7 @@ beforeEach(() => {
   selectCallIndex = 0
   updateCallResults = []
   updateCallIndex = 0
+  updateCalls = []
   updateMock.mockClear()
   triggerStage2Mock.mockClear()
 })
@@ -258,5 +273,121 @@ describe('a finished report is never held hostage by its status', () => {
     } as never)
 
     expect(res.status).toBe(409)
+  })
+
+  // The test above cannot tell WHICH clause refused the row: its fixture is both
+  // status:'failed' AND report_delivered_at:null, so the status clause alone already
+  // returns 409 and the no-content clause is never the deciding factor. Deleting `!report`
+  // from the gate leaves it green — while a delivered row with no content would be served
+  // as `report: null`, and the client's viewer would render an empty paid report.
+  // These fixtures satisfy the status/delivery half of the gate, so only `!report` is left
+  // standing between the client and a blank report.
+  it.each([
+    ['a DELIVERED row whose report row is missing entirely', { status: 'failed', report_delivered_at: '2026-07-07T15:23:49.291Z', reports: null }],
+    ['a DELIVERED row whose report row exists but is empty', { status: 'failed', report_delivered_at: '2026-07-07T15:23:49.291Z', reports: { id: 'rep-1', report_content: null, client_report_content: null } }],
+    ['a COMPLETED row with no content at all', { status: 'completed', report_delivered_at: null, reports: null }],
+  ])('refuses %s — content decides, and there is none', async (_label, extra) => {
+    selectResults = [fila(extra)]
+
+    const { GET } = await import('@/app/api/client/reports/[token]/route')
+    const res = await GET(new Request('http://test') as never, {
+      params: Promise.resolve({ token: TOK }),
+    } as never)
+    const json = await res.json()
+
+    expect(res.status).toBe(409)
+    expect(json.error).toBe('not_ready')
+    expect(json.report).toBeUndefined()
+  })
+})
+
+// Each guarded write below is a compare-and-swap on values read moments earlier. The tests
+// above prove what happens when a CAS wins or loses; none of them proved what the CAS
+// actually compares. Pointing it at `new Date()` instead of the timestamp that was read,
+// or pinning retry_count to a literal, means the guard can never match in production —
+// the row is left stuck forever while the route reports it handled things.
+describe('GET /api/client/reports/[token] — the compare-and-swaps themselves', () => {
+  it('marks a stale "analyzing" row failed only on the exact status AND the exact analyzing_started_at it read', async () => {
+    const startedAt = new Date(Date.now() - 300_000).toISOString()
+    const token = '00000000-0000-4000-8000-0000000000a1'
+    currentRow = {
+      report_download_token: token,
+      language: 'en',
+      status: 'analyzing',
+      report_id: null,
+      analyzing_started_at: startedAt,
+      reports: null,
+    }
+
+    const { GET } = await import('@/app/api/client/reports/[token]/route')
+    await GET(new Request('http://test') as never, { params: Promise.resolve({ token }) } as never)
+
+    expect(updateCalls).toHaveLength(1)
+    expect(updateCalls[0].payload).toEqual({
+      status: 'failed',
+      failure_reason: 'stale_timeout_synthesized',
+    })
+    expect(whereOf(updateCalls[0])).toEqual({
+      report_download_token: token,
+      status: 'analyzing',
+      analyzing_started_at: startedAt,
+    })
+  })
+
+  it('gives up on stage 2 only on the exact status AND the exact stage2_started_at it read', async () => {
+    const startedAt = new Date(Date.now() - 300_000).toISOString()
+    const token = '00000000-0000-4000-8000-0000000000a2'
+    currentRow = {
+      report_download_token: token,
+      language: 'en',
+      status: 'stage2_processing',
+      report_id: 'r4',
+      stage2_started_at: startedAt,
+      stage2_retry_count: 2,
+      reports: null,
+    }
+
+    const { GET } = await import('@/app/api/client/reports/[token]/route')
+    await GET(new Request('http://test') as never, { params: Promise.resolve({ token }) } as never)
+
+    expect(updateCalls).toHaveLength(1)
+    expect(updateCalls[0].payload).toEqual({
+      status: 'failed',
+      failure_reason: 'stage2_stale_after_retries',
+    })
+    expect(whereOf(updateCalls[0])).toEqual({
+      report_download_token: token,
+      status: 'stage2_processing',
+      stage2_started_at: startedAt,
+    })
+  })
+
+  it('claims the stage-2 retry with a CAS on the exact retry_count it read — not a constant', async () => {
+    // retry_count is deliberately 1, not 0: a guard pinned to a literal 0 (or any other
+    // constant) writes a WHERE that could never match this row, so two tabs polling the
+    // same stale analysis would both "win", both increment, and both re-run the whole of
+    // stage 2 — the double-run this CAS exists to prevent.
+    const token = '00000000-0000-4000-8000-0000000000a3'
+    currentRow = {
+      report_download_token: token,
+      language: 'en',
+      status: 'stage2_processing',
+      report_id: 'r3',
+      stage2_started_at: new Date(Date.now() - 300_000).toISOString(),
+      stage2_retry_count: 1,
+      reports: null,
+    }
+
+    const { GET } = await import('@/app/api/client/reports/[token]/route')
+    await GET(new Request('http://test') as never, { params: Promise.resolve({ token }) } as never)
+
+    expect(updateCalls).toHaveLength(1)
+    expect(updateCalls[0].payload).toEqual({ stage2_retry_count: 2 })
+    expect(whereOf(updateCalls[0])).toEqual({
+      report_download_token: token,
+      status: 'stage2_processing',
+      stage2_retry_count: 1,
+    })
+    expect(triggerStage2Mock).toHaveBeenCalledWith(token)
   })
 })

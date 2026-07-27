@@ -39,9 +39,12 @@ const mockReport = {
   section_13_strengths_of_the_body: 'S',
 }
 
-function chain(finalResult: any): any {
+function chain(finalResult: any, filters?: Array<{ column: string; value: unknown }>): any {
   const c: any = {
-    eq: () => c,
+    eq: (column: string, value: unknown) => {
+      filters?.push({ column, value })
+      return c
+    },
     select: () => c,
     single: () => Promise.resolve(finalResult),
   }
@@ -50,6 +53,15 @@ function chain(finalResult: any): any {
 
 const selectSingle = vi.fn().mockResolvedValue({ data: analysisRow, error: null })
 const updateMock = vi.fn()
+// Every update() on client_analyses, paired with the WHERE clause it was issued with.
+// This route has four separate compare-and-swaps — the 'paid' claim, the stage-1 advance
+// guarded on 'analyzing', the rescue guarded on 'failed', and the catch block's failure
+// write guarded on 'analyzing'. Each one guards a different status; an `eq` that records
+// nothing makes all four interchangeable.
+type UpdateCall = { payload: any; filters: Array<{ column: string; value: unknown }> }
+let updateCalls: UpdateCall[] = []
+const whereOf = (call: UpdateCall) =>
+  Object.fromEntries(call.filters.map((f) => [f.column, f.value]))
 // Per-call-index override list for the `client_analyses` update chain. Missing/undefined
 // entries fall back to a truthy "claimed" result. Lets tests simulate a specific update in
 // the sequence losing its CAS (0 rows) without affecting the others.
@@ -70,12 +82,14 @@ vi.mock('@/lib/supabase/server', () => ({
           }),
           update: (...args: unknown[]) => {
             updateMock(...args)
+            const filters: Array<{ column: string; value: unknown }> = []
+            updateCalls.push({ payload: args[0], filters })
             const result = updateCallResults[updateCallIndex] ?? {
               data: { report_download_token: analysisRow.report_download_token },
               error: null,
             }
             updateCallIndex++
-            return chain(result)
+            return chain(result, filters)
           },
         }
       }
@@ -122,6 +136,7 @@ beforeEach(() => {
   selectSingle.mockClear()
   selectSingle.mockResolvedValue({ data: analysisRow, error: null })
   updateMock.mockClear()
+  updateCalls = []
   updateCallResults = []
   updateCallIndex = 0
   insertReport.mockClear()
@@ -186,22 +201,43 @@ describe('POST /api/client/upload', () => {
     expect(mockAnalyzeDual).not.toHaveBeenCalled()
   })
 
-  it('REGRESSION (2026-07-26): a row already analysing returns 409 already_processing with the token, not a bare 402 payment_required', async () => {
-    // A client who reloaded during the video re-submits their photos. The row has already
-    // moved 'paid' -> 'analyzing', so the old code answered 402 payment_required and the
-    // page showed "something went wrong" to someone whose analysis was running fine.
+  // Every member of ANALYSIS_UNDER_WAY, not just 'analyzing'. Covering one member let the
+  // set be narrowed to exactly that member and stay green — which in production means a
+  // client whose row reads 'stage2_processing', 'completed', or 'failed' re-submitting
+  // their photos and being told "payment required" for something they already paid for.
+  it.each(['analyzing', 'stage2_processing', 'completed', 'failed'])(
+    'REGRESSION (2026-07-26): a row already at %s returns 409 already_processing with the token, not a bare 402 payment_required',
+    async (status) => {
+      // A client who reloaded during the video re-submits their photos. The row has already
+      // moved past 'paid', so the old code answered 402 payment_required and the page showed
+      // "something went wrong" to someone whose analysis was running fine — or finished.
+      selectSingle.mockResolvedValueOnce({
+        data: { ...analysisRow, status },
+        error: null,
+      })
+      const { POST } = await import('@/app/api/client/upload/route')
+      const res = await POST(makeRequest())
+      expect(res.status).toBe(409)
+      const json = await res.json()
+      expect(json.error).toBe('already_processing')
+      expect(json.status).toBe(status)
+      expect(json.report_download_token).toBe('00000000-0000-4000-8000-000000000000')
+      expect(mockAnalyzeDual).not.toHaveBeenCalled()
+    },
+  )
+
+  it('keeps the bare 402 for a status that is NOT under way, so the set is a real boundary and not "everything"', async () => {
+    // The mirror of the case above: widening ANALYSIS_UNDER_WAY to swallow every status
+    // would turn a genuinely unpaid row into a 409 that sends the client onward to a
+    // report that will never exist.
     selectSingle.mockResolvedValueOnce({
-      data: { ...analysisRow, status: 'analyzing' },
+      data: { ...analysisRow, status: 'intake_pending' },
       error: null,
     })
     const { POST } = await import('@/app/api/client/upload/route')
     const res = await POST(makeRequest())
-    expect(res.status).toBe(409)
-    const json = await res.json()
-    expect(json.error).toBe('already_processing')
-    expect(json.status).toBe('analyzing')
-    expect(json.report_download_token).toBe('00000000-0000-4000-8000-000000000000')
-    expect(mockAnalyzeDual).not.toHaveBeenCalled()
+    expect(res.status).toBe(402)
+    expect(updateMock).not.toHaveBeenCalled()
   })
 
   it('returns 409 and never runs the analysis when the initial "analyzing" CAS finds 0 rows', async () => {
@@ -312,5 +348,79 @@ describe('POST /api/client/upload', () => {
     expect(insertReport).toHaveBeenCalledTimes(1)
     expect(mockTriggerStage2).not.toHaveBeenCalled()
     expect(updateMock).toHaveBeenCalledTimes(3)
+  })
+})
+
+// This route runs four separate compare-and-swaps, each guarding a DIFFERENT status. The
+// tests above prove what each update writes; none of them proved which row it targets or
+// what precondition it asserts. Swapping one guard's status for another's — the exact
+// defect these guards exist to prevent — was invisible.
+describe('POST /api/client/upload — the compare-and-swaps themselves', () => {
+  const TOKEN = '00000000-0000-4000-8000-000000000000'
+
+  it('claims the run only from "paid", on exactly the submitted token', async () => {
+    // Without this guard a duplicate POST starts a second concurrent, fully paid AI run
+    // on the same row. Guarding on any other status means the genuine first POST — whose
+    // row is 'paid' — matches nothing and no analysis ever starts.
+    const { POST } = await import('@/app/api/client/upload/route')
+    await POST(makeRequest())
+    await waitUntilPromise
+
+    expect(whereOf(updateCalls[0])).toEqual({
+      report_download_token: TOKEN,
+      status: 'paid',
+    })
+    expect(updateCalls[0].payload).toMatchObject({ status: 'analyzing' })
+  })
+
+  it('advances stage 1 only from "analyzing", so it cannot overwrite a verdict the 270s guard already wrote', async () => {
+    const { POST } = await import('@/app/api/client/upload/route')
+    await POST(makeRequest())
+    await waitUntilPromise
+
+    expect(updateCalls[1].payload).toMatchObject({ status: 'stage2_processing' })
+    expect(whereOf(updateCalls[1])).toEqual({
+      report_download_token: TOKEN,
+      status: 'analyzing',
+    })
+  })
+
+  it('rescues a late-arriving success guarded on "failed" SPECIFICALLY — never on a status it does not recognise', async () => {
+    // The rescue exists to recover from exactly one race: the timeout guard wrote 'failed'
+    // first. Guarding it on 'analyzing' (a copy-paste of the line above) would make it a
+    // pointless retry of the write that just lost; guarding it on nothing would let it
+    // clobber any status at all, including a delivered report.
+    updateCallResults = [undefined, { data: null, error: null }]
+    const { POST } = await import('@/app/api/client/upload/route')
+    await POST(makeRequest())
+    await waitUntilPromise
+
+    expect(updateCalls).toHaveLength(3)
+    expect(updateCalls[2].payload).toMatchObject({
+      status: 'stage2_processing',
+      failure_reason: null,
+    })
+    expect(whereOf(updateCalls[2])).toEqual({
+      report_download_token: TOKEN,
+      status: 'failed',
+    })
+  })
+
+  it('writes the failure verdict only while still "analyzing", so a late success is never stomped back to failed', async () => {
+    // The un-cancelled loser promise (withTimeout stops waiting, it never stops the work)
+    // can still land 'stage2_processing' after this catch runs. Without the 'analyzing'
+    // guard, that completed, paid analysis gets silently reset to 'failed' with no
+    // recovery path — the main clobber this guard was added for.
+    mockAnalyzeDual.mockRejectedValue(new Error('boom'))
+    const { POST } = await import('@/app/api/client/upload/route')
+    await POST(makeRequest())
+    await waitUntilPromise
+
+    const failWrite = updateCalls.find((c) => c.payload.status === 'failed')
+    expect(failWrite).toBeDefined()
+    expect(whereOf(failWrite!)).toEqual({
+      report_download_token: TOKEN,
+      status: 'analyzing',
+    })
   })
 })

@@ -251,7 +251,13 @@ describe('ClientReportPage', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
-  it('does not call setState (no additional fetch-driven update) after unmount', async () => {
+  // This test began as `expect(true).toBe(true)` under the name "does not call setState
+  // after unmount" — it asserted nothing, and its own comment conceded the timer was never
+  // cleared. Rewritten as a characterization test it measured the real leak (2 fetches
+  // after unmount, not 1), which is what surfaced the defect. `page.tsx` now clears the
+  // timer in its cleanup, so the honest count is 1: the poll that was already in flight,
+  // and nothing after it.
+  it('REGRESSION (2026-07-27): leaving the page stops the polling, rather than firing one more request from a dead component', async () => {
     const fetchMock = global.fetch as ReturnType<typeof vi.fn>
     fetchMock.mockResolvedValueOnce(pendingPayload())
     fetchMock.mockResolvedValueOnce(readyPayload())
@@ -263,13 +269,16 @@ describe('ClientReportPage', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
 
     unmount()
-
-    // Advance past when the next poll would have fired. The component's
-    // `cancelled` flag guards the setState calls, but the setTimeout itself
-    // is not cleared on unmount -- so the underlying fetch may still fire.
     await advance(3000)
 
-    // No error/warning should be thrown by this advance.
-    expect(true).toBe(true)
+    // The scheduled poll was cleared by the cleanup, so no request leaves a component the
+    // client has already navigated away from.
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(screen.queryByTestId('report-viewer')).not.toBeInTheDocument()
+
+    // And nothing reschedules later either — the backoff chain is genuinely broken, not
+    // merely delayed.
+    await advance(60000)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 })

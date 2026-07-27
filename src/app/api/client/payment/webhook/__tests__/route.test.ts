@@ -3,16 +3,32 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 let updateResult: { data: unknown; error: unknown } = { data: [{ status: 'paid' }], error: null }
 const updateMock = vi.fn()
 
+// Every update(), paired with the WHERE clause it was issued with. `.eq('status',
+// 'intake_pending')` IS the compare-and-swap — the only thing that makes a retried Stripe
+// delivery an idempotent no-op instead of re-stamping paid_at over an in-flight analysis.
+// Recording it is what makes changing that value fail an assertion.
+type UpdateCall = { payload: unknown; filters: Array<{ column: string; value: unknown }> }
+let updateCalls: UpdateCall[] = []
+const whereOf = (call: UpdateCall) =>
+  Object.fromEntries(call.filters.map((f) => [f.column, f.value]))
+
 const fromMock = vi.fn(() => ({
   update: (...args: unknown[]) => {
     updateMock(...args)
-    return {
-      eq: () => ({
-        eq: () => ({
-          select: () => Promise.resolve(updateResult),
-        }),
-      }),
+    const filters: Array<{ column: string; value: unknown }> = []
+    updateCalls.push({ payload: args[0], filters })
+    // Any number of .eq() links, not exactly two. The old mock hardcoded two, so DELETING
+    // a guard blew up with "update(...).eq(...).select is not a function" — the shape
+    // broke before any assertion could speak, and changing a guard's VALUE passed
+    // silently. Failures must come from assertions, never from the mock's own rigidity.
+    const chain: any = {
+      eq: (column: string, value: unknown) => {
+        filters.push({ column, value })
+        return chain
+      },
+      select: () => Promise.resolve(updateResult),
     }
+    return chain
   },
 }))
 
@@ -57,6 +73,7 @@ function checkoutCompletedEvent(overrides: Partial<{ metadata: Record<string, st
 
 beforeEach(() => {
   updateMock.mockClear()
+  updateCalls = []
   fromMock.mockClear()
   constructEventMock.mockReset()
   updateResult = { data: [{ status: 'paid' }], error: null }
@@ -114,7 +131,23 @@ describe('POST /api/client/payment/webhook', () => {
   })
 
   it('acknowledges but ignores event types other than checkout.session.completed', async () => {
-    constructEventMock.mockReturnValue({ id: 'evt_other', type: 'payment_intent.succeeded', data: { object: {} } })
+    // The foreign event deliberately carries a PERFECTLY VALID token in both the places
+    // the route would look. Previously this fixture had `data.object = {}`, so deleting
+    // the event-type filter altogether stayed green — the token guard downstream was
+    // silently doing the work. Now only the type filter can stop this event, so its
+    // removal fails here instead of passing for the wrong reason.
+    constructEventMock.mockReturnValue({
+      id: 'evt_other',
+      type: 'payment_intent.succeeded',
+      data: {
+        object: {
+          id: 'pi_test_foreign',
+          metadata: { report_download_token: VALID_TOKEN },
+          client_reference_id: VALID_TOKEN,
+          payment_intent: 'pi_test_foreign',
+        },
+      },
+    })
 
     const { POST } = await import('@/app/api/client/payment/webhook/route')
     const res = await POST(makeRequest())
@@ -122,6 +155,27 @@ describe('POST /api/client/payment/webhook', () => {
 
     expect(res.status).toBe(200)
     expect(json.received).toBe(true)
+    expect(updateMock).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['plainly malformed', 'not-a-uuid-at-all'],
+    ['a UUID of the wrong version (v1, not v4)', '00000000-0000-1000-8000-000000000000'],
+    ['a UUID with an out-of-range variant nibble', '00000000-0000-4000-c000-000000000000'],
+    ['almost right, one character too short', '00000000-0000-4000-8000-00000000000'],
+    ['a SQL-ish string smuggled into the metadata', "' OR '1'='1"],
+  ])('refuses to touch the database when the token is %s', async (_label, badToken) => {
+    // isValidReportToken was only ever exercised with `null`, which the `!token` check
+    // already stops on its own — so the format check itself was never actually tested.
+    // A non-null token that is not a v4 UUID is the case that needs it.
+    constructEventMock.mockReturnValue(
+      checkoutCompletedEvent({ metadata: { report_download_token: badToken } }),
+    )
+
+    const { POST } = await import('@/app/api/client/payment/webhook/route')
+    const res = await POST(makeRequest())
+
+    expect(res.status).toBe(200)
     expect(updateMock).not.toHaveBeenCalled()
   })
 
@@ -174,6 +228,24 @@ describe('payment traceability', () => {
     expect(updateMock.mock.calls[0][0]).toMatchObject({
       status: 'paid',
       stripe_payment_intent_id: 'pi_test_abc123',
+    })
+  })
+
+  it('marks the row paid ONLY from intake_pending, on exactly the token from the session', async () => {
+    // This WHERE clause is the whole idempotency story. Guarding on 'paid' instead would
+    // invert it: a retried delivery would re-stamp paid_at and reset failure_reason on a
+    // row whose analysis is already running, while the genuine first delivery — which
+    // arrives with the row still 'intake_pending' — would match nothing and the customer
+    // would never be marked paid at all.
+    constructEventMock.mockReturnValue(checkoutCompletedEvent())
+
+    const { POST } = await import('@/app/api/client/payment/webhook/route')
+    await POST(makeRequest())
+
+    expect(updateCalls).toHaveLength(1)
+    expect(whereOf(updateCalls[0])).toEqual({
+      report_download_token: VALID_TOKEN,
+      status: 'intake_pending',
     })
   })
 

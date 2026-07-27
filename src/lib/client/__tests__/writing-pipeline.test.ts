@@ -100,6 +100,15 @@ function defaultCreateImpl(params: any) {
   return Promise.resolve({ content: [{ type: 'text', text: '{}' }] })
 }
 
+// The language the Planner is instructed to WRITE IN, read off the LANGUAGE directive
+// itself. The lazy match takes the first "in <Language>." after the directive opens; the
+// sentence that follows ("The source report above may already be in Spanish") is about the
+// INPUT and must never be mistaken for the output instruction — mistaking the two is
+// exactly why the original regex passed while the Planner was hardcoded to English.
+function plannerOutputLanguage(system: string): string | undefined {
+  return system.match(/Write every string value[\s\S]*?\bin (English|Spanish|German)\./)?.[1]
+}
+
 beforeEach(() => {
   mockGetAnthropicApiKey.mockReset().mockResolvedValue('test-anthropic-api-key')
   createMock.mockReset()
@@ -162,10 +171,58 @@ describe('rewriteReportForClient', () => {
     // Writers quote near-verbatim, e.g. the chakra/emotion clue for section_2_emotional_field)
     // had zero language instruction at all, so it could freely answer in English regardless
     // of `lang`, leaking English fragments into an otherwise-Spanish report.
+    // The original assertion here was /write every string value.*in spanish/i. `.` matches
+    // anything and `.*` is greedy, so it bridged the whole instruction and landed on the
+    // NEXT sentence's "may already be in Spanish" — hardcoding the Planner's own language
+    // to English still matched, and the test written for this very incident did not cover
+    // it. Read the actual language directive instead of anything that mentions Spanish.
     await rewriteReportForClient(mockReport, 'es', 'Jane')
     const plannerCall = createMock.mock.calls.find(([params]) => params.system.includes('You are the Planner'))
     expect(plannerCall).toBeDefined()
-    expect(plannerCall![0].system).toMatch(/write every string value.*in spanish/i)
+    const system: string = plannerCall![0].system
+
+    // Pin the FIRST "in <Language>." after the directive — that is the clause that binds
+    // the Planner's own output. The later "may already be in Spanish" is about the source
+    // report and must never be what satisfies this assertion.
+    expect(plannerOutputLanguage(system)).toBe('Spanish')
+  })
+
+  it.each([
+    ['es', 'Spanish'],
+    ['de', 'German'],
+    ['en', 'English'],
+  ])('REGRESSION (2026-07-20): the Planner is told to write in the requested language (%s -> %s), never a hardcoded one', async (lang, languageName) => {
+    await rewriteReportForClient(mockReport, lang, 'Jane')
+    const plannerCall = createMock.mock.calls.find(([params]) => params.system.includes('You are the Planner'))
+
+    expect(plannerOutputLanguage(plannerCall![0].system)).toBe(languageName)
+  })
+
+  it('REGRESSION (2026-07-20): every Writer is told to write in the requested language too', async () => {
+    // Nothing asserted the Writers' own `Write in ${languageName(lang)}` line at all — the
+    // Planner half of the 2026-07-20 language incident had a (broken) test; the Writer half
+    // had none. All three writers produce client-facing prose; one drifting to English is
+    // the exact shape of the reported failure.
+    await rewriteReportForClient(mockReport, 'de', 'Jane')
+
+    for (const role of ['A', 'B', 'C']) {
+      const call = createMock.mock.calls.find(([params]) => params.system.includes(`You are Writer ${role}`))
+      expect(call, `Writer ${role} was never called`).toBeDefined()
+      const system: string = call![0].system
+      expect(system, `Writer ${role} was not told to write in German`).toContain('Write in German.')
+      expect(system, `Writer ${role} was told to write in the wrong language`).not.toMatch(/Write in (English|Spanish)\./)
+    }
+  })
+
+  it('threads the language all the way into the per-section instructions, not just the role line', async () => {
+    // section_12_conclusion carries a literal safety sentence that must be emitted in the
+    // client's language. Writer C is the only one that writes that section.
+    await rewriteReportForClient(mockReport, 'es', 'Jane')
+    const writerC = createMock.mock.calls.find(([params]) => params.system.includes('You are Writer C'))
+    const system: string = writerC![0].system
+
+    expect(system).toContain('Write in Spanish.')
+    expect(system).toContain('Consulta con tu médico antes de cualquier ayuno o limpieza intensiva.')
   })
 
   it('carries the given first name straight into the brief for Writer A', async () => {

@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-function chain(finalResult: any): any {
+function chain(finalResult: any, filters?: Array<{ column: string; value: unknown }>): any {
   const c: any = {
-    eq: () => c,
+    eq: (column: string, value: unknown) => {
+      filters?.push({ column, value })
+      return c
+    },
     select: () => c,
     single: () => Promise.resolve(finalResult),
   }
@@ -13,6 +16,15 @@ let insertResult: any = { data: { id: 'log-1' }, error: null }
 let existingRowResult: any = { data: null, error: null }
 let reclaimResult: any = { data: { id: 'log-1' }, error: null }
 const updatePayloads: any[] = []
+// Every update(), paired with the WHERE clause it was issued with. The WHERE clause is the
+// compare-and-swap and the row identity — `.eq('status', existing.status)` is the only
+// thing stopping two concurrent senders from both claiming the same log row, and
+// `.eq('id', claimId)` is the only thing aiming the final verdict at the row we claimed.
+// An `eq` that records nothing makes both invisible.
+type UpdateCall = { payload: any; filters: Array<{ column: string; value: unknown }> }
+const updateCalls: UpdateCall[] = []
+const whereOf = (call: UpdateCall) =>
+  Object.fromEntries(call.filters.map((f) => [f.column, f.value]))
 const sendMock = vi.fn().mockResolvedValue({ data: { id: 'resend-123' }, error: null })
 
 vi.mock('resend', () => ({
@@ -26,7 +38,14 @@ vi.mock('@/lib/supabase/server', () => ({
     from: () => ({
       insert: () => chain(insertResult),
       select: () => chain(existingRowResult),
-      update: (payload: any) => { updatePayloads.push(payload); return chain(reclaimResult) },
+      update: (payload: any) => {
+        updatePayloads.push(payload)
+        const filters: Array<{ column: string; value: unknown }> = []
+        updateCalls.push({ payload, filters })
+        // The re-claim CAS is the only update that consults `reclaimResult`; the final
+        // status write is fire-and-forget and never reads its own result.
+        return chain(reclaimResult, filters)
+      },
     }),
   }),
 }))
@@ -41,6 +60,7 @@ describe('sendReportEmail', () => {
     existingRowResult = { data: null, error: null }
     reclaimResult = { data: { id: 'log-1' }, error: null }
     updatePayloads.length = 0
+    updateCalls.length = 0
     sendMock.mockClear()
     sendMock.mockResolvedValue({ data: { id: 'resend-123' }, error: null })
   })
@@ -191,5 +211,88 @@ describe('sendReportEmail', () => {
     expect(result.ok).toBe(true)
     const ok = updatePayloads.find((p) => p.status === 'sent')
     expect(ok.error_message).toBeNull()
+  })
+})
+
+// Everything above asserts WHAT was written. These assert WHICH ROW it was written to and
+// WHAT PRECONDITION was asserted — the WHERE clause. Both are load-bearing: the re-claim's
+// `.eq('status', existing.status)` is the entire defence against two callers sending the
+// same report twice, and the final `.eq('id', claimId)` is what stops the verdict landing
+// on a different client's log row.
+describe('sendReportEmail — the compare-and-swap and the row it targets', () => {
+  beforeEach(() => {
+    process.env.RESEND_API_KEY = 'test-key'
+    process.env.RESEND_FROM_EMAIL = 'test@example.com'
+    insertResult = { data: { id: 'log-1' }, error: null }
+    existingRowResult = { data: null, error: null }
+    reclaimResult = { data: { id: 'log-1' }, error: null }
+    updatePayloads.length = 0
+    updateCalls.length = 0
+    sendMock.mockClear()
+    sendMock.mockResolvedValue({ data: { id: 'resend-123' }, error: null })
+  })
+
+  const send = () =>
+    sendReportEmail({
+      to: 'user@example.com',
+      lang: 'en',
+      analysisId: 'analysis-uuid-123',
+      paymentTier: 'premium_2990',
+      pdfBuffer: Buffer.from('%PDF-test'),
+    })
+
+  it('re-claims a FAILED row with a CAS on exactly the status it read, not a hardcoded "sent"', async () => {
+    // The status is deliberately 'failed', so a guard hardcoded to 'sent' would write a
+    // WHERE that can never match — the re-claim would silently fail against a real
+    // database and the client's retry would be reported as "in progress" forever.
+    insertResult = { data: null, error: { message: 'duplicate key' } }
+    existingRowResult = { data: { id: 'log-77', status: 'failed' }, error: null }
+    reclaimResult = { data: { id: 'log-77' }, error: null }
+
+    await send()
+
+    expect(whereOf(updateCalls[0])).toEqual({ id: 'log-77', status: 'failed' })
+  })
+
+  it('re-claims a SENT row with a CAS on "sent" — the guard follows what was read, it is not a constant', async () => {
+    // Paired with the 'failed' case above: together they pin the guard to `existing.status`
+    // rather than to any one literal. Dropping the clause entirely fails both.
+    insertResult = { data: null, error: { message: 'duplicate key' } }
+    existingRowResult = { data: { id: 'log-88', status: 'sent' }, error: null }
+    reclaimResult = { data: { id: 'log-88' }, error: null }
+
+    await send()
+
+    expect(whereOf(updateCalls[0])).toEqual({ id: 'log-88', status: 'sent' })
+  })
+
+  it('writes the delivery verdict to the row it actually claimed, not to the analysis or the row it merely read', async () => {
+    // The re-claim returns a DIFFERENT id from both the log row first looked up and the
+    // analysis id, so `.eq('id', claimId)` is the only expression that produces it. A
+    // verdict written to the wrong id marks someone else's send 'sent'.
+    insertResult = { data: null, error: { message: 'duplicate key' } }
+    existingRowResult = { data: { id: 'log-old', status: 'failed' }, error: null }
+    reclaimResult = { data: { id: 'log-claimed-99' }, error: null }
+
+    const result = await send()
+    expect(result.ok).toBe(true)
+
+    const verdict = updateCalls.find((c) => c.payload.status === 'sent')
+    expect(verdict).toBeDefined()
+    expect(whereOf(verdict!)).toEqual({ id: 'log-claimed-99' })
+  })
+
+  it('writes a FAILED verdict to the claimed row too, with the same id guard', async () => {
+    insertResult = { data: { id: 'log-fresh-5' }, error: null }
+    sendMock.mockResolvedValue({
+      data: null,
+      error: { statusCode: 403, name: 'validation_error', message: 'The domain is not verified.' },
+    })
+
+    await send()
+
+    const verdict = updateCalls.find((c) => c.payload.status === 'failed')
+    expect(verdict).toBeDefined()
+    expect(whereOf(verdict!)).toEqual({ id: 'log-fresh-5' })
   })
 })
