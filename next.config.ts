@@ -9,6 +9,11 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     '/api/client/internal/stage2': ['./public/fonts/**', './public/logo-solutions.png'],
     '/api/client/reports/[token]/email': ['./public/fonts/**', './public/logo-solutions.png'],
+    // The health cron renders a throwaway PDF on every run precisely to prove those two
+    // routes above can still find their fonts and logo in production. It needs the same
+    // files traced into its own function, or it would report the failure it exists to
+    // detect — and report it even when the real routes are fine.
+    '/api/client/internal/health': ['./public/fonts/**', './public/logo-solutions.png'],
   },
 };
 
