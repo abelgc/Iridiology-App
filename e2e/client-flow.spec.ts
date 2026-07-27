@@ -1,0 +1,118 @@
+import { test, expect, type Page } from '@playwright/test';
+
+/**
+ * End-to-end coverage for the paying-client journey.
+ *
+ * These tests drive a real browser through the real page code: real navigation,
+ * real sessionStorage, real React state. What they deliberately do NOT do is let
+ * a request reach Supabase or an AI provider. Two reasons, both concrete:
+ *
+ *   1. `.env.local` points at the PRODUCTION database. A test run would create
+ *      real rows in `client_analyses`.
+ *   2. Worse, the cron deployed on 2026-07-26 sweeps rows stuck in
+ *      `stage2_processing` between 5 minutes and 24 hours old and retries them.
+ *      A test row abandoned mid-pipeline would be picked up and re-run at real
+ *      AI cost, unattended.
+ *
+ * So the API layer is intercepted at the network boundary with `page.route()`.
+ * Everything the customer actually touches is real; only the far side of the
+ * fetch is canned. That is the seam where every bug in this file lived.
+ */
+
+const TOKEN = '11111111-1111-4111-8111-111111111111';
+const PAYMENT_URL = `/client/intake/payment?token=${TOKEN}&tier=basic_1990`;
+
+/** Collects any native alert() the page raises, and dismisses it so the run continues. */
+function captureDialogs(page: Page): string[] {
+  const messages: string[] = [];
+  page.on('dialog', async (dialog) => {
+    messages.push(dialog.message());
+    await dialog.dismiss();
+  });
+  return messages;
+}
+
+test.describe('Client journey — anonymous access', () => {
+  // The proxy has redirected client-facing paths to /login twice in production
+  // (2026-07-25: /intro.mp4 and /robots.txt). A client is never logged in, so any
+  // redirect to /login here is a total outage for the paying flow.
+  test('the landing page serves the client app to a logged-out visitor, never /login', async ({ page }) => {
+    const response = await page.goto('/');
+
+    expect(response?.status()).toBe(200);
+    await expect(page).not.toHaveURL(/\/login/);
+  });
+
+  test('static assets the client flow depends on are reachable without a session', async ({ request }) => {
+    // Each of these is loaded by a client who has no cookies at all. When the proxy
+    // matcher stopped exempting them, the <video> element received an HTML login
+    // page instead of video, and link previews lost their image.
+    for (const path of ['/robots.txt', '/og.png', '/icon.png']) {
+      const res = await request.get(path);
+      expect(res.status(), `${path} must not require a session`).toBe(200);
+    }
+  });
+});
+
+test.describe('Client journey — payment step', () => {
+  test('REGRESSION (2026-07-26 live-demo incident): an already-paid order moves forward instead of showing an error', async ({ page }) => {
+    // The server refuses to mint a second Stripe session for a row that has already
+    // been paid — correct, it is what stops a double charge. It answers 200 with no
+    // checkout URL. The page used to read that absence as failure and alert
+    // "Algo salió mal" at a customer who had just successfully paid.
+    await page.route('**/api/client/payment/checkout-session', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          outcome: 'already_paid',
+          redirect_to: `/client/upload?token=${TOKEN}`,
+          report_download_token: TOKEN,
+          status: 'paid',
+        }),
+      }),
+    );
+
+    const dialogs = captureDialogs(page);
+    await page.goto(PAYMENT_URL);
+    await page.click('button:has-text("Proceed to payment")');
+
+    await expect(page).toHaveURL(new RegExp(`/client/upload\\?token=${TOKEN}`));
+    expect(dialogs, 'a paid customer must never be shown an error').toEqual([]);
+  });
+
+  test('a genuine payment failure still surfaces an error and keeps the customer on the page', async ({ page }) => {
+    // The counterpart to the test above: silencing the false error must not have
+    // silenced the real one.
+    await page.route('**/api/client/payment/checkout-session', (route) =>
+      route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'stripe_session_failed' }),
+      }),
+    );
+
+    const dialogs = captureDialogs(page);
+    await page.goto(PAYMENT_URL);
+    await page.click('button:has-text("Proceed to payment")');
+
+    await expect.poll(() => dialogs.length, { timeout: 5000 }).toBeGreaterThan(0);
+    expect(dialogs[0]).toContain('stripe_session_failed');
+    await expect(page).toHaveURL(/\/client\/intake\/payment/);
+  });
+
+  test('a dropped connection tells the customer something instead of leaving a dead button', async ({ page }) => {
+    // The checkout fetch was unguarded: a network failure left `submitting` true,
+    // so the button was disabled forever with no message at all.
+    await page.route('**/api/client/payment/checkout-session', (route) => route.abort('failed'));
+
+    const dialogs = captureDialogs(page);
+    await page.goto(PAYMENT_URL);
+    await page.click('button:has-text("Proceed to payment")');
+
+    await expect.poll(() => dialogs.length, { timeout: 5000 }).toBeGreaterThan(0);
+    expect(dialogs[0]).toContain('network');
+    // The button must be usable again so the customer can retry once they reconnect.
+    await expect(page.locator('button:has-text("Proceed to payment")')).toBeEnabled();
+  });
+});
