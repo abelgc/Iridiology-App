@@ -43,6 +43,20 @@ test.describe('Client journey — anonymous access', () => {
     await expect(page).not.toHaveURL(/\/login/);
   });
 
+  test('the landing page fits a phone without sideways scrolling', async ({ page }) => {
+    // Salvaged from responsive.spec.ts, which asserted viewport widths it had just set
+    // itself. This asserts something the test cannot control: that the page's own content
+    // fits the screen. Most clients arrive on a phone, and a page that scrolls sideways
+    // reads as broken before they have read a word.
+    await page.setViewportSize({ width: 390, height: 844 }) // iPhone 14
+    await page.goto('/')
+
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    )
+    expect(overflow, 'the page must not scroll horizontally on a phone').toBeLessThanOrEqual(1)
+  })
+
   test('static assets the client flow depends on are reachable without a session', async ({ request }) => {
     // Each of these is loaded by a client who has no cookies at all. When the proxy
     // matcher stopped exempting them, the <video> element received an HTML login

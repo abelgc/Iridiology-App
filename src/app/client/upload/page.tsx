@@ -127,10 +127,15 @@ function UploadContent() {
   // inside a <Suspense> boundary, so Next renders it client-side only (never prerendered) and
   // a first-render sessionStorage read cannot cause a hydration mismatch. The read stays
   // synchronous for exactly that reason — the async part belongs in the effect, not in render.
-  const [resumedToken] = useState<string | null>(() =>
-    token && readPersistedStage(token) ? token : null,
-  )
-  const [stage, setStage] = useState<Stage>(resumedToken ? 'analyzing' : 'form')
+  // Read after mount, never during render. An earlier version read sessionStorage in a
+  // lazy useState initialiser, reasoning that useSearchParams inside <Suspense> makes this
+  // subtree client-only and therefore safe. It is not: the browser end-to-end test caught
+  // "Hydration failed because the server rendered HTML didn't match the client" on a real
+  // reload. sessionStorage does not exist on the server, so any render that depends on it
+  // is a mismatch by construction. The cost is one frame of the form before the splash
+  // takes over, which is invisible next to a hydration error that throws away the tree.
+  const [resumedToken, setResumedToken] = useState<string | null>(null)
+  const [stage, setStage] = useState<Stage>('form')
   const pendingUpload = useRef<Promise<Response> | null>(null)
 
   useEffect(() => {
@@ -138,6 +143,29 @@ function UploadContent() {
       router.replace('/client')
     }
   }, [token, router])
+
+  // Guarded to run once per mount. Left on [token, router] it re-ran whenever the router
+  // identity changed, and by then handleSubmit had already persisted 'video' — so it read
+  // its own write back, decided this was a resume, and jumped straight to the analysing
+  // splash, skipping the waiting video entirely. "Did this page load as a resume?" is a
+  // question with one answer per mount; asking it again later answers a different question.
+  const resumeChecked = useRef(false)
+  // sessionStorage does not exist on the server, so deciding what to render from it during
+  // render is a hydration mismatch by construction — proven by the browser test, which
+  // caught exactly that. Changing the view from client-only storage necessarily means one
+  // setState after mount; the ref guard above keeps it to a single extra render.
+  useEffect(() => {
+    if (!token || resumeChecked.current) return
+    resumeChecked.current = true
+    if (readPersistedStage(token)) {
+      /* eslint-disable react-hooks/set-state-in-effect -- see the note above: reading this
+         during render is a hydration mismatch, so a post-mount setState is the only correct
+         shape. The ref guard makes it one extra render, not a cascade. */
+      setResumedToken(token)
+      setStage('analyzing')
+      /* eslint-enable react-hooks/set-state-in-effect */
+    }
+  }, [token])
 
   useEffect(() => {
     if (!resumedToken) return

@@ -18,7 +18,10 @@ test.describe('Authentication', () => {
   });
 
   test('should be redirected to login when not authenticated', async ({ page }) => {
-    await page.goto('/patients');
+    // A real practitioner route. This used to point at `/patients`, which was moved under
+    // /practitioner long ago — so the assertion passed for a path that no longer existed,
+    // proving nothing. Full route coverage lives in practitioner-access.spec.ts.
+    await page.goto('/practitioner/patients');
     await expect(page).toHaveURL(/\/login/);
   });
 });
