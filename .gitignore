@@ -44,3 +44,11 @@ next-env.d.ts
 # git worktrees
 .worktrees/
 .env*.local
+
+# integration tests: .env.test is deliberately NOT ignored.
+# The `.env*` rule above would have swallowed it. It carries no secret — only the Supabase
+# CLI's fixed local development keys, which are identical on every machine, printed by
+# `npx supabase start`, and published in Supabase's own docs. Committing it is what lets a
+# fresh clone run `npm run test:int` without hunting for values, and src/test/integration-setup.ts
+# refuses to start unless the URL in it points at 127.0.0.1:54321.
+!.env.test
