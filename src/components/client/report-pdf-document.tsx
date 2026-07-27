@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     fontFamily: 'DM Sans',
     fontSize: 10.5,
     color: INK,
-    paddingTop: 34,
+    paddingTop: 44,
     paddingBottom: 52, // room for the fixed footer
     paddingHorizontal: 40,
   },
@@ -103,10 +103,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: BORDER,
     borderRadius: 12,
-    padding: 22,
+    paddingVertical: 26,
+    paddingHorizontal: 22,
   },
 
-  section: { marginBottom: 18 },
+  // marginTop gives a section that lands at the top of a fresh page room to breathe;
+  // on page one the heading already sits below the title block, so the extra space
+  // there is harmless.
+  section: { marginBottom: 18, marginTop: 4 },
   headingRow: {
     flexDirection: 'row',
     gap: 8,
