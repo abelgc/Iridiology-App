@@ -12,6 +12,7 @@ function chain(finalResult: any): any {
 let insertResult: any = { data: { id: 'log-1' }, error: null }
 let existingRowResult: any = { data: null, error: null }
 let reclaimResult: any = { data: { id: 'log-1' }, error: null }
+const updatePayloads: any[] = []
 const sendMock = vi.fn().mockResolvedValue({ data: { id: 'resend-123' }, error: null })
 
 vi.mock('resend', () => ({
@@ -25,7 +26,7 @@ vi.mock('@/lib/supabase/server', () => ({
     from: () => ({
       insert: () => chain(insertResult),
       select: () => chain(existingRowResult),
-      update: () => chain(reclaimResult),
+      update: (payload: any) => { updatePayloads.push(payload); return chain(reclaimResult) },
     }),
   }),
 }))
@@ -39,6 +40,7 @@ describe('sendReportEmail', () => {
     insertResult = { data: { id: 'log-1' }, error: null }
     existingRowResult = { data: null, error: null }
     reclaimResult = { data: { id: 'log-1' }, error: null }
+    updatePayloads.length = 0
     sendMock.mockClear()
     sendMock.mockResolvedValue({ data: { id: 'resend-123' }, error: null })
   })
@@ -148,5 +150,46 @@ describe('sendReportEmail', () => {
     expect(sendMock).not.toHaveBeenCalled()
     expect(result.ok).toBe(false)
     expect(result.error).toBe('send_in_progress')
+  })
+
+  it('REGRESSION (2026-07-27): stores why the send failed, in readable form, not "[object Object]"', async () => {
+    // Resend returns an error OBJECT. String(err) on it produced literally
+    // "[object Object]", which is what landed in the Vercel logs on 2026-07-26 — so even
+    // with full logs the 21-day email outage could not be diagnosed. Logs expire; the
+    // reason has to live in the database next to the failure.
+    sendMock.mockResolvedValue({
+      data: null,
+      error: { statusCode: 403, name: 'validation_error', message: 'The domain is not verified.' },
+    })
+
+    const result = await sendReportEmail({
+      to: 'user@example.com',
+      lang: 'en',
+      analysisId: 'analysis-uuid-123',
+      paymentTier: 'premium_2990',
+      pdfBuffer: Buffer.from('%PDF-test'),
+    })
+
+    expect(result.ok).toBe(false)
+    expect(result.error).toContain('domain is not verified')
+    expect(result.error).not.toContain('[object Object]')
+
+    const fallo = updatePayloads.find((p) => p.status === 'failed')
+    expect(fallo).toBeDefined()
+    expect(fallo.error_message).toContain('domain is not verified')
+  })
+
+  it('clears any previous error_message on a successful send', async () => {
+    const result = await sendReportEmail({
+      to: 'user@example.com',
+      lang: 'en',
+      analysisId: 'analysis-uuid-123',
+      paymentTier: 'premium_2990',
+      pdfBuffer: Buffer.from('%PDF-test'),
+    })
+
+    expect(result.ok).toBe(true)
+    const ok = updatePayloads.find((p) => p.status === 'sent')
+    expect(ok.error_message).toBeNull()
   })
 })

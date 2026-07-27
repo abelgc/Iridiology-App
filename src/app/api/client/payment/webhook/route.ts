@@ -51,6 +51,13 @@ export async function POST(request: NextRequest) {
       is_mock_payment: false,
       status: 'paid',
       failure_reason: null,
+      // Without this the database cannot tell a real charge from an
+      // OWNER_TEST_DISCOUNT_CODE bypass: both write is_mock_payment=false, and this
+      // column was never populated. A fully discounted order (a 100%-off promotion
+      // code) has no PaymentIntent at all, so null here is a legitimate value and
+      // must not block the row being marked paid.
+      stripe_payment_intent_id:
+        typeof session.payment_intent === 'string' ? session.payment_intent : null,
     })
     .eq('report_download_token', token)
     .eq('status', 'intake_pending')

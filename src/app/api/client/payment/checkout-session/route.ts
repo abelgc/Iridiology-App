@@ -94,6 +94,14 @@ export async function POST(request: NextRequest) {
       ...(promotionCodeId ? { discounts: [{ promotion_code: promotionCodeId }] } : {}),
       success_url: `${origin}/client/upload?token=${token}`,
       cancel_url: `${origin}/client/intake/payment?token=${token}&tier=${tier}`,
+    }, {
+      // The database side of payment is compare-and-swap safe; the charge was not.
+      // Two rapid clicks, a back-button, or a second tab could each mint a Checkout
+      // Session for the same order — two real receipts, recoverable only by a manual
+      // refund. Stripe returns the first session for a repeated key instead of
+      // creating another. Keyed on the discount too, so a client who applies or
+      // changes a code still gets a session priced correctly rather than the stale one.
+      idempotencyKey: `checkout:${token}:${promotionCodeId ?? 'none'}`,
     })
   } catch (err) {
     console.error('[stripe] checkout session creation failed:', err)

@@ -210,3 +210,53 @@ describe('GET /api/client/reports/[token]', () => {
     expect(triggerStage2Mock).not.toHaveBeenCalled()
   })
 })
+
+describe('a finished report is never held hostage by its status', () => {
+  const TOK = '00000000-0000-4000-8000-0000000000ff'
+  const fila = (extra: Record<string, unknown>) => ({
+    data: {
+      report_download_token: TOK,
+      language: 'es',
+      status: 'failed',
+      payment_tier: 'basic_1990',
+      report_delivered_at: null,
+      report_id: null,
+      analyzing_started_at: null,
+      stage2_started_at: null,
+      stage2_retry_count: 0,
+      reports: null,
+      ...extra,
+    },
+    error: null,
+  })
+
+  it('REGRESSION (2026-07-27): serves a report whose content exists even if the row is marked failed', async () => {
+    // Production holds a row from 2026-07-07 with client_report_content AND
+    // report_delivered_at set — the report was written and delivered — while its status
+    // says 'failed'. The gate demanded 'completed', so a finished report was unreachable
+    // forever because of a label that lost a race.
+    selectResults = [fila({
+      report_id: 'rep-1',
+      report_delivered_at: '2026-07-07T15:23:49.291Z',
+      reports: { id: 'rep-1', report_content: {}, client_report_content: { section_1_general_terrain: 'Tu cuerpo...' } },
+    })]
+
+    const { GET } = await import('@/app/api/client/reports/[token]/route')
+    const res = await GET(new Request('http://test') as never, {
+      params: Promise.resolve({ token: TOK }),
+    } as never)
+
+    expect(res.status).toBe(200)
+  })
+
+  it('still refuses a failed row with no content, so a real failure is not dressed up as a report', async () => {
+    selectResults = [fila({})]
+
+    const { GET } = await import('@/app/api/client/reports/[token]/route')
+    const res = await GET(new Request('http://test') as never, {
+      params: Promise.resolve({ token: TOK }),
+    } as never)
+
+    expect(res.status).toBe(409)
+  })
+})

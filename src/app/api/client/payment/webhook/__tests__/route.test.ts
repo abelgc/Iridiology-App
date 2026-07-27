@@ -40,7 +40,7 @@ function makeRequest(body = 'raw-body', signature: string | null = 'sig_test') {
   }) as never
 }
 
-function checkoutCompletedEvent(overrides: Partial<{ metadata: Record<string, string> | null; client_reference_id: string | null }> = {}) {
+function checkoutCompletedEvent(overrides: Partial<{ metadata: Record<string, string> | null; client_reference_id: string | null; payment_intent: string | null }> = {}) {
   return {
     id: 'evt_test123',
     type: 'checkout.session.completed',
@@ -49,6 +49,7 @@ function checkoutCompletedEvent(overrides: Partial<{ metadata: Record<string, st
         id: 'cs_test123',
         metadata: overrides.metadata ?? { report_download_token: VALID_TOKEN },
         client_reference_id: overrides.client_reference_id ?? null,
+        payment_intent: overrides.payment_intent === undefined ? 'pi_test_abc123' : overrides.payment_intent,
       },
     },
   }
@@ -156,5 +157,36 @@ describe('POST /api/client/payment/webhook', () => {
 
     expect(res.status).toBe(500)
     expect(json.error).toBe('db_update_failed')
+  })
+})
+
+describe('payment traceability', () => {
+  it('records the Stripe payment intent, so a real charge is distinguishable from an owner-code bypass', async () => {
+    // Both the real Stripe path and OWNER_TEST_DISCOUNT_CODE write is_mock_payment=false,
+    // and this column was never populated — so nothing in the database could tell a paid
+    // customer from a free internal test. That is an accounting gap, not just a forensic one.
+    constructEventMock.mockReturnValue(checkoutCompletedEvent())
+
+    const { POST } = await import('@/app/api/client/payment/webhook/route')
+    await POST(makeRequest())
+
+    expect(updateMock).toHaveBeenCalledTimes(1)
+    expect(updateMock.mock.calls[0][0]).toMatchObject({
+      status: 'paid',
+      stripe_payment_intent_id: 'pi_test_abc123',
+    })
+  })
+
+  it('still marks the row paid when Stripe sends no payment intent (a fully discounted order)', async () => {
+    // A 100%-off promotion code produces a zero-amount session with no PaymentIntent.
+    // Missing traceability must never block delivery of something the client completed.
+    constructEventMock.mockReturnValue(checkoutCompletedEvent({ payment_intent: null }))
+
+    const { POST } = await import('@/app/api/client/payment/webhook/route')
+    const res = await POST(makeRequest())
+
+    expect(res.status).toBe(200)
+    expect(updateMock.mock.calls[0][0]).toMatchObject({ status: 'paid' })
+    expect(updateMock.mock.calls[0][0].stripe_payment_intent_id).toBeNull()
   })
 })

@@ -20,6 +20,33 @@ const THANK_YOU_TEXT: Record<Lang, string> = {
   de: 'Vielen Dank für Ihren Kauf.',
 }
 
+/**
+ * Resend returns an error OBJECT, and `String(err)` on one yields literally
+ * "[object Object]" — which is exactly what was written to the logs while report email
+ * delivery failed for 21 straight days, leaving the outage undiagnosable even with the
+ * full log history. Pull out the fields worth reading, and fall back to JSON rather than
+ * to a shape that carries no information at all.
+ */
+function describeSendError(err: unknown): string {
+  if (typeof err === 'string') return err
+  if (err instanceof Error) return err.message
+  if (err && typeof err === 'object') {
+    const e = err as { name?: string; message?: string; statusCode?: number }
+    const parts = [
+      e.statusCode !== undefined ? `${e.statusCode}` : null,
+      e.name ?? null,
+      e.message ?? null,
+    ].filter(Boolean)
+    if (parts.length > 0) return parts.join(' ')
+    try {
+      return JSON.stringify(err)
+    } catch {
+      return 'unserialisable_error'
+    }
+  }
+  return String(err)
+}
+
 export async function sendReportEmail(params: {
   to: string
   lang: Lang
@@ -126,18 +153,25 @@ export async function sendReportEmail(params: {
       ],
     })
 
-    const status = error ? 'failed' : 'sent'
-    await supabase.from('email_send_log').update({ status }).eq('id', claimId)
+    const reason = error ? describeSendError(error) : null
+    await supabase
+      .from('email_send_log')
+      .update({ status: error ? 'failed' : 'sent', error_message: reason })
+      .eq('id', claimId)
 
-    if (error) return { ok: false, error: String(error) }
+    if (error) return { ok: false, error: reason ?? 'unknown' }
     return { ok: true, id: data?.id }
   } catch (err) {
+    const reason = describeSendError(err)
     try {
-      await supabase.from('email_send_log').update({ status: 'failed' }).eq('id', claimId)
+      await supabase
+        .from('email_send_log')
+        .update({ status: 'failed', error_message: reason })
+        .eq('id', claimId)
     } catch {
       // best-effort log — ignore failures
     }
 
-    return { ok: false, error: err instanceof Error ? err.message : 'unknown' }
+    return { ok: false, error: reason }
   }
 }

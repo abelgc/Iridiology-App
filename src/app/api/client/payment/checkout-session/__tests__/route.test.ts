@@ -195,3 +195,37 @@ describe('POST /api/client/payment/checkout-session', () => {
     expect(json.error).toBe('stripe_session_failed')
   })
 })
+
+describe('double-charge protection', () => {
+  it('sends Stripe an idempotency key so a back-button or second tab cannot mint a second session', async () => {
+    // The DB side of payment is compare-and-swap safe, but the *charge* was not: nothing
+    // stopped two rapid clicks creating two Checkout Sessions for the same order, which is
+    // two real receipts. A stable key per (token, discount) makes Stripe return the first
+    // session instead of creating another.
+    selectResult = { data: { report_download_token: VALID_TOKEN, status: 'intake_pending', payment_tier: 'basic_1990' }, error: null }
+    createSessionMock.mockResolvedValue({ url: 'https://checkout.stripe.com/c/pay/abc' })
+
+    const { POST } = await import('@/app/api/client/payment/checkout-session/route')
+    await POST(makeRequest())
+
+    const options = createSessionMock.mock.calls[0][1]
+    expect(options?.idempotencyKey).toBeTruthy()
+    expect(options.idempotencyKey).toContain(VALID_TOKEN)
+  })
+
+  it('uses a different key when a discount is applied, so changing the code still creates the right session', async () => {
+    selectResult = { data: { report_download_token: VALID_TOKEN, status: 'intake_pending', payment_tier: 'basic_1990' }, error: null }
+    createSessionMock.mockResolvedValue({ url: 'https://checkout.stripe.com/c/pay/abc' })
+    listPromotionCodesMock.mockResolvedValue({ data: [{ id: 'promo_1' }] })
+
+    const { POST } = await import('@/app/api/client/payment/checkout-session/route')
+    await POST(makeRequest())
+    const sinDescuento = createSessionMock.mock.calls[0][1].idempotencyKey
+
+    createSessionMock.mockClear()
+    await POST(makeRequest(VALID_TOKEN, 'TESTCLIENT'))
+    const conDescuento = createSessionMock.mock.calls[0][1].idempotencyKey
+
+    expect(conDescuento).not.toBe(sinDescuento)
+  })
+})

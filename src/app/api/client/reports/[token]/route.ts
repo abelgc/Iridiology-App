@@ -117,15 +117,23 @@ export async function GET(
     }
   }
 
-  if (current.status !== 'completed' || !current.reports) {
+  // Content decides, not the label. Production holds a row from 2026-07-07 with
+  // client_report_content and report_delivered_at both set — the report was written and
+  // delivered — while its status reads 'failed', because a terminal write lost a race
+  // with the stale-timeout guard. Demanding status === 'completed' made that finished
+  // report unreachable for good. A row with no content is still refused, so a genuine
+  // failure is never dressed up as a report.
+  const reports = current.reports as
+    | { client_report_content?: unknown; report_content?: unknown }
+    | null
+  const report = reports?.client_report_content ?? reports?.report_content ?? null
+
+  if (!report || (current.status !== 'completed' && !current.report_delivered_at)) {
     return NextResponse.json(
       { error: 'not_ready', status: current.status },
       { status: 409 },
     )
   }
-
-  const reports = current.reports as any
-  const report = reports.client_report_content ?? reports.report_content
 
   return NextResponse.json({
     language: current.language,

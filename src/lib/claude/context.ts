@@ -7,6 +7,16 @@ export interface PatientContext {
 }
 
 export async function buildPatientContext(patientId: string): Promise<PatientContext> {
+  // Client-funnel analyses have no patient record — src/app/api/client/upload/route.ts
+  // passes ''. Both queries below filter on a uuid column, so Postgres rejected that with
+  // `invalid input syntax for type uuid: ""` twice on every single analysis. Neither
+  // caller reads the error, so it was invisible in the app and pure noise in the database
+  // logs, sitting between the errors that actually matter. There is nothing to look up
+  // without a patient, so don't look.
+  if (!patientId?.trim()) {
+    return { previousReportSummary: null, practitionerCorrections: null }
+  }
+
   const supabase = createAdminClient()
 
   // Query the most recent session for this patient
