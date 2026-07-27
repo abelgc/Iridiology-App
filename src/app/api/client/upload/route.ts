@@ -15,6 +15,13 @@ import { isNonRetryableAIError } from '@/lib/ai/errors'
 export const runtime = 'nodejs'
 export const maxDuration = 300
 
+// Statuses that mean the money is already in and stage 1 has begun (or finished). A POST for
+// one of these is NOT a payment problem — it's a client who lost their page and re-submitted.
+// They must be sent to their report, where the polling view shows progress and then the report,
+// instead of being told "something went wrong". Anything else that isn't 'paid' (today only
+// 'intake_pending') is a genuine payment_required and keeps the original 402.
+const ANALYSIS_UNDER_WAY = new Set(['analyzing', 'stage2_processing', 'completed', 'failed'])
+
 export async function POST(request: NextRequest) {
   let body: unknown
   try {
@@ -42,11 +49,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'analysis_not_found' }, { status: 404 })
   }
 
+  const token = parsed.data.report_download_token
+
   if (row.status !== 'paid') {
+    if (ANALYSIS_UNDER_WAY.has(row.status)) {
+      return NextResponse.json(
+        { error: 'already_processing', status: row.status, report_download_token: token },
+        { status: 409 },
+      )
+    }
     return NextResponse.json({ error: 'payment_required' }, { status: 402 })
   }
-
-  const token = parsed.data.report_download_token
 
   // Guard: only proceed if still 'paid' — prevents a duplicate/retried POST for the same
   // token from starting a second concurrent analysis run.
@@ -59,7 +72,12 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (!claimedAnalyzing) {
-    return NextResponse.json({ error: 'already_processing' }, { status: 409 })
+    // Someone else won the claim between our read and this update: same situation as the
+    // already-analysing branch above, so answer with the same shape.
+    return NextResponse.json(
+      { error: 'already_processing', status: 'analyzing', report_download_token: token },
+      { status: 409 },
+    )
   }
 
   const runAnalysis = async () => {
