@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useLanguage } from '@/lib/i18n-context'
+import { useToast } from '@/hooks/use-toast'
 import { TIER_PRICING, formatAmountCents, formatTierPrice, type PaymentTier } from '@/types/client-analysis'
 
 type DiscountState = 'idle' | 'checking' | 'applied' | 'error'
@@ -37,6 +38,7 @@ function StepDot({ done, active, num, label }: { done?: boolean; active?: boolea
 
 function PaymentContent() {
   const { t, lang } = useLanguage()
+  const { toast } = useToast()
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
@@ -130,7 +132,12 @@ function PaymentContent() {
   function failWith(code: string) {
     console.error('[payment] could not start payment:', code)
     setSubmitting(false)
-    alert(`${t('error')} (${code})`)
+    // This is the box that appeared over a working order during the live demo on
+    // 2026-07-26. The cause is fixed; the presentation was not. A native alert
+    // freezes the whole page and prints the raw deployment URL above the message,
+    // which on a phone reads like a security warning rather than this shop
+    // speaking to its customer.
+    toast({ description: `${t('error')} (${code})`, variant: 'destructive' })
   }
 
   async function handleContinue() {

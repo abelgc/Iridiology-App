@@ -4,12 +4,14 @@ import { Suspense } from 'react'
 import { useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useLanguage } from '@/lib/i18n-context'
+import { useToast } from '@/hooks/use-toast'
 import { IntakeForm } from '@/components/client/intake-form'
 import { formatTierPrice, type PaymentTier } from '@/types/client-analysis'
 import type { ClientIntakeInput } from '@/lib/validators/client-intake'
 
 function IntakeContent() {
   const { t, lang } = useLanguage()
+  const { toast } = useToast()
   const router = useRouter()
   const searchParams = useSearchParams()
   const tier = searchParams.get('tier') as PaymentTier | null
@@ -27,7 +29,7 @@ function IntakeContent() {
       body: JSON.stringify(data),
     })
     if (!res.ok) {
-      alert(t('error'))
+      toast({ description: t('error'), variant: 'destructive' })
       return
     }
     const json = (await res.json()) as { report_download_token: string }

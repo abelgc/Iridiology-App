@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useLanguage } from '@/lib/i18n-context'
+import { useToast } from '@/hooks/use-toast'
 import { ClientReportViewer } from '@/components/client/client-report-viewer'
 import { AnalysisSplash } from '@/components/client/analysis-splash'
 
@@ -19,6 +20,7 @@ export default function ClientReportPage() {
   const params = useParams<{ token: string }>()
   const token = params.token
   const { t, lang } = useLanguage()
+  const { toast } = useToast()
   const [state, setState] = useState<
     | { kind: 'loading' }
     | { kind: 'pending' }
@@ -92,7 +94,15 @@ export default function ClientReportPage() {
 
   async function emailMe() {
     const res = await fetch(`/api/client/reports/${token}/email`, { method: 'POST' })
-    alert(res.ok ? t('reportEmailSent') : t('error'))
+    // Measured on staging 2026-07-29: the send itself works — Resend confirmed
+    // delivery at 10:27:21 and again at 10:37:39 — but the alert that followed
+    // froze the page both times. From the customer's side that is exactly what
+    // "I pressed send and nothing happened" looks like.
+    toast(
+      res.ok
+        ? { description: t('reportEmailSent'), variant: 'brand' }
+        : { description: t('error'), variant: 'destructive' },
+    )
   }
 
   if (state.kind === 'loading') return (

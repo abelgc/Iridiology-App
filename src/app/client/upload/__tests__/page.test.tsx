@@ -41,13 +41,20 @@ vi.mock('@/components/client/analysis-splash', () => ({
   AnalysisSplash: () => <div data-testid="splash" />,
 }))
 
-const alertMock = vi.fn()
+// The failure notice is now an in-page toast rather than a native alert — the alert
+// froze the whole page, which is what "I pressed it and nothing happened" looked like
+// from the customer's side. What is asserted is unchanged: the client is told, or
+// deliberately is not.
+const toastMock = vi.fn()
+
+vi.mock('@/hooks/use-toast', () => ({
+  useToast: () => ({ toast: toastMock, dismiss: vi.fn(), toasts: [] }),
+}))
 
 beforeEach(() => {
   replaceMock.mockClear()
-  alertMock.mockClear()
+  toastMock.mockClear()
   searchParamValues = { token: 'tok-123' }
-  vi.stubGlobal('alert', alertMock)
   window.sessionStorage.clear()
   global.fetch = vi.fn()
 })
@@ -127,7 +134,7 @@ describe('client upload page', () => {
     await user.click(screen.getByText('video-done'))
 
     await waitFor(() => expect(replaceMock).toHaveBeenCalledWith('/client/report/tok-123'))
-    expect(alertMock).not.toHaveBeenCalled()
+    expect(toastMock).not.toHaveBeenCalled()
     // The splash stays up through the navigation — the client is never shown the form again.
     // (The form markup always renders underneath it; the splash is a fixed-position overlay.)
     expect(screen.getByTestId('splash')).toBeInTheDocument()
@@ -149,7 +156,7 @@ describe('client upload page', () => {
 
     await waitFor(() => expect(replaceMock).toHaveBeenCalledWith('/client/report/tok-123'))
     expect(screen.getByTestId('splash')).toBeInTheDocument()
-    expect(alertMock).not.toHaveBeenCalled()
+    expect(toastMock).not.toHaveBeenCalled()
   })
 
   it('does not inherit a different analysis\'s persisted stage — a fresh token starts on the form', async () => {
@@ -177,7 +184,9 @@ describe('client upload page', () => {
     await user.click(screen.getByText('submit-photos'))
     await user.click(screen.getByText('video-done'))
 
-    await waitFor(() => expect(alertMock).toHaveBeenCalledWith('error'))
+    await waitFor(() =>
+    expect(toastMock).toHaveBeenCalledWith(expect.objectContaining({ description: 'error' })),
+  )
     expect(replaceMock).not.toHaveBeenCalled()
     expect(screen.queryByTestId('splash')).not.toBeInTheDocument()
 
@@ -210,7 +219,7 @@ describe('client upload page', () => {
     await user.click(screen.getByText('video-done'))
 
     await waitFor(() => expect(replaceMock).toHaveBeenCalledWith('/client/report/tok-123'))
-    expect(alertMock).not.toHaveBeenCalled()
+    expect(toastMock).not.toHaveBeenCalled()
   })
 
   it('REGRESSION (2026-07-26): a resume asks the server whether the analysis really started before committing to the report redirect', async () => {
@@ -234,7 +243,7 @@ describe('client upload page', () => {
     )
     await waitFor(() => expect(replaceMock).toHaveBeenCalledWith('/client/report/tok-123'))
     expect(screen.getByTestId('splash')).toBeInTheDocument()
-    expect(alertMock).not.toHaveBeenCalled()
+    expect(toastMock).not.toHaveBeenCalled()
   })
 
   it('REGRESSION (2026-07-26): a reload in the window before the upload POST left the machine returns to the form, not to a report that will never arrive', async () => {

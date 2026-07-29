@@ -4,6 +4,7 @@ import { Suspense } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useLanguage } from '@/lib/i18n-context'
+import { useToast } from '@/hooks/use-toast'
 import { UploadTutorial } from '@/components/client/upload-tutorial'
 import { IrisImageUpload } from '@/components/client/iris-image-upload'
 import { AnalysisSplash } from '@/components/client/analysis-splash'
@@ -115,6 +116,7 @@ async function checkAnalysisStarted(token: string, signal: AbortSignal): Promise
 
 function UploadContent() {
   const { t } = useLanguage()
+  const { toast } = useToast()
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
@@ -225,7 +227,7 @@ function UploadContent() {
       if (res.status === 413) {
         persistStage(token, 'form')
         setStage('form')
-        alert(t('errorPayloadTooLarge'))
+        toast({ description: t('errorPayloadTooLarge'), variant: 'destructive' })
         return
       }
       // "Already under way" is forward progress, not failure: the analysis this client paid
@@ -238,7 +240,7 @@ function UploadContent() {
       if (!res.ok) {
         persistStage(token, 'form')
         setStage('form')
-        alert(t('error'))
+        toast({ description: t('error'), variant: 'destructive' })
         return
       }
       // Keep the splash up through navigation — it unmounts when the report loads.
@@ -246,7 +248,7 @@ function UploadContent() {
     } catch {
       persistStage(token, 'form')
       setStage('form')
-      alert(t('error'))
+      toast({ description: t('error'), variant: 'destructive' })
     }
   }
 

@@ -5,12 +5,19 @@ import PaymentPage from '../page'
 
 const pushMock = vi.fn()
 const replaceMock = vi.fn()
-const alertMock = vi.fn()
+// The customer-facing notice is now an in-page toast, not a native alert. The promise
+// under test is unchanged — the client is told, and the diagnostic code travels with
+// the message — so these assertions follow the notice rather than the mechanism.
+const toastMock = vi.fn()
 let searchParamValues: Record<string, string> = { token: 'test-token', tier: 'basic_1990' }
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: pushMock, replace: replaceMock }),
   useSearchParams: () => ({ get: (key: string) => searchParamValues[key] ?? null }),
+}))
+
+vi.mock('@/hooks/use-toast', () => ({
+  useToast: () => ({ toast: toastMock, dismiss: vi.fn(), toasts: [] }),
 }))
 
 vi.mock('@/lib/i18n-context', () => ({
@@ -21,10 +28,9 @@ describe('PaymentPage', () => {
   beforeEach(() => {
     pushMock.mockClear()
     replaceMock.mockClear()
-    alertMock.mockClear()
+    toastMock.mockClear()
     searchParamValues = { token: 'test-token', tier: 'basic_1990' }
     global.fetch = vi.fn()
-    window.alert = alertMock
     Object.defineProperty(window, 'location', {
       value: { href: '' },
       writable: true,
@@ -68,7 +74,7 @@ describe('PaymentPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'paymentCta' }))
 
-    expect(alertMock).not.toHaveBeenCalled()
+    expect(toastMock).not.toHaveBeenCalled()
     expect(pushMock).toHaveBeenCalledWith('/client/upload?token=test-token')
     expect(window.location.href).toBe('')
   })
@@ -87,7 +93,7 @@ describe('PaymentPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'paymentCta' }))
 
-    expect(alertMock).not.toHaveBeenCalled()
+    expect(toastMock).not.toHaveBeenCalled()
     expect(pushMock).toHaveBeenCalledWith('/client/upload?token=test-token')
   })
 
@@ -106,8 +112,8 @@ describe('PaymentPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'paymentCta' }))
 
-    expect(alertMock).toHaveBeenCalledTimes(1)
-    const message = alertMock.mock.calls[0][0] as string
+    expect(toastMock).toHaveBeenCalledTimes(1)
+    const message = (toastMock.mock.calls[0][0] as { description: string }).description
     expect(message).toContain('error') // the translated t('error') string
     expect(message).toContain('stripe_session_failed')
     expect(pushMock).not.toHaveBeenCalled()
@@ -121,8 +127,8 @@ describe('PaymentPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'paymentCta' }))
 
-    expect(alertMock).toHaveBeenCalled()
-    expect(alertMock.mock.calls[0][0] as string).toContain('network')
+    expect(toastMock).toHaveBeenCalled()
+    expect((toastMock.mock.calls[0][0] as { description: string }).description).toContain('network')
     expect(screen.getByRole('button', { name: 'paymentCta' })).not.toBeDisabled()
   })
 

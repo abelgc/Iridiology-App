@@ -16,7 +16,12 @@ export function Toaster() {
             'mb-2 flex w-full items-center justify-between rounded-lg border p-4 shadow-lg animate-in fade-in slide-in-from-right-full',
             toast.variant === 'destructive'
               ? 'border-red-200 bg-red-50 text-red-900'
-              : 'border-gray-200 bg-white text-gray-900',
+              : toast.variant === 'brand'
+                // The client funnel's own palette, taken from globals.css. A white
+                // admin-panel box dropped into the cream-and-green flow reads as a
+                // different product; a paying customer should never see the seam.
+                ? 'border-[#d8c9ad] bg-[#f8f0df] text-[#3d4a2a]'
+                : 'border-gray-200 bg-white text-gray-900',
           )}
         >
           <div className="flex-1">
@@ -25,7 +30,11 @@ export function Toaster() {
               <div
                 className={cn(
                   'text-sm',
-                  toast.variant === 'destructive' ? 'text-red-700' : 'text-gray-600',
+                  toast.variant === 'destructive'
+                    ? 'text-red-700'
+                    : toast.variant === 'brand'
+                      ? 'text-[#5d4f3f]'
+                      : 'text-gray-600',
                 )}
               >
                 {toast.description}

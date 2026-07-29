@@ -4,7 +4,9 @@ export interface Toast {
   id: string
   title?: string
   description?: string
-  variant?: 'default' | 'destructive'
+  // 'brand' carries the client funnel's own palette. The other two are the
+  // practitioner-side defaults and are left exactly as they were.
+  variant?: 'default' | 'destructive' | 'brand'
   action?: {
     label: string
     onClick: () => void
