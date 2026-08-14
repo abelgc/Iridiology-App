@@ -46,8 +46,8 @@ export default function LoginPage() {
       }
       window.location.href = '/'
     } catch (err) {
-      // The user is shown a generic message on purpose; this is the only record of
-      // what actually went wrong. Sentry picks it up in production.
+      // The user is shown a generic message on purpose; this only survives in
+      // the browser's own devtools console.
       console.error(`[signing in]`, err)
       setGlobalError('An unexpected error occurred')
     } finally {

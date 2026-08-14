@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/nextjs'
 import { createAdminClient } from '@/lib/supabase/server'
 import { patientCreateSchema } from '@/lib/validators/patient'
 import { NextRequest, NextResponse } from 'next/server'
@@ -26,9 +25,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data, { status: 200 })
   } catch (error) {
-    // Reported, not swallowed: the client only ever sees the generic message below,
-    // so without this the real cause is gone for good.
-    Sentry.captureException(error, { tags: { route: 'GET /api/patients' } })
+    // The client is shown a generic message on purpose; this only survives in
+    // Vercel's short-lived function logs.
+    console.error('[GET /api/patients]', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

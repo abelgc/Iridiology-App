@@ -1,15 +1,44 @@
-import * as Sentry from '@sentry/nextjs'
+// Next's client instrumentation hook (see
+// node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/instrumentation-client.md):
+// runs once at module scope after the HTML loads, before hydration. No React component
+// needed — this file registers listeners for the app's entire lifetime.
 
-// Browser-side errors. Lower priority than the server ones, but this is what would catch a
-// client whose upload page throws before it ever reaches an API — a failure that today
-// leaves no trace anywhere at all, since the row is never created.
-Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  tracesSampleRate: 0,
-  enabled: process.env.NODE_ENV === 'production',
-  release: process.env.VERCEL_GIT_COMMIT_SHA,
-  environment: process.env.VERCEL_ENV ?? 'development',
+function report(message: string, stack: string | undefined | null, context: Record<string, unknown>) {
+  try {
+    fetch('/api/client/internal/log-error', {
+      method: 'POST',
+      keepalive: true,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, stack: stack ?? undefined, context }),
+    }).catch(() => {
+      // Fire-and-forget: a failed beacon must never surface to the user or recurse into
+      // another error.
+    })
+  } catch {
+    // JSON.stringify or fetch construction itself failed — still must not throw back into
+    // the error handler that called us.
+  }
+}
+
+window.addEventListener('error', (event) => {
+  const err = event.error
+  report(
+    err instanceof Error ? err.message : String(event.message ?? 'unknown error'),
+    err instanceof Error ? err.stack : undefined,
+    {
+      type: 'error',
+      url: window.location.href,
+      filename: event.filename,
+      lineno: event.lineno,
+      colno: event.colno,
+    },
+  )
 })
 
-// Required by Next.js so Sentry can measure client-side navigations.
-export const onRouterTransitionStart = Sentry.captureRouterTransitionStart
+window.addEventListener('unhandledrejection', (event) => {
+  const reason = event.reason
+  report(reason instanceof Error ? reason.message : String(reason), reason instanceof Error ? reason.stack : undefined, {
+    type: 'unhandledrejection',
+    url: window.location.href,
+  })
+})

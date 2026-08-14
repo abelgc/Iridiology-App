@@ -38,15 +38,19 @@ vi.mock('@/lib/supabase/server', () => ({
   createAdminClient: vi.fn(() => createStubClient()),
 }))
 
-vi.mock('@sentry/nextjs', () => ({
-  captureMessage: vi.fn(),
+const sendMock = vi.fn().mockResolvedValue({ data: { id: 'email-1' }, error: null })
+
+vi.mock('resend', () => ({
+  // `new Resend(...)` requires a constructible mock — an arrow function can't be `new`'d.
+  Resend: vi.fn().mockImplementation(function () {
+    return { emails: { send: sendMock } }
+  }),
 }))
 
 vi.mock('@/lib/client/pdf', () => ({
   generateReportPdf: vi.fn(),
 }))
 
-import * as Sentry from '@sentry/nextjs'
 import { generateReportPdf } from '@/lib/client/pdf'
 import { GET, MIN_PDF_BYTES, HEALTH_CHECK_SETTING_KEY } from '../route'
 
@@ -130,10 +134,13 @@ function request(authHeader?: string): Request {
 
 beforeEach(() => {
   process.env.CRON_SECRET = 'test-cron-secret'
+  process.env.RESEND_API_KEY = 'test-resend-key'
+  process.env.RESEND_FROM_EMAIL = 'alerts@example.com'
+  process.env.HEALTH_ALERT_EMAIL = 'admin@example.com'
   queries = []
   state = freshState()
   respond = defaultResponder
-  vi.mocked(Sentry.captureMessage).mockReset()
+  sendMock.mockClear()
   vi.mocked(generateReportPdf).mockReset().mockResolvedValue(healthyPdf())
 })
 
@@ -144,7 +151,7 @@ describe('GET /api/client/internal/health — authentication', () => {
     expect(res.status).toBe(401)
     expect(queries).toHaveLength(0)
     expect(generateReportPdf).not.toHaveBeenCalled()
-    expect(Sentry.captureMessage).not.toHaveBeenCalled()
+    expect(sendMock).not.toHaveBeenCalled()
   })
 
   it('rejects a request whose bearer token is wrong', async () => {
@@ -177,7 +184,7 @@ describe('GET /api/client/internal/health — healthy system', () => {
     expect(body.checks.paid).toMatchObject({ ok: true, count: 0 })
     expect(body.checks.pdf).toMatchObject({ ok: true, header: '%PDF' })
     expect(body.checks.liveness.ok).toBe(true)
-    expect(Sentry.captureMessage).not.toHaveBeenCalled()
+    expect(sendMock).not.toHaveBeenCalled()
   })
 
   it('stamps the cron liveness timestamp into settings on every run', async () => {
@@ -195,14 +202,17 @@ describe('GET /api/client/internal/health — failing checks', () => {
   it('reports failed report emails with the reason, which is what the 21-day outage needed', async () => {
     state.failedEmails = { count: 2, latestReason: 'domain not verified' }
 
-    const body = await (await GET(request('Bearer test-cron-secret'))).json()
+    const res = await GET(request('Bearer test-cron-secret'))
+    const body = await res.json()
 
+    expect(res.status).toBe(500)
     expect(body.ok).toBe(false)
     expect(body.checks.email).toMatchObject({ ok: false, failedSends: 2, latestFailure: 'domain not verified' })
     expect(body.problems).toHaveLength(1)
     expect(body.problems[0]).toContain('2 report email(s) failed to send')
     expect(body.problems[0]).toContain('domain not verified')
-    expect(Sentry.captureMessage).toHaveBeenCalledWith(body.problems[0], 'error')
+    expect(sendMock).toHaveBeenCalledTimes(1)
+    expect(sendMock.mock.calls[0][0].html).toContain(body.problems[0])
   })
 
   it('reports a delivered report that has no email_send_log row at all', async () => {
@@ -213,7 +223,7 @@ describe('GET /api/client/internal/health — failing checks', () => {
 
     expect(body.checks.email).toMatchObject({ ok: false, deliveredWithoutLog: 2 })
     expect(body.problems[0]).toContain('2 report(s) marked delivered')
-    expect(Sentry.captureMessage).toHaveBeenCalledTimes(1)
+    expect(sendMock).toHaveBeenCalledTimes(1)
   })
 
   it('counts stalled analyses across both processing states and names them', async () => {
@@ -243,7 +253,8 @@ describe('GET /api/client/internal/health — failing checks', () => {
 
     expect(body.checks.pdf.ok).toBe(false)
     expect(body.problems[0]).toContain('report PDF is broken in this deployment')
-    expect(Sentry.captureMessage).toHaveBeenCalledWith(body.problems[0], 'error')
+    expect(sendMock).toHaveBeenCalledTimes(1)
+    expect(sendMock.mock.calls[0][0].html).toContain(body.problems[0])
   })
 
   it('fails the PDF check when the render is not a PDF at all', async () => {
@@ -255,16 +266,23 @@ describe('GET /api/client/internal/health — failing checks', () => {
     expect(body.problems).toHaveLength(1)
   })
 
-  it('raises one alert per failing check when several trip at once', async () => {
+  it('raises one alert email listing every failing check when several trip at once', async () => {
     state.failedEmails = { count: 1, latestReason: 'rate limited' }
     state.analysisCounts = { 'stage2_processing:recent': 2, 'paid:recent': 1 }
     vi.mocked(generateReportPdf).mockRejectedValue(new Error('ENOENT public/fonts/DMSans-Regular.ttf'))
 
-    const body = await (await GET(request('Bearer test-cron-secret'))).json()
+    const res = await GET(request('Bearer test-cron-secret'))
+    const body = await res.json()
 
+    expect(res.status).toBe(500)
     expect(body.ok).toBe(false)
     expect(body.problems).toHaveLength(4)
-    expect(Sentry.captureMessage).toHaveBeenCalledTimes(4)
+    // One email for the whole run, not one per problem — avoids paging four times for a
+    // single bad cron run.
+    expect(sendMock).toHaveBeenCalledTimes(1)
+    for (const problem of body.problems) {
+      expect(sendMock.mock.calls[0][0].html).toContain(problem)
+    }
     // A check that throws is itself reported — a blind health check is the state this
     // route exists to end.
     expect(body.problems.some((p: string) => p.includes('pdf_render') && p.includes('ENOENT'))).toBe(true)
@@ -296,7 +314,7 @@ describe('GET /api/client/internal/health — pre-existing damage', () => {
 
     expect(body.ok).toBe(true)
     expect(body.problems).toEqual([])
-    expect(Sentry.captureMessage).not.toHaveBeenCalled()
+    expect(sendMock).not.toHaveBeenCalled()
     expect(body.preExisting).toEqual({ failedSends: 8, stalled: 7, paidUndelivered: 5 })
   })
 

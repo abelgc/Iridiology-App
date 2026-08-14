@@ -79,8 +79,8 @@ function ResetPasswordContent() {
 
       router.push('/login?message=Password updated successfully')
     } catch (err) {
-      // The user is shown a generic message on purpose; this is the only record of
-      // what actually went wrong. Sentry picks it up in production.
+      // The user is shown a generic message on purpose; this only survives in
+      // the browser's own devtools console.
       console.error(`[resetting a password]`, err)
       setGlobalError('An unexpected error occurred')
     } finally {

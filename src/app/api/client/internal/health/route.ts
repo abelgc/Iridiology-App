@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import * as Sentry from '@sentry/nextjs'
+import { Resend } from 'resend'
 import { createAdminClient } from '@/lib/supabase/server'
 import { generateReportPdf } from '@/lib/client/pdf'
 import type { ReportContent } from '@/types/report'
@@ -21,9 +21,9 @@ export const maxDuration = 60
 // lives here: the sweep repairs, this route only reports. Every condition below is
 // already defined as at least 10 minutes old (an hour, for paid-undelivered), so running
 // more often would not shorten detection of anything; it would only multiply repeat
-// alerts about the same unresolved row and eat the free Sentry quota. 24 runs a day keeps
-// the worst case — every check failing on every run — under 3,000 events a month, inside
-// the 5,000 free tier. Against a 21-day silent email outage, an hour of latency is noise.
+// alert emails about the same unresolved row and eat the Resend free quota. 24 runs a day
+// keeps the worst case — every check failing on every run — under 720 emails a month, well
+// inside Resend's free tier. Against a 21-day silent email outage, an hour of latency is noise.
 
 // ---------------------------------------------------------------------------
 // Windows and thresholds
@@ -286,6 +286,34 @@ async function countPreExisting(supabase: SupabaseAdmin, now: number): Promise<P
 }
 
 /**
+ * The only alert path left once a problem is found. Reuses the Resend account already
+ * wired up for report delivery (src/lib/client/email.ts) instead of adding a new vendor —
+ * HEALTH_ALERT_EMAIL is the one new env var this needs.
+ */
+async function alertProblems(problems: string[]): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY
+  const from = process.env.RESEND_FROM_EMAIL
+  const to = process.env.HEALTH_ALERT_EMAIL
+
+  if (!apiKey || !from || !to) {
+    console.error('health check found problems but alerting is not configured:', problems)
+    return
+  }
+
+  try {
+    const resend = new Resend(apiKey)
+    await resend.emails.send({
+      from,
+      to,
+      subject: `[Health check] ${problems.length} problem(s) detected`,
+      html: `<ul>${problems.map((p) => `<li>${p}</li>`).join('')}</ul>`,
+    })
+  } catch (err) {
+    console.error('health check alert email failed to send:', err)
+  }
+}
+
+/**
  * Runs one check and never lets it take the others down. A thrown check is itself a
  * problem worth reporting — a failing query means the health check is blind, which is the
  * state this whole route exists to end.
@@ -356,17 +384,22 @@ export async function GET(request: Request) {
     )
   }
 
-  for (const problem of problems) {
-    Sentry.captureMessage(problem, 'error')
+  if (problems.length > 0) {
+    await alertProblems(problems)
   }
 
-  return NextResponse.json({
-    ok: problems.length === 0,
-    checkedAt: iso(now),
-    // Named so nobody reads a green result as "everything is fine, ever".
-    alertWindowHours: NEW_DAMAGE_WINDOW_MS / 3_600_000,
-    problems,
-    checks: { email, stalled, paid, pdf, liveness },
-    preExisting,
-  })
+  return NextResponse.json(
+    {
+      ok: problems.length === 0,
+      checkedAt: iso(now),
+      // Named so nobody reads a green result as "everything is fine, ever".
+      alertWindowHours: NEW_DAMAGE_WINDOW_MS / 3_600_000,
+      problems,
+      checks: { email, stalled, paid, pdf, liveness },
+      preExisting,
+    },
+    // A non-2xx status is what makes Vercel Cron's own failure detection a real backstop —
+    // a 200 with problems inside the JSON body was invisible to it.
+    { status: problems.length === 0 ? 200 : 500 },
+  )
 }

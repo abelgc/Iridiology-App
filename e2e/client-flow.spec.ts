@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 /**
  * End-to-end coverage for the paying-client journey.
@@ -21,16 +21,6 @@ import { test, expect, type Page } from '@playwright/test';
 
 const TOKEN = '11111111-1111-4111-8111-111111111111';
 const PAYMENT_URL = `/client/intake/payment?token=${TOKEN}&tier=basic_1990`;
-
-/** Collects any native alert() the page raises, and dismisses it so the run continues. */
-function captureDialogs(page: Page): string[] {
-  const messages: string[] = [];
-  page.on('dialog', async (dialog) => {
-    messages.push(dialog.message());
-    await dialog.dismiss();
-  });
-  return messages;
-}
 
 test.describe('Client journey — anonymous access', () => {
   // The proxy has redirected client-facing paths to /login twice in production
@@ -87,12 +77,14 @@ test.describe('Client journey — payment step', () => {
       }),
     );
 
-    const dialogs = captureDialogs(page);
     await page.goto(PAYMENT_URL);
     await page.click('button:has-text("Proceed to payment")');
 
     await expect(page).toHaveURL(new RegExp(`/client/upload\\?token=${TOKEN}`));
-    expect(dialogs, 'a paid customer must never be shown an error').toEqual([]);
+    // 2026-07-29: alert() was replaced with a toast (src/components/ui/toaster.tsx);
+    // a destructive toast is rendered with the `border-red-200` class, so its absence
+    // is the toast-era equivalent of "no dialog was ever raised".
+    await expect(page.locator('.border-red-200'), 'a paid customer must never be shown an error').toHaveCount(0);
   });
 
   test('a genuine payment failure still surfaces an error and keeps the customer on the page', async ({ page }) => {
@@ -106,12 +98,13 @@ test.describe('Client journey — payment step', () => {
       }),
     );
 
-    const dialogs = captureDialogs(page);
     await page.goto(PAYMENT_URL);
     await page.click('button:has-text("Proceed to payment")');
 
-    await expect.poll(() => dialogs.length, { timeout: 5000 }).toBeGreaterThan(0);
-    expect(dialogs[0]).toContain('stripe_session_failed');
+    // 2026-07-29: alert() was replaced with a toast whose description is
+    // `${t('error')} (${code})` (src/app/client/intake/payment/page.tsx) — the
+    // parenthesised code is what a native alert's message used to carry.
+    await expect(page.getByText('(stripe_session_failed)')).toBeVisible({ timeout: 5000 });
     await expect(page).toHaveURL(/\/client\/intake\/payment/);
   });
 
@@ -120,12 +113,10 @@ test.describe('Client journey — payment step', () => {
     // so the button was disabled forever with no message at all.
     await page.route('**/api/client/payment/checkout-session', (route) => route.abort('failed'));
 
-    const dialogs = captureDialogs(page);
     await page.goto(PAYMENT_URL);
     await page.click('button:has-text("Proceed to payment")');
 
-    await expect.poll(() => dialogs.length, { timeout: 5000 }).toBeGreaterThan(0);
-    expect(dialogs[0]).toContain('network');
+    await expect(page.getByText('(network)')).toBeVisible({ timeout: 5000 });
     // The button must be usable again so the customer can retry once they reconnect.
     await expect(page.locator('button:has-text("Proceed to payment")')).toBeEnabled();
   });

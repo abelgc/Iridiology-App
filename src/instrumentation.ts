@@ -1,18 +1,32 @@
-import * as Sentry from '@sentry/nextjs'
+import type { Instrumentation } from 'next'
+import { logAppError } from '@/lib/error-log'
 
-// Next.js calls register() once per runtime at server start. NEXT_RUNTIME tells us which
-// one we're in, so each gets its matching Sentry config rather than loading Node-only code
-// into the edge runtime.
-export async function register() {
-  if (process.env.NEXT_RUNTIME === 'nodejs') {
-    await import('../sentry.server.config')
-  }
-  if (process.env.NEXT_RUNTIME === 'edge') {
-    await import('../sentry.edge.config')
+// Next 16 (node_modules/next/dist/server/instrumentation/types.d.ts): `register` and
+// `onRequestError` are independent, both optional. Nothing here needs OpenTelemetry setup,
+// so only `onRequestError` is exported.
+//
+// The context object has no `runtime` field in this Next.js version — it carries
+// routerKind/routePath/routeType/renderSource/revalidateReason instead. The documented way
+// to tell Node.js apart from Edge inside this file is process.env.NEXT_RUNTIME.
+export const onRequestError: Instrumentation.onRequestError = async (err, request, context) => {
+  try {
+    const source = process.env.NEXT_RUNTIME === 'edge' ? 'edge' : 'server'
+    const error = err instanceof Error ? err : new Error(String(err))
+
+    await logAppError({
+      source,
+      route: request?.path ?? null,
+      message: error.message,
+      stack: error.stack ?? null,
+      context: {
+        routerKind: context?.routerKind,
+        routePath: context?.routePath,
+        routeType: context?.routeType,
+        renderSource: context?.renderSource,
+      },
+    })
+  } catch (loggingErr) {
+    // Best-effort: a logging failure must never break the request that triggered it.
+    console.error('onRequestError: failed to log error to app_errors', loggingErr)
   }
 }
-
-// Without this, a thrown error inside a React Server Component is swallowed by Next's own
-// error boundary and never reaches Sentry — which would leave exactly the class of silent
-// failure this whole change exists to eliminate.
-export const onRequestError = Sentry.captureRequestError

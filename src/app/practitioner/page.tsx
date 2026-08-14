@@ -49,8 +49,8 @@ export default function DashboardPage() {
           setRecentSessions(sessions || [])
         }
       } catch (err) {
-        // The user is shown a generic message on purpose; this is the only record of
-        // what actually went wrong. Sentry picks it up in production.
+        // The user is shown a generic message on purpose; this only survives in
+        // the browser's own devtools console.
         console.error(`[loading the practitioner dashboard]`, err)
         setError('Unable to load dashboard data')
       } finally {
