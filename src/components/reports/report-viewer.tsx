@@ -121,8 +121,18 @@ export function ReportViewer({ report, corrections = [] }: ReportViewerProps) {
       })
       if (!res.ok) throw new Error('Failed to save')
       setLocalContent(newContent)
-      // Invalidate translation cache since content changed
-      setTranslatedCache({})
+      // Drop the edited section from every cached translation — it's now stale —
+      // but leave translations for every other section in place so the working
+      // language the practitioner is viewing doesn't get lost on save.
+      setTranslatedCache(prev =>
+        Object.fromEntries(
+          Object.entries(prev).map(([langCode, sections]) => {
+            const rest = { ...sections }
+            delete rest[editingSection]
+            return [langCode, rest]
+          }),
+        ),
+      )
       setEditingSection(null)
       setEditingText('')
     } catch (err) {
