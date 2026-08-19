@@ -6,23 +6,35 @@ import {
   validateImage,
   readImageDimensions,
 } from '@/lib/client/image-validation'
+import { computeCenterCrop } from '@/lib/image-crop'
 
 type Eye = 'right' | 'left'
 
-async function compressImage(file: File, maxDim = 1200, quality = 0.8): Promise<string> {
+// Conservative centre-crop ratio applied before resize — see the P2 image-pipeline diagnosis
+// referenced by the iridology-app-map skill for why this exists.
+const CROP_KEEP_RATIO = 0.75
+
+async function compressImage(file: File, maxDim = 1536, quality = 0.8): Promise<string> {
   const url = URL.createObjectURL(file)
   return new Promise((resolve, reject) => {
     const img = new Image()
     img.onload = () => {
       URL.revokeObjectURL(url)
       const { naturalWidth: w, naturalHeight: h } = img
-      const scale = Math.min(1, maxDim / Math.max(w, h))
+
+      // Centre-crop before resizing: captures include eyelid, lashes, and eyebrow that carry
+      // no clinical value, and the model never sees more than what survives this step. A
+      // fixed-ratio centre crop, not iris detection — assumes reasonably centred framing, so
+      // it trims outer margin without risking the iris itself.
+      const crop = computeCenterCrop(w, h, CROP_KEEP_RATIO)
+
+      const scale = Math.min(1, maxDim / Math.max(crop.width, crop.height))
       const canvas = document.createElement('canvas')
-      canvas.width = Math.round(w * scale)
-      canvas.height = Math.round(h * scale)
+      canvas.width = Math.round(crop.width * scale)
+      canvas.height = Math.round(crop.height * scale)
       const ctx = canvas.getContext('2d')
       if (!ctx) { reject(new Error('canvas_unavailable')); return }
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+      ctx.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, canvas.width, canvas.height)
       canvas.toBlob(
         (blob) => {
           if (!blob) { reject(new Error('compress_failed')); return }

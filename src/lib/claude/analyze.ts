@@ -73,13 +73,13 @@ export function buildUserPrompt(
 - Age: ${age}
 - Gender: ${request.patientData.gender || 'Not specified'}
 - Clinical history: ${request.patientData.general_history || 'Not specified'}
-- Current symptoms: ${request.patientData.symptoms || 'Not specified'}
+- Current symptoms (self-reported — a hypothesis to check against the iris per CLINICAL HISTORY INTEGRATION below, not a finding to confirm; state plainly if the iris shows no support for it): ${request.patientData.symptoms || 'Not specified'}
 - Practitioner clinical hypothesis (verify against iris findings independently — do not restate or echo these words in the report; confirm, contradict, or nuance through what you observe): ${request.patientData.practitioner_notes || 'None'}
 
 PREVIOUS FINDINGS (if any):
 ${previousReportSummary || 'None'}
 
-PRACTITIONER CORRECTIONS (if any):
+PRACTITIONER CORRECTIONS FROM PREVIOUS REPORTS (if any — treat as the practitioner's prior hypotheses about this patient, to re-verify against these iris images, not facts to reproduce; if the iris does not support a prior correction, say so plainly rather than repeating it):
 ${practitionerCorrections || 'None'}
 
 PATIENT CLINICAL HISTORY (self-reported symptoms by body system):
@@ -88,7 +88,7 @@ ${formatQuestionnaire(healthQuestionnaire ?? null)}
 IMAGES:
 Right and left iris images of the patient are attached.
 
-Analyse both irises and generate the complete clinical report in the specified JSON format. The iris is the primary source for clinical assertions. Client history may confirm, contextualize, or prioritize what is visible in the iris, but must not create findings that are not supported by the iris. Every claim in the report must originate from an iris observation. Apply the CLINICAL HISTORY INTEGRATION, SEVERITY CALIBRATION, and STRUCTURAL VS FUNCTIONAL rules throughout. Maintain consistency with previous findings where applicable — if your assessment differs, explain the change.`
+Analyse both irises and generate the complete clinical report in the specified JSON format. The iris is the primary source for clinical assertions. Client history may confirm, contextualize, or prioritize what is visible in the iris, but must not create findings that are not supported by the iris. Every claim in the report must originate from an iris observation. Apply the CLINICAL HISTORY INTEGRATION, SEVERITY CALIBRATION, and STRUCTURAL VS FUNCTIONAL rules throughout. Previous findings and corrections are prior hypotheses, not established facts — re-derive every conclusion from these iris images independently. Where you agree with the past, say so; where you don't, say so and explain why the current images don't support it. Let the iris evidence decide, not consistency with the past.`
 }
 
 async function parseWithRetry(
