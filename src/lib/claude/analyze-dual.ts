@@ -7,9 +7,23 @@ import { getStandardAnalysisSystemPrompt } from './prompts'
 import { buildPatientContext } from './context'
 import { buildUserPrompt } from './analyze'
 import { parseReportResponse } from './parse'
+import { guardAgainstSystemFixation } from './rewrite-fixation'
 import type { ReportContent } from '@/types/report'
 import type { AnalysisError } from './analyze'
 import type { AnalysisRequest } from '@/types/claude'
+
+/**
+ * Routes every successful result through the SYSTEM CONNECTIONS deterministic backstop (see
+ * detect-fixation.ts / rewrite-fixation.ts) before it leaves this module — a no-op, no-cost
+ * pass-through unless the model actually let one system dominate too many sections.
+ */
+async function finalizeReport(
+  provider: AIProvider,
+  result: ReportContent | AnalysisError,
+): Promise<ReportContent | AnalysisError> {
+  if ('code' in result) return result
+  return guardAgainstSystemFixation(provider, result)
+}
 
 /**
  * Wraps provider.complete() with a single truncation-retry: if the response stops for
@@ -49,7 +63,8 @@ export async function analyzeIrisDual(
 
   if (!providers) {
     const { analyzeIris } = await import('./analyze')
-    return analyzeIris(request, language, undefined, forceLanguage)
+    const singleResult = await analyzeIris(request, language, undefined, forceLanguage)
+    return finalizeReport(await getAIProvider(), singleResult)
   }
 
   const { anthropic, openai } = providers
@@ -98,7 +113,7 @@ export async function analyzeIrisDual(
     console.warn('[analyzeIrisDual] GPT-4o failed, using Claude only:', openaiResult.reason)
     const parsed = parseReportResponse(claudeResult.value.text)
     if ('code' in parsed) return { code: 'analysis_failed', message: parsed.message }
-    return parsed
+    return finalizeReport(anthropic, parsed)
   }
 
   console.log('[analyzeIrisDual] both complete, synthesising...')
@@ -146,7 +161,7 @@ LANGUAGE DIRECTIVE: You MUST write the ENTIRE response in ${langLabel}, includin
     console.warn('[analyzeIrisDual] synthesis truncated twice, falling back to Claude-only result:', error)
     const claudeParsed = parseReportResponse(claudeResult.value.text)
     if ('code' in claudeParsed) return { code: 'analysis_failed', message: claudeParsed.message }
-    return claudeParsed
+    return finalizeReport(anthropic, claudeParsed)
   }
 
   console.log(`[analyzeIrisDual] synthesis completed in ${Date.now() - synthesisStartedAt}ms (total: ${Date.now() - dualStartedAt}ms)`)
@@ -156,9 +171,9 @@ LANGUAGE DIRECTIVE: You MUST write the ENTIRE response in ${langLabel}, includin
     console.warn('[analyzeIrisDual] synthesis parse failed, falling back to Claude-only result')
     const claudeParsed = parseReportResponse(claudeResult.value.text)
     if ('code' in claudeParsed) return { code: 'analysis_failed', message: claudeParsed.message }
-    return claudeParsed
+    return finalizeReport(anthropic, claudeParsed)
   }
 
   console.log('[analyzeIrisDual] synthesis complete ✓')
-  return parsed
+  return finalizeReport(anthropic, parsed)
 }

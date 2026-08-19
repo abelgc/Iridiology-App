@@ -115,10 +115,10 @@ describe('Claude Prompts', () => {
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT_EN).toContain('functional outcome')
     })
 
-    it('should require inter-system connections', () => {
+    it('should require inter-system connections without letting one system monopolise them', () => {
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT_EN).toContain('SYSTEM CONNECTIONS')
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT_EN).toContain('liver and digestive system')
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT_EN).toContain('Do not describe any system in isolation')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT_EN).toContain("this section's own primary iris-grounded finding")
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT_EN).toContain('may be named as the causal driver in more than two sections')
     })
 
     it('contains structural pattern detection and territory mapping pre-analysis phase', () => {

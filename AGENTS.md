@@ -7,3 +7,5 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## Skill routing
 
 When about to edit any file, run git commit, or run git push — invoke the `changes-awareness` skill FIRST. Do not touch files or run git operations before it runs.
+
+Before writing or modifying any production code, also invoke `regression-test-policy` — write and show a failing real-path regression test before the fix.

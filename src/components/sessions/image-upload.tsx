@@ -3,6 +3,11 @@
 import { useState, useRef, useEffect } from 'react'
 import { Upload, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { computeCenterCrop } from '@/lib/image-crop'
+
+// Conservative centre-crop ratio applied before resize — see the P2 image-pipeline diagnosis
+// referenced by the iridology-app-map skill for why this exists.
+const CROP_KEEP_RATIO = 0.75
 
 interface ImageUploadProps {
   label: string
@@ -58,8 +63,16 @@ export function ImageUpload({ label, value, onChange, required = false }: ImageU
     const objectUrl = URL.createObjectURL(file)
     img.onload = () => {
       URL.revokeObjectURL(objectUrl)
-      const MAX = 1024
-      let { width, height } = img
+
+      // Centre-crop before resizing: captures include eyelid, lashes, and eyebrow that carry
+      // no clinical value, and the model never sees more than what survives this step. A
+      // fixed-ratio centre crop, not iris detection — assumes reasonably centred framing, so
+      // it trims outer margin without risking the iris itself.
+      const crop = computeCenterCrop(img.naturalWidth, img.naturalHeight, CROP_KEEP_RATIO)
+
+      const MAX = 1536
+      let width = crop.width
+      let height = crop.height
       if (width > MAX || height > MAX) {
         const scale = Math.min(MAX / width, MAX / height)
         width = Math.round(width * scale)
@@ -68,7 +81,7 @@ export function ImageUpload({ label, value, onChange, required = false }: ImageU
       const canvas = document.createElement('canvas')
       canvas.width = width
       canvas.height = height
-      canvas.getContext('2d')!.drawImage(img, 0, 0, width, height)
+      canvas.getContext('2d')!.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, width, height)
       const base64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1]
       onChange(base64)
     }
