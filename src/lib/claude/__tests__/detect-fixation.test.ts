@@ -23,32 +23,51 @@ function baseReport(overrides: Partial<ReportContent> = {}): ReportContent {
 }
 
 describe('detectDominantSystemFixation', () => {
-  it('returns null when no hub system is over-represented', () => {
+  it('returns null when no organ is over-represented', () => {
     const report = baseReport()
     expect(detectDominantSystemFixation(report)).toBeNull()
   })
 
-  it('flags a hub mentioned as connector in more than 2 body-system sections', () => {
+  it('flags hepatic when it dominates more than the cap of body-system sections', () => {
     const report = baseReport({
-      section_2_emotional_field: 'Autonomic tone places secondary pressure on adrenal output.',
+      section_2_emotional_field: 'Autonomic tone places secondary pressure on hepatic output.',
       section_3_cognitive_nervous: 'This compounds demand on the liver filtration capacity.',
       section_5_endocrine_hormonal: 'Thyroid conversion, which occurs in the liver, is affected.',
-      section_9_renal_urinary: 'Renal load is compounded by ongoing hepatic congestion.',
     })
 
     const flag = detectDominantSystemFixation(report)
     expect(flag).not.toBeNull()
     expect(flag?.hub).toBe('hepatic')
-    expect(flag?.count).toBe(3)
-    expect(flag?.sections).not.toContain('section_7_hepatic')
+    expect(flag?.count).toBeGreaterThan(2)
   })
 
-  it('does not count a hub within its own section', () => {
-    // Only the hepatic section itself mentions liver — should not self-flag.
+  it('generalises to an organ outside the original hand-picked set — pancreas, not previously tracked', () => {
+    // This is the whole point of the redesign: any organ in the same catalogue the
+    // generation prompt itself reasons from should be catchable, not just a fixed shortlist
+    // discovered from one real case.
     const report = baseReport({
-      section_7_hepatic: 'Liver filtration is reduced, with bile flow under pressure.',
+      section_5_endocrine_hormonal: 'Pancreatic regulatory strain is the clearer finding here.',
+      section_7_hepatic: 'Hepatic sector shows lacunar formations, compounded by pancreatic load.',
+      section_8_digestive_intestinal: 'Reduced enzymatic output, driven by pancreatic insufficiency.',
     })
-    expect(detectDominantSystemFixation(report)).toBeNull()
+
+    const flag = detectDominantSystemFixation(report)
+    expect(flag).not.toBeNull()
+    expect(flag?.hub).toBe('pancreas')
+    expect(flag?.count).toBe(3)
+  })
+
+  it('also generalises to an organ never seen in any real case so far — spleen', () => {
+    const report = baseReport({
+      section_2_emotional_field: 'Splenic tension underlies this pattern.',
+      section_4_immune_lymphatic: 'Spleen involvement is the clearest driver of reduced clearance.',
+      section_6_circulatory_cardiorespiratory: 'Spleen-linked vascular load is notable here too.',
+    })
+
+    const flag = detectDominantSystemFixation(report)
+    expect(flag).not.toBeNull()
+    expect(flag?.hub).toBe('spleen')
+    expect(flag?.count).toBe(3)
   })
 
   it('ignores general_terrain, axes, conclusion, strengths, and recommendations', () => {
@@ -63,7 +82,7 @@ describe('detectDominantSystemFixation', () => {
     expect(detectDominantSystemFixation(report)).toBeNull()
   })
 
-  it('picks the worst offender when multiple hubs exceed the cap', () => {
+  it('picks the worst offender when multiple organs exceed the cap', () => {
     const report = baseReport({
       section_2_emotional_field: 'Adrenal strain compounds the load elsewhere.',
       section_3_cognitive_nervous: 'Liver burden compounds nervous load; adrenal fatigue too.',
