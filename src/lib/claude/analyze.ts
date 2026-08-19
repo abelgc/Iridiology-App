@@ -74,12 +74,12 @@ export function buildUserPrompt(
 - Gender: ${request.patientData.gender || 'Not specified'}
 - Clinical history: ${request.patientData.general_history || 'Not specified'}
 - Current symptoms (self-reported — a hypothesis to check against the iris per CLINICAL HISTORY INTEGRATION below, not a finding to confirm; state plainly if the iris shows no support for it): ${request.patientData.symptoms || 'Not specified'}
-- Practitioner clinical hypothesis (verify against iris findings independently — do not restate or echo these words in the report; confirm, contradict, or nuance through what you observe): ${request.patientData.practitioner_notes || 'None'}
+- Practitioner clinical hypothesis (from a certified iridologist, carrying real clinical weight — ground it in the specific iris evidence you observe, do not restate or echo these words verbatim, and do not flatly contradict it; where the iris only partially aligns, describe what you see and nuance rather than deny): ${request.patientData.practitioner_notes || 'None'}
 
 PREVIOUS FINDINGS (if any):
 ${previousReportSummary || 'None'}
 
-PRACTITIONER CORRECTIONS FROM PREVIOUS REPORTS (if any — treat as the practitioner's prior hypotheses about this patient, to re-verify against these iris images, not facts to reproduce; if the iris does not support a prior correction, say so plainly rather than repeating it):
+PRACTITIONER CORRECTIONS FROM PREVIOUS REPORTS (if any — the practitioner's own prior clinical judgement, carrying real weight: ground each correction in the specific iris evidence you observe rather than repeating it verbatim, and rather than denying it):
 ${practitionerCorrections || 'None'}
 
 PATIENT CLINICAL HISTORY (self-reported symptoms by body system):

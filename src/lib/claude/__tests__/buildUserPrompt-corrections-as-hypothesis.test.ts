@@ -2,12 +2,13 @@ import { describe, it, expect } from 'vitest'
 import { buildUserPrompt } from '../analyze'
 import type { AnalysisRequest } from '@/types/claude'
 
-// Regression test for P3 ("notes treated as dogma"): practitioner corrections from previous
-// reports, and the client's self-reported main complaint (which lands on the same `symptoms`
-// field for the /client flow), must reach the model framed as hypotheses to re-verify against
-// the iris — not as established facts. Calls the real production buildUserPrompt() with no
-// mocks; the assertions are on the actual prompt text the model receives, which is the only
-// observable output available without a live model call.
+// Regression tests for P3 ("notes treated as dogma") AND its follow-up correction: the
+// practitioner is a certified iridologist — their clinical hypothesis and prior corrections
+// must be grounded in real iris evidence (not echoed verbatim as fact — the original bug),
+// but never flatly contradicted or denied either (the first fix's overcorrection, caught
+// against the real Wendy case). Patient-reported symptoms stay fully skeptical: the iris can
+// explicitly say "no support found" there. Calls the real production buildUserPrompt() with
+// no mocks; assertions are on the actual prompt text the model receives.
 
 function baseRequest(overrides: Partial<AnalysisRequest['patientData']> = {}): AnalysisRequest {
   return {
@@ -28,23 +29,33 @@ function baseRequest(overrides: Partial<AnalysisRequest['patientData']> = {}): A
   }
 }
 
-describe('buildUserPrompt — P3 practitioner corrections and client symptoms as hypotheses', () => {
-  it('frames prior practitioner corrections as hypotheses to re-verify, not facts to reproduce', () => {
+describe('buildUserPrompt — practitioner input is grounded, never denied; patient input stays skeptical', () => {
+  it('grounds the practitioner clinical hypothesis in iris evidence without permitting flat contradiction', () => {
+    const request = baseRequest({ practitioner_notes: 'I think hepatic burden is the main thing to tackle' })
+
+    const prompt = buildUserPrompt(request, null, null, null)
+
+    expect(prompt).toContain('I think hepatic burden is the main thing to tackle')
+    expect(prompt).toContain('from a certified iridologist, carrying real clinical weight')
+    expect(prompt).toContain('ground it in the specific iris evidence you observe')
+    expect(prompt).toContain('do not flatly contradict it')
+    expect(prompt).not.toContain('confirm, contradict, or nuance')
+  })
+
+  it('grounds prior practitioner corrections in iris evidence rather than denying or literally repeating them', () => {
     const request = baseRequest()
     const priorCorrections =
       'Section section_7_hepatic: Severe hepatic congestion, most likely toxic overload. (Practitioner note: confirmed by patient fatigue)'
 
     const prompt = buildUserPrompt(request, null, priorCorrections, null)
 
-    // The correction text itself must still reach the model...
     expect(prompt).toContain(priorCorrections)
-    // ...but framed as a hypothesis to re-verify, and permitted to be contradicted.
-    expect(prompt).toContain("treat as the practitioner's prior hypotheses")
-    expect(prompt).toContain('not facts to reproduce')
-    expect(prompt).toContain('if the iris does not support a prior correction, say so plainly')
+    expect(prompt).toContain("the practitioner's own prior clinical judgement, carrying real weight")
+    expect(prompt).toContain('rather than denying it')
+    expect(prompt).not.toContain('if the iris does not support a prior correction, say so plainly')
   })
 
-  it('frames the reported "current symptoms" field the same way — this is the exact line the client main_complaint lands on', () => {
+  it('frames the reported "current symptoms" field with full skepticism — this is the exact line the client main_complaint lands on', () => {
     const request = baseRequest({ symptoms: 'Chronic fatigue and anxiety' })
 
     const prompt = buildUserPrompt(request, null, null, null)
