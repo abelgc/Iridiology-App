@@ -1,30 +1,20 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { LogOut, Menu } from 'lucide-react'
 import { useSidebar } from '@/lib/sidebar-state'
 
-export function Header() {
+interface HeaderProps {
+  userEmail: string
+}
+
+export function Header({ userEmail }: HeaderProps) {
   const router = useRouter()
   const { toggle } = useSidebar()
-  const [userEmail, setUserEmail] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
-
-  useEffect(() => {
-    const getUser = async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (user) {
-        setUserEmail(user.email || '')
-      }
-    }
-    getUser()
-  }, [])
 
   const handleLogout = async () => {
     setIsLoading(true)
