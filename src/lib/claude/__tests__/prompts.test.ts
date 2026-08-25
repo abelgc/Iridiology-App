@@ -108,6 +108,18 @@ describe('Claude Prompts', () => {
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('PRIORITISATION')
     })
 
+    it("REGRESSION (Bhargavi Dasi live run, 2026-08-25): never lets the model tell a client the iris can't confirm or deny a doctor's diagnosis", () => {
+      // The old RESTRAINT wording applied "say so explicitly" to ANY patient-reported
+      // item with no iris support, with no carve-out for a doctor-confirmed diagnosis —
+      // producing "cannot be independently confirmed or denied" about a patient's actual
+      // hyperparathyroidism diagnosis on a real run. That reads as the app doubting a
+      // doctor, not being honest.
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('subjective symptoms only')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Never apply explicit-absence language to a diagnosis')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('say nothing about that diagnosis at all')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('never a statement that the iris cannot confirm or deny it')
+    })
+
     it('should prohibit mechanistic biochemical language', () => {
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT_EN).toContain('PROHIBITED MECHANISTIC LANGUAGE')
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT_EN).toContain('Phase I detoxification')
