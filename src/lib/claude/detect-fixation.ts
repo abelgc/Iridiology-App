@@ -90,3 +90,37 @@ export function detectDominantSystemFixation(report: ReportContent): FixationFla
 
   return worst
 }
+
+// Structural counterpart to the organ-hub check above: it never needs a keyword for
+// "calcium" or "PTH" or whatever a future case's reported condition turns out to be. It
+// catches HOW a section explains itself — leaning on "you already told me this" as the
+// causal tie — not WHAT was told, which is what makes it generalise to any anchor a patient
+// happens to report rather than a hand-picked list of conditions. Same >2-of-9 cap as above.
+const HISTORY_CALLBACK_PATTERNS: RegExp[] = [
+  /\byou(?:'ve| have)?\s+(?:mentioned|reported|described|said|noted|stated)\b/i,
+  /\balready\s+(?:diagnosed|flagged|managed|under\s+(?:a\s+)?doctor)/i,
+  /\b(?:lines up|fits(?:\s+well)?)\s+with what (?:you|shows here)/i,
+]
+
+export interface HistoryCallbackFlag {
+  count: number
+  sections: ReportSectionKey[]
+}
+
+/**
+ * Deterministic backstop for a fixation mode the organ-hub check above cannot see: a
+ * *reported condition* (not an organ) reused as the causal driver across too many sections.
+ * Rather than matching the condition itself — which would need updating for every future
+ * patient's wording — this matches the report's own explanatory pattern: an explicit
+ * callback to patient-reported history standing in for the section's own iris-grounded
+ * finding. More than 2 of the 9 body-system sections doing this is the same fixation the
+ * organ guard targets, just on a different axis.
+ */
+export function detectHistoryCallbackOveruse(report: ReportContent): HistoryCallbackFlag | null {
+  const hitSections = BODY_SYSTEM_SECTIONS.filter((key) => {
+    const text = report[key]
+    return typeof text === 'string' && HISTORY_CALLBACK_PATTERNS.some((pattern) => pattern.test(text))
+  })
+
+  return hitSections.length > FIXATION_THRESHOLD ? { count: hitSections.length, sections: hitSections } : null
+}

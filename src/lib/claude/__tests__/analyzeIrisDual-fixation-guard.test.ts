@@ -97,6 +97,65 @@ describe('analyzeIrisDual — P1 fixation guard end to end', () => {
     expect(result.section_7_hepatic).toBe(biased.section_7_hepatic)
   })
 
+  it('REGRESSION (Bhargavi Dasi over-anchoring case, 2026-08-24): corrects the excess sections when the model over-uses a reported condition — not an organ — as its explanation', async () => {
+    // The organ-hub guard alone cannot see this: no organ name repeats, only an explicit
+    // callback to what the patient reported (hyperparathyroidism/PTH here, but the guard
+    // never names it — that's the point of the structural detector).
+    const anchored: ReportContent = {
+      section_1_general_terrain: 'The overall picture centres on how calcium is being managed.',
+      section_2_emotional_field: 'Emotional field carries strain around self-worth.',
+      section_3_cognitive_nervous: 'Nervous system runs with too much drive and not enough recovery.',
+      section_4_immune_lymphatic: 'Immune and lymphatic system is holding steady.',
+      section_5_endocrine_hormonal: 'Since you\'ve mentioned diagnosed hyperparathyroidism and raised PTH, this is the engine behind your symptoms.',
+      section_6_circulatory_cardiorespiratory: 'The palpitations you feel fit with the calcium disturbance already flagged elsewhere in this report.',
+      section_7_hepatic: 'Liver is running slow and bile flow is sluggish.',
+      section_8_digestive_intestinal: 'This fits well with the bloating and low appetite you have described.',
+      section_9_renal_urinary: 'Kidneys and adrenals are holding steady.',
+      section_10_structural_integumentary: 'This matches decades of back pain, and since you\'ve mentioned osteoporosis already, keep it in view with your doctor.',
+      section_11_detected_axes: 'Axis: endocrine and structural system',
+      section_12_conclusion: 'The calcium disturbance you\'ve mentioned is the main driver.',
+      section_13_strengths_of_the_body: 'Immune and kidney reserve appear adequate.',
+      section_14_recommendations: '**Pituitary**\nVitamins: B Complex\nMinerals: Bromine\nHerbs: Mistletoe',
+    }
+
+    const correctedSection8 = 'Gastric tone and colon motility both show independent reduction.'
+    const correctedSection10 = 'Structural fibres show a long-standing mechanical load pattern independent of other findings.'
+
+    const anthropic = fakeProvider([
+      ['You are a clinical iridology report writer', { text: JSON.stringify(anchored), stopReason: 'end_turn' }],
+      ['You are a senior clinical iridologist producing a definitive iris analysis report', { text: JSON.stringify(anchored), stopReason: 'end_turn' }],
+      // The organ-hub guard finds nothing (no organ repeats) and makes no call; only the
+      // history-callback guard's targeted rewrite call fires, for both excess sections
+      // (section_8 and section_10 — the 3rd and 4th of the 4 flagged, beyond the cap of 2).
+      [
+        'revising a report you already wrote because it leans too often on',
+        {
+          text: JSON.stringify({
+            section_8_digestive_intestinal: correctedSection8,
+            section_10_structural_integumentary: correctedSection10,
+          }),
+          stopReason: 'end_turn',
+        },
+      ],
+    ])
+    const openai = fakeProvider([
+      ['You are a clinical iridology report writer', { text: JSON.stringify(anchored), stopReason: 'end_turn' }],
+    ])
+
+    const result = await analyzeIrisDual(makeRequest(), 'en', { providers: { anthropic: anthropic as any, openai: openai as any } })
+
+    if ('code' in result) throw new Error(`Expected a report, got error: ${result.message}`)
+
+    // section_5, section_6, section_8, section_10 all call back to patient history — the
+    // 3rd and 4th (section_8, section_10) are beyond the cap of 2 and must come back rewritten.
+    expect(result.section_8_digestive_intestinal).toBe(correctedSection8)
+    expect(result.section_10_structural_integumentary).toBe(correctedSection10)
+
+    // The first 2 flagged sections are within the cap — left as the model wrote them.
+    expect(result.section_5_endocrine_hormonal).toBe(anchored.section_5_endocrine_hormonal)
+    expect(result.section_6_circulatory_cardiorespiratory).toBe(anchored.section_6_circulatory_cardiorespiratory)
+  })
+
   it('leaves the report untouched when no hub system exceeds the cap', async () => {
     const clean: ReportContent = {
       ...biasedReport(),
