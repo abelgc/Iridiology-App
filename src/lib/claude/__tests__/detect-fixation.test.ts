@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { detectDominantSystemFixation } from '../detect-fixation'
+import { detectDominantSystemFixation, detectHistoryCallbackOveruse } from '../detect-fixation'
 import type { ReportContent } from '@/types/report'
 
 function baseReport(overrides: Partial<ReportContent> = {}): ReportContent {
@@ -93,5 +93,69 @@ describe('detectDominantSystemFixation', () => {
     const flag = detectDominantSystemFixation(report)
     expect(flag?.hub).toBe('adrenal')
     expect(flag?.count).toBe(4)
+  })
+})
+
+describe('detectHistoryCallbackOveruse (REGRESSION: Bhargavi Dasi over-anchoring case, 2026-08-24)', () => {
+  it('returns null when no section leans on patient history as its explanation', () => {
+    const report = baseReport()
+    expect(detectHistoryCallbackOveruse(report)).toBeNull()
+  })
+
+  it('flags a reported condition reused as the explanation in more than the cap of sections, regardless of which condition it is', () => {
+    // Same shape as the real production report: "hyperparathyroidism" here, but the
+    // detector never names it — this is the whole point of the structural approach.
+    const report = baseReport({
+      section_5_endocrine_hormonal:
+        'Since you\'ve mentioned diagnosed hyperparathyroidism and raised PTH, this is the engine behind your bone pain.',
+      section_6_circulatory_cardiorespiratory:
+        'The palpitations you feel fit with the calcium disturbance already flagged elsewhere in this report.',
+      section_8_digestive_intestinal:
+        'This fits well with the bloating and low appetite you have described.',
+      section_10_structural_integumentary:
+        'This matches decades of back pain, and since you\'ve mentioned osteoporosis already, keep it in view with your doctor.',
+    })
+
+    const flag = detectHistoryCallbackOveruse(report)
+    expect(flag).not.toBeNull()
+    expect(flag?.count).toBe(4)
+    expect(flag?.sections).toEqual([
+      'section_5_endocrine_hormonal',
+      'section_6_circulatory_cardiorespiratory',
+      'section_8_digestive_intestinal',
+      'section_10_structural_integumentary',
+    ])
+  })
+
+  it('generalises to a condition never seen in any real case so far — a thyroid history, not hyperparathyroidism', () => {
+    // The detector must never need updating for what a future patient happens to report.
+    const report = baseReport({
+      section_3_cognitive_nervous: 'Since you\'ve mentioned a thyroid history, this fits with your fatigue.',
+      section_5_endocrine_hormonal: 'This lines up with what you have described about your thyroid.',
+      section_7_hepatic: 'You\'ve mentioned your thyroid condition, and that lines up with what shows here.',
+    })
+
+    const flag = detectHistoryCallbackOveruse(report)
+    expect(flag).not.toBeNull()
+    expect(flag?.count).toBe(3)
+  })
+
+  it('does not flag a section that states a finding without calling back to patient history', () => {
+    const report = baseReport({
+      section_5_endocrine_hormonal: 'Sustained compression is visible around the pituitary and thyroid territory.',
+      section_6_circulatory_cardiorespiratory: 'Cardiac rhythm is steady and regular.',
+      section_8_digestive_intestinal: 'Gastric tone and colon motility are both reduced.',
+    })
+    expect(detectHistoryCallbackOveruse(report)).toBeNull()
+  })
+
+  it('ignores general_terrain, axes, conclusion, strengths, and recommendations, matching the organ guard\'s scope', () => {
+    const report = baseReport({
+      section_1_general_terrain: 'Since you\'ve mentioned this history, the overall picture centres on it.',
+      section_11_detected_axes: 'The calcium disturbance you\'ve mentioned is quietly working against your appetite.',
+      section_12_conclusion: 'The calcium disturbance you\'ve mentioned, which lines up with what shows here, is the main driver.',
+      section_13_strengths_of_the_body: 'Despite what you\'ve mentioned, your immune system holds steady.',
+    })
+    expect(detectHistoryCallbackOveruse(report)).toBeNull()
   })
 })

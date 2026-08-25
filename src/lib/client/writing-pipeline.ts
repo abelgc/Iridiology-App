@@ -91,6 +91,12 @@ const BRIEF_SYSTEM_KEYS = [
 
 type BriefSystemKey = typeof BRIEF_SYSTEM_KEYS[number]
 
+// The only sections eligible to own a known diagnosis: the 9 tracked systems plus
+// section_1, which Writer A also writes (see WRITER_GROUPS below).
+type KnownDiagnosisSection = BriefSystemKey | 'section_1_general_terrain'
+
+type KnownDiagnosis = { condition: string; assignedSection: KnownDiagnosisSection }
+
 type ClientReportBrief = {
   clientFirstName: string
   dominantPattern: string
@@ -98,7 +104,7 @@ type ClientReportBrief = {
   symptomFindingMap: string[]
   systemVerdicts: Record<BriefSystemKey, SystemVerdict>
   crossSystemLinks: string[]
-  knownDiagnoses: string[]
+  knownDiagnoses: KnownDiagnosis[]
   safety: { flags: string[]; constraint: string | null }
 }
 
@@ -121,7 +127,18 @@ function parseBrief(raw: string, clientFirstName: string): ClientReportBrief {
     symptomFindingMap: Array.isArray(parsed.symptomFindingMap) ? parsed.symptomFindingMap : [],
     systemVerdicts: parsed.systemVerdicts,
     crossSystemLinks: Array.isArray(parsed.crossSystemLinks) ? parsed.crossSystemLinks : [],
-    knownDiagnoses: Array.isArray(parsed.knownDiagnoses) ? parsed.knownDiagnoses : [],
+    // Drop any entry missing either field instead of crashing the whole brief on one
+    // malformed item — worst case is that one diagnosis is silently omitted from every
+    // writer rather than leaking into one it wasn't assigned to.
+    knownDiagnoses: Array.isArray(parsed.knownDiagnoses)
+      ? parsed.knownDiagnoses.filter(
+          (d: unknown): d is KnownDiagnosis =>
+            typeof d === 'object' &&
+            d !== null &&
+            typeof (d as KnownDiagnosis).condition === 'string' &&
+            typeof (d as KnownDiagnosis).assignedSection === 'string',
+        )
+      : [],
     safety: {
       flags: Array.isArray(parsed.safety?.flags) ? parsed.safety.flags : [],
       constraint: typeof parsed.safety?.constraint === 'string' ? parsed.safety.constraint : null,
@@ -135,7 +152,7 @@ function buildPlannerSystemPrompt(lang: string): string {
 Return ONLY a JSON object, no commentary, no markdown fences, with exactly these keys:
 {
   "dominantPattern": string — the single dominant pattern across the whole case,
-  "mainDriver": string — the ONE main driver behind that pattern; if you find yourself naming two, keep narrowing until there is one,
+  "mainDriver": string — the system or pattern the report's own iris evidence most strongly and consistently supports as dominant. Base this on iris-grounded findings, not on which condition the patient happened to mention — a patient-reported diagnosis is not automatically the driver unless the report's own findings independently point there too,
   "symptomFindingMap": string[] — each reported symptom tied to the one finding that explains it, one short string per pair, e.g. "fatigue -> adrenal strain",
   "systemVerdicts": {
     "section_2_emotional_field": { "verdict": "needs-action" | "fine", "clue": string },
@@ -149,7 +166,7 @@ Return ONLY a JSON object, no commentary, no markdown fences, with exactly these
     "section_10_structural_integumentary": { "verdict": "needs-action" | "fine", "clue": string }
   },
   "crossSystemLinks": string[] — each cross-system connection stated ONCE, in plain internal language, e.g. "liver strain is compounding the digestive load",
-  "knownDiagnoses": string[] — conditions the client themself mentioned about their own history (for example "the patient reports a history of...", "the patient states they have...") — NEVER a condition the report presents as something this iris reading found or detected, and never treat the client's own wording as proof a doctor diagnosed it. Only include it if the report's own wording clearly frames it as something the client already said about themselves. Empty array if none, or if you are unsure.
+  "knownDiagnoses": { condition: string, assignedSection: string }[] — conditions the client themself mentioned about their own history (for example "the patient reports a history of...", "the patient states they have...") — NEVER a condition the report presents as something this iris reading found or detected, and never treat the client's own wording as proof a doctor diagnosed it. Only include it if the report's own wording clearly frames it as something the client already said about themselves. For each one, assignedSection must be the SINGLE section key (one of the systemVerdicts keys above, or "section_1_general_terrain") where the report's own text most directly and specifically ties that condition to a finding — not every section that could plausibly relate to it. Each condition may only be assigned to one section; if the report ties it to several, pick the section with the strongest, most specific textual link and leave it out of the others. Empty array if none, or if you are unsure.
   "safety": {
     "flags": string[] — any of these you find real evidence for in the report: low body weight, low BMI, elderly and low weight, pregnancy, eating-disorder history, diabetes, any serious diagnosed condition. Empty array if none,
     "constraint": string | null — "gentle support only, no fasting or aggressive protocols" if flags is non-empty, otherwise null
@@ -159,7 +176,7 @@ Base every field only on what the report actually supports — never invent a fi
 
 For "section_2_emotional_field" specifically: if the source text names a specific chakra (e.g. "Root Chakra") and/or a specific emotion to work with, the clue MUST quote both names verbatim — never paraphrase, generalize, or drop them. This is a paid detail the client is specifically promised.
 
-LANGUAGE: Write every string value in your JSON response — dominantPattern, mainDriver, each symptomFindingMap entry, every clue, each crossSystemLinks entry, each knownDiagnoses entry, and safety.constraint — in ${languageName(lang)}. The source report above may already be in ${languageName(lang)}; keep it in that language, never translate or drift into English.`
+LANGUAGE: Write every string value in your JSON response — dominantPattern, mainDriver, each symptomFindingMap entry, every clue, each crossSystemLinks entry, each knownDiagnoses entry's condition string, and safety.constraint — in ${languageName(lang)}. assignedSection values are section-key identifiers, not prose — always leave them in English exactly as listed above, never translate them. The source report above may already be in ${languageName(lang)}; keep it in that language, never translate or drift into English.`
 }
 
 async function runPlanner(
@@ -250,7 +267,7 @@ Never write a sentence whose effect is to tell the client this reading is not up
 No urgency: never "soon", "without waiting", "promptly", "as soon as possible", "don't delay", "urgent", "immediately". A symptom the client reported is a reason to name the finding, not a reason to escalate.
 
 KNOWN DIAGNOSES:
-If brief.knownDiagnoses is non-empty and the section you are writing concerns one of those conditions, it's fine — even reassuring — to mention it: the underlying analysis only keeps a historical condition in knownDiagnoses when the iris independently showed a matching pattern in that zone, so this isn't just repeating what the client said. Reference it as something the client already mentioned about themselves, not as a fact a doctor confirmed — e.g. "Since you've mentioned [condition], and that lines up with what shows here, keep it in view with your doctor; this works alongside that." Never say "already diagnosed" or imply a doctor confirmed it — that status isn't something you or this reading can know.
+brief.knownDiagnoses only ever contains conditions already assigned to a section you are writing — if one appears in your brief, it belongs here, and it's fine, even reassuring, to mention it once: the underlying analysis only keeps a historical condition in knownDiagnoses when the iris independently showed a matching pattern in that specific zone, so this isn't just repeating what the client said. Reference it as something the client already mentioned about themselves, not as a fact a doctor confirmed — e.g. "Since you've mentioned [condition], and that lines up with what shows here, keep it in view with your doctor; this works alongside that." Never say "already diagnosed" or imply a doctor confirmed it — that status isn't something you or this reading can know. Do not reach for a known diagnosis to explain a different section just because it also feels related — if it isn't in your brief for that section, it wasn't assigned there.
 
 SAFETY GATE:
 If brief.safety.flags is non-empty, do not suggest fasting, aggressive cleanses, parasite protocols, or protein restriction in any section you write. Use gentle, moderate language for any lifestyle direction.
@@ -283,9 +300,9 @@ function sectionInstructions(key: ReportSectionKey, lang: string): string {
     case 'section_13_strengths_of_the_body':
       return 'section_13_strengths_of_the_body: name what\'s holding up well, drawn from any brief.systemVerdicts entries marked "fine" — reserve, adaptability, capacity to respond. Never write "healthy", "fine", "undamaged", or "disease-free" — say what you\'d expect from a body with real reserve instead, e.g. "your lungs show few patterns and good reserve". Motivating and true.'
     case 'section_2_emotional_field':
-      return 'section_2_emotional_field: use brief.systemVerdicts["section_2_emotional_field"] — a short plain verdict, then what it causes for the client, then the direction of the fix. Cover the system even when its verdict is "fine" (one honest line). If the clue names a specific chakra and/or emotion to work with, state both explicitly by name as a clear, personal recommendation — this is a paid detail the client is specifically promised, never fold it anonymously into generic language. If brief.knownDiagnoses includes a condition that belongs to this system, reference it only as history already under a doctor\'s care per the KNOWN DIAGNOSES rule below — never as something this reading found.'
+      return 'section_2_emotional_field: use brief.systemVerdicts["section_2_emotional_field"] — a short plain verdict, then what it causes for the client, then the direction of the fix. Cover the system even when its verdict is "fine" (one honest line). If the clue names a specific chakra and/or emotion to work with, state both explicitly by name as a clear, personal recommendation — this is a paid detail the client is specifically promised, never fold it anonymously into generic language. If brief.knownDiagnoses is non-empty, reference it only as history already under a doctor\'s care per the KNOWN DIAGNOSES rule below — never as something this reading found.'
     default:
-      return `${key}: use brief.systemVerdicts["${key}"] — a short plain verdict, then what it causes for the client, then the direction of the fix. Cover the system even when its verdict is "fine" (one honest line). If brief.knownDiagnoses includes a condition that belongs to this system, reference it only as history already under a doctor's care per the KNOWN DIAGNOSES rule below — never as something this reading found.`
+      return `${key}: use brief.systemVerdicts["${key}"] — a short plain verdict, then what it causes for the client, then the direction of the fix. Cover the system even when its verdict is "fine" (one honest line). If brief.knownDiagnoses is non-empty, reference it only as history already under a doctor's care per the KNOWN DIAGNOSES rule below — never as something this reading found.`
   }
 }
 
@@ -295,6 +312,18 @@ function buildWriterPrompt(group: WriterGroup, lang: string): string {
   return `${roleLine}\n\n${perSection}\n\n${SHARED_WRITER_RULES}`
 }
 
+// A diagnosis only ever reaches the Writer group that owns the section the Planner assigned
+// it to — enforced here in code, not left to a per-writer prompt instruction the three
+// parallel writers have no way to coordinate on. A writer whose group doesn't own that
+// section never sees the condition in its payload at all, so it structurally cannot cite it.
+function scopeBriefToGroup(brief: ClientReportBrief, group: WriterGroup): ClientReportBrief {
+  const ownedSections = new Set<string>(group.keys)
+  return {
+    ...brief,
+    knownDiagnoses: brief.knownDiagnoses.filter((d) => ownedSections.has(d.assignedSection)),
+  }
+}
+
 async function runWriter(
   client: Anthropic,
   brief: ClientReportBrief,
@@ -302,7 +331,7 @@ async function runWriter(
   lang: string
 ): Promise<Partial<ReportContent>> {
   const systemPrompt = buildWriterPrompt(group, lang)
-  const userContent = JSON.stringify(brief)
+  const userContent = JSON.stringify(scopeBriefToGroup(brief, group))
 
   const attempt = async (): Promise<Partial<ReportContent>> => {
     const raw = await callClaude(client, systemPrompt, userContent, 1600)

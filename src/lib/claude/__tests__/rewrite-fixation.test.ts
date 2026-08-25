@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { guardAgainstSystemFixation } from '../rewrite-fixation'
+import { guardAgainstSystemFixation, guardAgainstHistoryCallbackOveruse } from '../rewrite-fixation'
 import type { AIProvider } from '@/lib/ai/types'
 import type { ReportContent } from '@/types/report'
 
@@ -78,6 +78,57 @@ describe('guardAgainstSystemFixation', () => {
     const report = makeReport()
 
     const result = await guardAgainstSystemFixation(provider, report)
+
+    expect(result).toEqual(report)
+  })
+})
+
+describe('guardAgainstHistoryCallbackOveruse (REGRESSION: Bhargavi Dasi over-anchoring case, 2026-08-24)', () => {
+  it('returns the report untouched when nothing is flagged', async () => {
+    const complete = vi.fn()
+    const provider: AIProvider = { complete }
+    const report = makeReport()
+
+    const result = await guardAgainstHistoryCallbackOveruse(provider, report)
+
+    expect(result).toBe(report)
+    expect(complete).not.toHaveBeenCalled()
+  })
+
+  it('rewrites only the sections beyond the first 2 flagged, on a real trigger', async () => {
+    const complete = vi.fn().mockResolvedValue({
+      stopReason: 'end_turn',
+      text: JSON.stringify({
+        section_10_structural_integumentary: 'Structural fibres show a long-standing mechanical load pattern.',
+      }),
+    })
+    const provider: AIProvider = { complete }
+
+    const report = makeReport({
+      section_5_endocrine_hormonal: 'Since you\'ve mentioned diagnosed hyperparathyroidism, this is the driver.',
+      section_6_circulatory_cardiorespiratory: 'Palpitations fit with the disturbance already flagged elsewhere.',
+      section_10_structural_integumentary: 'This matches what you\'ve mentioned about your bones.',
+    })
+
+    const result = await guardAgainstHistoryCallbackOveruse(provider, report)
+
+    expect(complete).toHaveBeenCalledTimes(1)
+    expect(result.section_10_structural_integumentary).toBe('Structural fibres show a long-standing mechanical load pattern.')
+    // The first 2 flagged sections are within the cap — left as written.
+    expect(result.section_5_endocrine_hormonal).toBe(report.section_5_endocrine_hormonal)
+    expect(result.section_6_circulatory_cardiorespiratory).toBe(report.section_6_circulatory_cardiorespiratory)
+  })
+
+  it('falls back to the original report if the rewrite call fails', async () => {
+    const complete = vi.fn().mockRejectedValue(new Error('network error'))
+    const provider: AIProvider = { complete }
+    const report = makeReport({
+      section_5_endocrine_hormonal: 'Since you\'ve mentioned diagnosed hyperparathyroidism, this is the driver.',
+      section_6_circulatory_cardiorespiratory: 'Palpitations fit with the disturbance already flagged elsewhere.',
+      section_10_structural_integumentary: 'This matches what you\'ve mentioned about your bones.',
+    })
+
+    const result = await guardAgainstHistoryCallbackOveruse(provider, report)
 
     expect(result).toEqual(report)
   })

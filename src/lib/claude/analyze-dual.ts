@@ -7,22 +7,24 @@ import { getStandardAnalysisSystemPrompt } from './prompts'
 import { buildPatientContext } from './context'
 import { buildUserPrompt } from './analyze'
 import { parseReportResponse } from './parse'
-import { guardAgainstSystemFixation } from './rewrite-fixation'
+import { guardAgainstSystemFixation, guardAgainstHistoryCallbackOveruse } from './rewrite-fixation'
 import type { ReportContent } from '@/types/report'
 import type { AnalysisError } from './analyze'
 import type { AnalysisRequest } from '@/types/claude'
 
 /**
- * Routes every successful result through the SYSTEM CONNECTIONS deterministic backstop (see
+ * Routes every successful result through both deterministic fixation backstops (see
  * detect-fixation.ts / rewrite-fixation.ts) before it leaves this module — a no-op, no-cost
- * pass-through unless the model actually let one system dominate too many sections.
+ * pass-through unless the model actually let one system, or one reported condition, dominate
+ * too many sections.
  */
 async function finalizeReport(
   provider: AIProvider,
   result: ReportContent | AnalysisError,
 ): Promise<ReportContent | AnalysisError> {
   if ('code' in result) return result
-  return guardAgainstSystemFixation(provider, result)
+  const afterSystemGuard = await guardAgainstSystemFixation(provider, result)
+  return guardAgainstHistoryCallbackOveruse(provider, afterSystemGuard)
 }
 
 /**
