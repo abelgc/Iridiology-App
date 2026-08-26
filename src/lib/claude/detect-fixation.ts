@@ -100,6 +100,12 @@ const HISTORY_CALLBACK_PATTERNS: RegExp[] = [
   /\byou(?:'ve| have)?\s+(?:mentioned|reported|described|said|noted|stated)\b/i,
   /\balready\s+(?:diagnosed|flagged|managed|under\s+(?:a\s+)?doctor)/i,
   /\b(?:lines up|fits(?:\s+well)?)\s+with what (?:you|shows here)/i,
+  // Stage 1's own third-person register — the two patterns above only match Stage 2's
+  // rewritten second-person client voice, but this detector runs directly on Stage 1
+  // output too, which is the only guard /practitioner has.
+  /\b(?:consistent with|correlat(?:es|ing|ion) with)\s+(?:the\s+)?(?:patient'?s?|her|his|their)\s+reported\b/i,
+  /\bgiven\s+(?:her|his|their|the\s+patient'?s?)\s+[\w-]+(?:\s+[\w-]+){0,3}\s+history\b/i,
+  /\b(?:her|his|their|the\s+patient'?s?)\s+(?:surgical|reported|documented)\s+history\s+of\b/i,
 ]
 
 export interface HistoryCallbackFlag {

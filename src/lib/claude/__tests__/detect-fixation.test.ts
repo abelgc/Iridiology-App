@@ -158,4 +158,37 @@ describe('detectHistoryCallbackOveruse (REGRESSION: Bhargavi Dasi over-anchoring
     })
     expect(detectHistoryCallbackOveruse(report)).toBeNull()
   })
+
+  it('REGRESSION (register gap, 2026-08-26): catches Stage 1\'s real third-person phrasing, not just Stage 2\'s rewritten "you\'ve mentioned"', () => {
+    // Sourced verbatim-in-style from a real live Stage 1 output — Stage 1 never writes
+    // "you've mentioned", it writes "consistent with her reported X". This detector runs
+    // directly on Stage 1 output (the only guard /practitioner has, with no Stage 2 filter),
+    // so it must catch Stage 1's own voice, not just Stage 2's client-facing rewrite.
+    const report = baseReport({
+      section_5_endocrine_hormonal:
+        'Sustained pressure here is consistent with her reported hyperparathyroidism and elevated PTH.',
+      section_6_circulatory_cardiorespiratory:
+        'The palpitations noted are consistent with her reported hyperparathyroid state rather than a primary cardiac finding.',
+      section_8_digestive_intestinal:
+        'Reduced appetite here correlates with the patient\'s reported hyperparathyroidism and its systemic load.',
+      section_10_structural_integumentary:
+        'This pattern is consistent with her reported hyperparathyroidism placing additional calcium demand on the skeletal frame.',
+    })
+
+    const flag = detectHistoryCallbackOveruse(report)
+    expect(flag).not.toBeNull()
+    expect(flag?.count).toBe(4)
+  })
+
+  it('REGRESSION (register gap, 2026-08-26): does not flag a contradiction or negation as a history callback', () => {
+    // Real Stage 1 phrasing that mentions patient history but does NOT use it as the
+    // section's explanation — these must stay unflagged, or the guard becomes noise.
+    const report = baseReport({
+      section_6_circulatory_cardiorespiratory:
+        'This does not support a structural cardiac finding despite her reported palpitations.',
+      section_9_renal_urinary:
+        'Nothing here supports a current urinary symptom, and the patient has not reported one.',
+    })
+    expect(detectHistoryCallbackOveruse(report)).toBeNull()
+  })
 })
