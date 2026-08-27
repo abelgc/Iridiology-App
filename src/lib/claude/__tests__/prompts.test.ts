@@ -151,6 +151,29 @@ describe('Claude Prompts', () => {
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('SCLERA')
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('never name a colour without')
     })
+
+    it("REGRESSION (practitioner clinical review, 2026-08-27): requires an internal constitutional assessment step (fibre density + colour family + wreath) before the findings inventory", () => {
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('STEP 0 — CONSTITUTIONAL ASSESSMENT')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('FIBRE DENSITY SCALE')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Mixta o Biliar')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('acquired pigment overlay')
+    })
+
+    it('REGRESSION (practitioner clinical review, 2026-08-27): requires an exhaustive lacunae and pigment-spot inventory, not just the dominant finding', () => {
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('This inventory must be exhaustive, not illustrative')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('phase indicator')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('persistent intestinal toxic load')
+    })
+
+    it('REGRESSION (practitioner clinical review, 2026-08-27): reads ANS wreath shape as an autonomic/stress signal tied to repair capacity', () => {
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('protuberant or flowered wreath suggests sympathetic overactivation')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('reparative or healing phase')
+    })
+
+    it("REGRESSION (practitioner clinical review, 2026-08-27): requires cross-checking elimination organs before calling them unaffected, and prioritises kidney/intestine detox in the conclusion when a central organ is burdened", () => {
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('ELIMINATION PATHWAY CONSISTENCY')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('decongesting and supporting the kidneys and intestines generally comes first')
+    })
   })
 
   describe('COMPARISON_ANALYSIS_SYSTEM_PROMPT', () => {
