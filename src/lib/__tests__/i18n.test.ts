@@ -29,4 +29,12 @@ describe('i18n', () => {
     expect(detectLocale('es-ES')).toBe('es')
     expect(detectLocale('es')).toBe('es')
   })
+
+  it('regression: analysisFailedMessage (de) stays in "du" register — bug: accidental "Sie" leak', () => {
+    expect(t('de', 'analysisFailedMessage')).not.toMatch(/\bSie\b|\bIhre\b|\bIhnen\b/)
+  })
+
+  it('regression: uploadAnalyzing (es) stays in "tú" register — bug: accidental "usted" leak', () => {
+    expect(t('es', 'uploadAnalyzing')).not.toMatch(/\bEspere\b|\bsu\b/)
+  })
 })
