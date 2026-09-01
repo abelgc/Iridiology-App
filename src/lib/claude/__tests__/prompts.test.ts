@@ -174,6 +174,18 @@ describe('Claude Prompts', () => {
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('ELIMINATION PATHWAY CONSISTENCY')
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('decongesting and supporting the kidneys and intestines generally comes first')
     })
+
+    it('REGRESSION (client feedback, 2026-09-01): never declares a chronic-relapsing condition resolved when a current related symptom is reported', () => {
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Never declare a historical or chronic-relapsing condition')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('closure language the iris cannot actually verify')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('ongoing constitutional or functional vulnerability')
+    })
+
+    it('REGRESSION (client feedback, 2026-09-01): checks for a systemic explanation before writing a dismissive symptom-absence statement', () => {
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('check whether a systemic mechanism already identified elsewhere in THIS report')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('downstream expressions of systemic burden')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('state that connection instead of, or alongside, the local absence')
+    })
   })
 
   describe('COMPARISON_ANALYSIS_SYSTEM_PROMPT', () => {
@@ -230,6 +242,11 @@ describe('Claude Prompts', () => {
       expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('ANS WREATH ARC TERRITORIES')
       expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('jaw')
     })
+
+    it('does not let peripheral mobilization alone close out a chronic-relapsing condition', () => {
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('Do not declare a chronic-relapsing condition')
+      expect(COMPARISON_ANALYSIS_SYSTEM_PROMPT).toContain('mobilizing or moving toward resolution')
+    })
   })
 
   describe('TECHNICAL_REVIEW_SYSTEM_PROMPT', () => {
@@ -268,6 +285,11 @@ describe('Claude Prompts', () => {
       expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).toContain('SCLERA')
       expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).not.toContain('Do not mention iris colour tones')
       expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).not.toContain('Prioritise reading these structures over any chromatic observation')
+    })
+
+    it('flags overconfident closure language and dismissive absence statements as something to QUESTION', () => {
+      expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).toContain('declares a condition fully resolved or inactive without iris evidence strong enough')
+      expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).toContain('systemic mechanism documented elsewhere in the same report')
     })
   })
 
