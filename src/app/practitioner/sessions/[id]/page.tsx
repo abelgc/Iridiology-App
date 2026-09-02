@@ -60,14 +60,6 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
 
         const data = await response.json()
         setSession(data)
-
-        if (data.status === 'completed') {
-          const reportResponse = await fetch(`/api/reports?sessionId=${sessionId}`)
-          if (reportResponse.ok) {
-            const reports = await reportResponse.json()
-            if (reports.length > 0) setReport(reports[0])
-          }
-        }
       } catch (err) {
         setError('Failed to load session')
         console.error(err)
@@ -97,14 +89,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
           const data = await response.json()
           if (!cancelled) setSession(data)
 
-          if (data.status === 'completed') {
-            const reportResponse = await fetch(`/api/reports?sessionId=${sessionId}`)
-            if (reportResponse.ok) {
-              const reports = await reportResponse.json()
-              if (!cancelled && reports.length > 0) setReport(reports[0])
-            }
-            return
-          } else if (data.status === 'error') {
+          if (data.status === 'completed' || data.status === 'error') {
             return
           }
         }
@@ -136,6 +121,31 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
     // only part of `session` this effect reads, and it is what should retrigger it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, session?.status])
+
+  // Fetches the report once the session is completed. Deliberately its own effect, not
+  // folded into the initial fetch or the poll above: those both mark themselves
+  // "cancelled" (and the poll effect re-runs, since its dependency is session?.status)
+  // the moment status flips to 'completed', which used to race the report request itself
+  // when a real network round trip was slower than React's own re-render — the request
+  // would land after `cancelled` had already flipped, so setReport() was silently
+  // skipped, and the practitioner would see neither the "Analyzing" nor the "Complete"
+  // card until they manually reloaded the page. This effect has no such dependency to
+  // race against.
+  useEffect(() => {
+    if (!sessionId || session?.status !== 'completed' || report) return
+
+    let cancelled = false
+    fetch(`/api/reports?sessionId=${sessionId}`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((reports) => {
+        if (!cancelled && reports.length > 0) setReport(reports[0])
+      })
+      .catch(() => { /* report card just won't appear; no polling to fall back on here */ })
+
+    return () => {
+      cancelled = true
+    }
+  }, [sessionId, session?.status, report])
 
   if (!sessionId) {
     return <div className="text-center py-8">Loading...</div>

@@ -305,6 +305,57 @@ describe('SessionDetailPage polling/backoff', () => {
     expect(setTimeoutSpy.mock.calls.length).toBe(setTimeoutCallsAtLimit)
   })
 
+  it('still shows the report when the report fetch resolves after the status-change re-render (real-world ordering)', async () => {
+    // Reproduces the "have to refresh the browser to see the View Report button" bug:
+    // in production, the /api/reports round trip is slow enough (real network) that
+    // React's own re-render for the status change to 'completed' — which re-runs the
+    // polling effect and its cleanup, flipping the poll's local `cancelled` flag — lands
+    // *before* the report fetch's continuation checks that flag. The existing
+    // "stops polling and fetches the report" test above uses an instantly-resolved
+    // report fetch, so it never exposes this: everything settles within the same
+    // act() flush, before the cleanup has a chance to run. Holding the report promise
+    // open until *after* that flush reproduces the real interleaving deterministically.
+    let resolveReportFetch: (value: { ok: boolean; json: () => Promise<unknown> }) => void
+    const reportFetchPromise = new Promise<{ ok: boolean; json: () => Promise<unknown> }>(
+      (resolve) => {
+        resolveReportFetch = resolve
+      },
+    )
+
+    let sessionFetchCount = 0
+    const fetchMock = vi.fn((url: string) => {
+      if (url.startsWith(`/api/sessions/${SESSION_ID}`)) {
+        sessionFetchCount += 1
+        const status = sessionFetchCount === 1 ? 'analyzing' : 'completed'
+        return jsonResponse(makeSession(status))
+      }
+      if (url.startsWith(`/api/reports?sessionId=${SESSION_ID}`)) {
+        return reportFetchPromise
+      }
+      return Promise.reject(new Error(`Unexpected fetch call: ${url}`))
+    })
+    global.fetch = fetchMock as unknown as typeof fetch
+
+    render(<SessionDetailPage params={Promise.resolve({ id: SESSION_ID })} />)
+    await flush()
+    expect(screen.getByText('Analysis in Progress')).toBeInTheDocument()
+
+    // Fire the poll: session flips to 'completed', setSession() re-renders, and the
+    // polling effect's cleanup runs (status is no longer 'analyzing') — all fully
+    // flushed by the time this act() resolves, while the report fetch is still pending.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(4000)
+    })
+
+    // Now let the delayed report fetch resolve.
+    await act(async () => {
+      resolveReportFetch({ ok: true, json: () => Promise.resolve([makeReport()]) })
+      await vi.advanceTimersByTimeAsync(0)
+    })
+
+    expect(screen.getByText('Analysis Complete')).toBeInTheDocument()
+  })
+
   it('cancels the pending timeout on unmount and never fires the next poll', async () => {
     const fetchMock = createFetchMock(['analyzing'])
     global.fetch = fetchMock as unknown as typeof fetch
