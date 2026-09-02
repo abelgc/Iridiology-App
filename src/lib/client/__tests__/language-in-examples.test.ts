@@ -74,4 +74,32 @@ describe('SHARED_WRITER_RULES — translate English examples into the target lan
     expect(prompt).toContain('never copy an English word or phrase')
     expect(prompt).toContain('such as "fits with"')
   })
+
+  it('does not repeat the literal English connector phrase "fits with" as a copyable anchor', async () => {
+    createMock.mockImplementation((params: any) => {
+      if (params.system.includes('You are the Planner')) {
+        return implWith(
+          JSON.stringify({
+            dominantPattern: 'x', mainDriver: 'x', symptomFindingMap: [],
+            systemVerdicts: {}, crossSystemLinks: [], knownDiagnoses: [],
+            safety: { flags: [], constraint: null },
+          }),
+        )()
+      }
+      return implWith(JSON.stringify({})).call(null)
+    })
+
+    await rewriteReportForClient(mockReport, 'es', 'Rocío').catch(() => {})
+
+    const writerCall = createMock.mock.calls.find(
+      ([p]: any) => p.system.includes('You are Writer A'),
+    )
+    const prompt: string = writerCall![0].system
+    // The one mention inside "such as \"fits with\"" (the meta-instruction itself) is
+    // fine — what must be gone is every OTHER bare repetition that made it a copyable
+    // anchor (the ASSERT VS REDIRECT rule, the KNOWN DIAGNOSES soft example, and the
+    // SELF-CHECK item all used to quote it as a literal suggested phrase).
+    const occurrences = prompt.split('fits with').length - 1
+    expect(occurrences).toBe(1)
+  })
 })
