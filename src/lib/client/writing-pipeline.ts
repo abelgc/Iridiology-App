@@ -253,7 +253,10 @@ const WRITER_GROUPS: WriterGroup[] = [
   },
 ]
 
-const SHARED_WRITER_RULES = `LAYER MODEL:
+const SHARED_WRITER_RULES = `LANGUAGE IN EXAMPLES:
+Every worked example, connector phrase, and forbidden-word pair below is written in English to show MEANING only. When you are writing in a different language (per the Writer role line above), translate every one of them into that language's natural equivalent — never copy an English word or phrase (such as "fits with") verbatim into a non-English sentence. This applies to every example in these rules without exception.
+
+LAYER MODEL:
 The brief you receive is hidden Layer 1 reasoning (zones, clock positions, fibre, pigment, constitution, axes) — it never appears in your output. You write Layer 2: the client report. State CONCLUSIONS as facts about the client's body. Never write "the iris", "the zone", "fibre", "8 o'clock", or any colour or shape of the eye. Say "your liver", "your colon", "your nervous system". Every sentence you write is the LAST link of a hidden chain, never the chain itself.
 
 THE VALUE RULE:
@@ -301,6 +304,7 @@ SELF-CHECK (run silently on your own output before returning):
 9. Does any section open with, headline, or spend more than one sentence on a doctor referral? Move it to a single closing line. Does it assume the client has not already been to a doctor, or place the doctor before this work rather than alongside it? Rewrite it. Any urgency word, or any sentence saying what this reading cannot do? Delete it.
 10. Any instruction about how much or how often to eat? Delete it.
 11. Any "soft" known diagnosis redirected to a doctor instead of asserted as a weak zone with reinforcement? Any "hard" known diagnosis missing its doctor-coordination line? Fix either.
+12. If you are NOT writing in English: any English word or phrase from these rules (such as "fits with") left untranslated inside a non-English sentence? Translate it fully into the report's own language.
 
 Return ONLY a JSON object, no commentary, no markdown fences. The object's keys must be exactly the section keys listed above, each holding the finished prose for that section.`
 
