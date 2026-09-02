@@ -95,7 +95,7 @@ type BriefSystemKey = typeof BRIEF_SYSTEM_KEYS[number]
 // section_1, which Writer A also writes (see WRITER_GROUPS below).
 type KnownDiagnosisSection = BriefSystemKey | 'section_1_general_terrain'
 
-type KnownDiagnosis = { condition: string; assignedSection: KnownDiagnosisSection }
+type KnownDiagnosis = { condition: string; assignedSection: KnownDiagnosisSection; severity: 'soft' | 'hard' }
 
 type ClientReportBrief = {
   clientFirstName: string
@@ -131,13 +131,24 @@ function parseBrief(raw: string, clientFirstName: string): ClientReportBrief {
     // malformed item — worst case is that one diagnosis is silently omitted from every
     // writer rather than leaking into one it wasn't assigned to.
     knownDiagnoses: Array.isArray(parsed.knownDiagnoses)
-      ? parsed.knownDiagnoses.filter(
-          (d: unknown): d is KnownDiagnosis =>
-            typeof d === 'object' &&
-            d !== null &&
-            typeof (d as KnownDiagnosis).condition === 'string' &&
-            typeof (d as KnownDiagnosis).assignedSection === 'string',
-        )
+      ? parsed.knownDiagnoses
+          .filter(
+            (d: unknown): d is Record<string, unknown> =>
+              typeof d === 'object' &&
+              d !== null &&
+              typeof (d as Record<string, unknown>).condition === 'string' &&
+              typeof (d as Record<string, unknown>).assignedSection === 'string',
+          )
+          .map(
+            (d: Record<string, unknown>): KnownDiagnosis => ({
+              condition: d.condition as string,
+              assignedSection: d.assignedSection as KnownDiagnosisSection,
+              // Missing or malformed severity defaults to 'hard' — the more cautious
+              // option, so a Planner mistake degrades to the doctor-coordination line a
+              // hard diagnosis needs, instead of silently dropping it.
+              severity: d.severity === 'soft' ? ('soft' as const) : ('hard' as const),
+            }),
+          )
       : [],
     safety: {
       flags: Array.isArray(parsed.safety?.flags) ? parsed.safety.flags : [],
@@ -166,7 +177,7 @@ Return ONLY a JSON object, no commentary, no markdown fences, with exactly these
     "section_10_structural_integumentary": { "verdict": "needs-action" | "fine", "clue": string }
   },
   "crossSystemLinks": string[] — each cross-system connection stated ONCE, in plain internal language, e.g. "liver strain is compounding the digestive load",
-  "knownDiagnoses": { condition: string, assignedSection: string }[] — conditions the client themself mentioned about their own history (for example "the patient reports a history of...", "the patient states they have...") — NEVER a condition the report presents as something this iris reading found or detected, and never treat the client's own wording as proof a doctor diagnosed it. Only include it if the report's own wording clearly frames it as something the client already said about themselves. For each one, assignedSection must be the SINGLE section key (one of the systemVerdicts keys above, or "section_1_general_terrain") where the report's own text most directly and specifically ties that condition to a finding — not every section that could plausibly relate to it. Each condition may only be assigned to one section; if the report ties it to several, pick the section with the strongest, most specific textual link and leave it out of the others. Empty array if none, or if you are unsure.
+  "knownDiagnoses": { condition: string, assignedSection: string, severity: "soft" | "hard" }[] — conditions the client themself mentioned about their own history (for example "the patient reports a history of...", "the patient states they have...") — NEVER a condition the report presents as something this iris reading found or detected, and never treat the client's own wording as proof a doctor diagnosed it. Only include it if the report's own wording clearly frames it as something the client already said about themselves. For each one, assignedSection must be the SINGLE section key (one of the systemVerdicts keys above, or "section_1_general_terrain") where the report's own text most directly and specifically ties that condition to a finding — not every section that could plausibly relate to it. Each condition may only be assigned to one section; if the report ties it to several, pick the section with the strongest, most specific textual link and leave it out of the others. Empty array if none, or if you are unsure. severity must be "hard" for a named diagnosis with real medical stakes — doctor-confirmed, involves or led to surgery, a lab or hormone-based condition, or anything only a doctor can manage (example: "hyperparathyroidism", "diagnosed with diabetes"). severity must be "soft" for a historical, uncertain, or tendency-type self-report that is not a formal diagnosis with real medical stakes, even when it lines up with a real constitutional or functional weakness finding (example: "possible childhood asthma, unclear if still active", "occasional childhood eczema"). If genuinely unsure which it is, use "hard" — the more cautious option.
   "safety": {
     "flags": string[] — any of these you find real evidence for in the report: low body weight, low BMI, elderly and low weight, pregnancy, eating-disorder history, diabetes, any serious diagnosed condition. Empty array if none,
     "constraint": string | null — "gentle support only, no fasting or aggressive protocols" if flags is non-empty, otherwise null
@@ -267,7 +278,10 @@ Never write a sentence whose effect is to tell the client this reading is not up
 No urgency: never "soon", "without waiting", "promptly", "as soon as possible", "don't delay", "urgent", "immediately". A symptom the client reported is a reason to name the finding, not a reason to escalate.
 
 KNOWN DIAGNOSES:
-brief.knownDiagnoses only ever contains conditions already assigned to a section you are writing — if one appears in your brief, it belongs here, and it's fine, even reassuring, to mention it once: the underlying analysis only keeps a historical condition in knownDiagnoses when the iris independently showed a matching pattern in that specific zone, so this isn't just repeating what the client said. Reference it as something the client already mentioned about themselves, not as a fact a doctor confirmed — e.g. "Since you've mentioned [condition], and that lines up with what shows here, keep it in view with your doctor; this works alongside that." Never say "already diagnosed" or imply a doctor confirmed it — that status isn't something you or this reading can know. Do not reach for a known diagnosis to explain a different section just because it also feels related — if it isn't in your brief for that section, it wasn't assigned there.
+brief.knownDiagnoses only ever contains conditions already assigned to a section you are writing — if one appears in your brief, it belongs here, and it's fine, even reassuring, to mention it once: the underlying analysis only keeps a historical condition in knownDiagnoses when the iris independently showed a matching pattern in that specific zone, so this isn't just repeating what the client said.
+If severity is "soft": assert it as a weak zone consistent with what they mentioned, and point to this report's own recommendations for that zone as the way to reinforce it — never redirect to a doctor for a soft entry. e.g. "Since you've mentioned [condition], this fits with a weak zone here — the [organ] support in your recommendations below is built for exactly this."
+If severity is "hard": reference it as something the client already mentioned about themselves, not as a fact a doctor confirmed, and close with a single doctor-coordination line — e.g. "Since you've mentioned [condition], and that lines up with what shows here, keep it in view with your doctor; this works alongside that." Never say "already diagnosed" or imply a doctor confirmed it — that status isn't something you or this reading can know.
+Do not reach for a known diagnosis to explain a different section just because it also feels related — if it isn't in your brief for that section, it wasn't assigned there.
 
 SAFETY GATE:
 If brief.safety.flags is non-empty, do not suggest fasting, aggressive cleanses, parasite protocols, or protein restriction in any section you write. Use gentle, moderate language for any lifestyle direction.
@@ -286,6 +300,7 @@ SELF-CHECK (run silently on your own output before returning):
 8. Any generic "needs attention" / "requires attention" filler, or any condition asserted as "already diagnosed"? Fix both per the rules above.
 9. Does any section open with, headline, or spend more than one sentence on a doctor referral? Move it to a single closing line. Does it assume the client has not already been to a doctor, or place the doctor before this work rather than alongside it? Rewrite it. Any urgency word, or any sentence saying what this reading cannot do? Delete it.
 10. Any instruction about how much or how often to eat? Delete it.
+11. Any "soft" known diagnosis redirected to a doctor instead of asserted as a weak zone with reinforcement? Any "hard" known diagnosis missing its doctor-coordination line? Fix either.
 
 Return ONLY a JSON object, no commentary, no markdown fences. The object's keys must be exactly the section keys listed above, each holding the finished prose for that section.`
 
