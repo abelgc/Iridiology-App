@@ -39,7 +39,7 @@ export default function DashboardPage() {
         // Fetch recent sessions
         const { data: sessions, error: sessionsError } = await supabase
           .from('sessions')
-          .select('id, patient_id, created_at, patients(name)')
+          .select('id, patient_id, created_at, patients(full_name)')
           .order('created_at', { ascending: false })
           .limit(5)
 
@@ -105,7 +105,7 @@ export default function DashboardPage() {
               <div key={session.id} className="flex items-center justify-between p-3 bg-zinc-50 rounded">
                 <div>
                   <p className="font-medium">
-                    {session.patients?.name || 'Unknown Patient'}
+                    {session.patients?.full_name || 'Unknown Patient'}
                   </p>
                   <p className="text-sm text-zinc-600">
                     {new Date(session.created_at).toLocaleDateString()}
