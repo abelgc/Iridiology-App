@@ -140,7 +140,7 @@ export default function ReportViewPage({ params }: { params: Promise<{ id: strin
         )}
       </div>
 
-      <ReportViewer report={report} corrections={corrections} />
+      <ReportViewer report={report} corrections={corrections} patientFullName={patient?.full_name} />
 
       {/* Corrections section */}
       {corrections.length > 0 && (

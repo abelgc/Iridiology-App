@@ -66,6 +66,8 @@ function makeReport(): Report {
     report_content: { ...NATIVE_CONTENT },
     report_version: 1,
     is_edited: false,
+    client_report_content: null,
+    client_report_translations: {},
   }
 }
 

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Printer, Loader2 } from 'lucide-react'
+import { Printer, Loader2, FileDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ReportSection } from './report-section'
 import { getOrderedSectionKeys, type ReportContent } from '@/types/report'
@@ -11,6 +11,7 @@ import Link from 'next/link'
 interface ReportViewerProps {
   report: Report
   corrections?: ReportCorrection[]
+  patientFullName?: string
 }
 
 const UK_FLAG = (
@@ -45,7 +46,7 @@ const VIEWER_LANGS = [
   { code: 'de' as const, label: 'DE', flag: DE_FLAG },
 ]
 
-export function ReportViewer({ report, corrections = [] }: ReportViewerProps) {
+export function ReportViewer({ report, corrections = [], patientFullName }: ReportViewerProps) {
   const [localContent, setLocalContent] = useState<ReportContent>(report.report_content)
   const [translatedCache, setTranslatedCache] = useState<Partial<Record<string, Partial<ReportContent>>>>({})
   const [translatingTarget, setTranslatingTarget] = useState<string | null>(null)
@@ -68,7 +69,35 @@ export function ReportViewer({ report, corrections = [] }: ReportViewerProps) {
     {} as Record<string, number>,
   )
 
+  const [isDownloadingHandout, setIsDownloadingHandout] = useState(false)
+  const [handoutError, setHandoutError] = useState<string | null>(null)
+
   const handlePrint = () => window.print()
+
+  const handleDownloadClientHandout = async () => {
+    setIsDownloadingHandout(true)
+    setHandoutError(null)
+    try {
+      const res = await fetch(`/api/reports/${report.id}/client-voice`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lang, fullName: patientFullName ?? null }),
+      })
+      if (!res.ok) throw new Error('Failed to generate client handout')
+      const data = await res.json()
+      const blob = new Blob([data.markdown], { type: 'text/markdown' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${(patientFullName ?? 'client').replace(/\s+/g, '-').toLowerCase()}-client-report-${lang}.md`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      setHandoutError(err instanceof Error ? err.message : 'Failed to generate client handout')
+    } finally {
+      setIsDownloadingHandout(false)
+    }
+  }
 
   const handleSwitchLang = async (target: 'en' | 'es' | 'de') => {
     if (target === 'en') { setLang('en'); return }
@@ -159,6 +188,10 @@ export function ReportViewer({ report, corrections = [] }: ReportViewerProps) {
           <Printer className="w-4 h-4 mr-2" />
           Print
         </Button>
+        <Button variant="outline" size="sm" onClick={handleDownloadClientHandout} disabled={isDownloadingHandout}>
+          {isDownloadingHandout ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileDown className="w-4 h-4 mr-2" />}
+          Client Handout (.md)
+        </Button>
         <div className="ml-auto flex items-center gap-1">
           {VIEWER_LANGS.map(({ code, label, flag }, i) => (
             <button
@@ -185,6 +218,9 @@ export function ReportViewer({ report, corrections = [] }: ReportViewerProps) {
 
       {translateError && (
         <p className="text-sm text-red-600 no-print">{translateError}</p>
+      )}
+      {handoutError && (
+        <p className="text-sm text-red-600 no-print">{handoutError}</p>
       )}
 
       <div className="space-y-2">

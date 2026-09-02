@@ -34,6 +34,8 @@ export interface Report {
   report_content: ReportContent
   report_version: number
   is_edited: boolean
+  client_report_content: ReportContent | null
+  client_report_translations: Record<string, ReportContent>
 }
 
 export interface ReportCorrection {
