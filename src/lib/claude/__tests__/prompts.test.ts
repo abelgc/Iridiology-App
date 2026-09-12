@@ -8,6 +8,7 @@ import {
   IRIDOLOGY_COLOUR_FIBRE_SCLERA_GUIDE,
   IRIDOLOGY_IRIS_TERRITORY_MAP,
   IRIDOLOGY_VITAMIN_MINERAL_HERB_MAP,
+  IRIDOLOGY_LACUNAE_AND_SIGN_CATALOGUE,
   buildChatSystemPrompt,
   getStandardAnalysisSystemPrompt,
 } from '../prompts'
@@ -58,6 +59,41 @@ describe('Claude Prompts', () => {
       // Examples, not a closed list — the AI must interpret any colour it sees:
       expect(g).toContain('not a fixed or exhaustive list')
       expect(g).toContain('ANY colour')
+    })
+  })
+
+  describe('IRIDOLOGY_LACUNAE_AND_SIGN_CATALOGUE', () => {
+    it("REGRESSION (practitioner's IRIDOLOGY TEXTBOOK notes, 2026-09-12): names specific lacuna shapes with their own clinical meaning, not just generic open/closed lacunae", () => {
+      const c = IRIDOLOGY_LACUNAE_AND_SIGN_CATALOGUE
+      expect(c).toContain('Asparagus lacuna')
+      expect(c).toContain('Roof tile or stair-step lacuna')
+      expect(c).toContain('Shoe lacuna')
+      expect(c).toContain('Schnabel or beak lacuna')
+      expect(c).toContain('Medusa or jellyfish lacuna')
+    })
+
+    it('instructs never asserting malignancy or a specific disease from a lacuna shape alone, and never asserts one itself', () => {
+      const c = IRIDOLOGY_LACUNAE_AND_SIGN_CATALOGUE
+      expect(c).toContain('Never name "cancer", "malignancy", or any specific disease from a lacuna shape alone')
+      expect(c).not.toContain('tendency toward malignancy')
+      expect(c).not.toContain('possible malignancy')
+      expect(c).not.toContain('sign of cancer')
+      expect(c).toContain('warranting closer monitoring')
+    })
+
+    it('adds named signs the base inventory did not previously interpret: scurf rim, central heterochromia, pinguecula, funnel, cords, defect signs', () => {
+      const c = IRIDOLOGY_LACUNAE_AND_SIGN_CATALOGUE
+      expect(c).toContain('Scurf rim')
+      expect(c).toContain('Central heterochromia')
+      expect(c).toContain('Pinguecula')
+      expect(c).toContain('Funnel')
+      expect(c).toContain('Cords')
+      expect(c).toContain('Defect signs')
+    })
+
+    it('is woven into the standard analysis prompt as supplementary evidence, alongside the existing catalogues', () => {
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('IRIDOLOGY LACUNAE TYPES AND ADDITIONAL SIGNS')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Scurf rim')
     })
   })
 

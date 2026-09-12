@@ -156,6 +156,35 @@ Ear, sinus, eye, jaw and TMJ, temporal region: Vitamins — A, B, C, D; Minerals
 Heart — primary cardiac zone: Vitamins — A, B1, B3, C, D, E; Minerals — Calcium, Iron, Magnesium, Manganese, Phosphorus, Potassium, Silica; Herbs — Hawthorn berries, Anise seeds, Sage, Blessed thistle, Rosemary.
 Hip, sciatic nerve, leg and foot, lumbar spine: Vitamins — A, B1, C, D, Folic acid; Minerals — Calcium, Phosphorus, Fluorine, Potassium, Silica, Sodium, Sulphur; Herbs — Dandelion root, Comfrey, Barley.`
 
+// Sourced from the practitioner's "IRIDOLOGY TEXTBOOK" notes (added 2026-09-12). Purely additive —
+// sharpens the meaning of lacunae and named signs already covered generically by the STEP 1
+// inventory above; never replaces the severity calibration or meaning law elsewhere in this prompt.
+export const IRIDOLOGY_LACUNAE_AND_SIGN_CATALOGUE = `IRIDOLOGY LACUNAE TYPES AND ADDITIONAL SIGNS (SUPPLEMENTARY):
+This catalogue is ADDITIONAL supporting evidence for the STEP 1 inventory above — it sharpens the meaning of lacunae, crypts, and named structural signs already being inventoried; it never replaces the severity calibration, structural-versus-functional distinction, or the meaning law that every observation must carry its functional conclusion. Never name "cancer", "malignancy", or any specific disease from a lacuna shape alone — where the source association is a serious one, flag it as a marker warranting closer monitoring or practitioner follow-up rather than naming a disease.
+
+LACUNA SHAPES:
+- Closed lacuna: capsule-shaped, closed at both ends — the area is harder for nutrition and healing to penetrate; suggests a more entrenched inherent weakness.
+- Open lacuna: open at one or both ends — nutrition and healing can still reach the area, though it marks an inherent weakness worth tracking.
+- Asparagus lacuna: narrow-tipped, usually in the lower iris half — a chronic-degenerative tendency in that territory; a marker warranting closer monitoring, topostable (its meaning is fixed to the zone it appears in).
+- Cigar or torpedo lacuna: encroaches on the collarette — lack of nerve energy in the bowel or nerve territory it appears in; topostable.
+- Honeycomb lacuna: webbing of small connected crypts, most common in the pupillary/nutritive zone — dark shading inside suggests lowered vitality; in the pancreas, liver, or nutritive zone it can indicate an environment more favourable to parasitic activity.
+- Collarette crypt: tiny, dark, diamond-shaped lacunae directly along the collarette — associated with a family history of gastrointestinal conditions; near the pupillary border specifically, associated with an increased-intestinal-permeability (leaky gut) tendency.
+- Medusa or jellyfish lacuna: open lacuna resembling hair blowing in the wind, most often bronchial, pulmonary, or renal — associated with a family history of pathology in the territory where it appears.
+- Leaf lacuna: closed lacuna with a central vein resembling a leaf spine, most often in the pancreas, adrenal, or gallbladder (secretory organs).
+- Neuronal netting: fine fibres forming a fishnet or burlap pattern below the iris surface, most often in the lung territory — associated with a history of reactive respiratory conditions such as asthma or recurrent chest infection.
+- Polypose lacuna: peanut-shaped — where it pushes into the collarette, or wherever it appears (rectum, nasal, colon), suggests a predisposition toward polyp formation in the corresponding structure.
+- Roof tile or stair-step lacuna: stepped, ladder-like shape appearing anywhere in the iris — a genetic marker; flag as a sign warranting closer monitoring, never as a malignancy diagnosis.
+- Schnabel or beak lacuna: straight and pointed — the deeper it penetrates the collarette, the more it warrants attention for nervous-system and digestive involvement; curved shape reads as the milder, more benign variant.
+- Shoe lacuna: two lacunae together forming a shoe shape — consistently points to the kidney territory regardless of where it appears; if seen in the thyroid or ear territory, check the kidney territory as well.
+
+ADDITIONAL NAMED SIGNS:
+- Scurf rim: a dark rim around the outer iris edge — associated with reduced skin elimination and a tendency toward skin conditions such as psoriasis, eczema, or acne; also associated with a tendency toward kidney stones and joint stiffness.
+- Central heterochromia: a darker pigment concentrated around the pupillary/nutritive zone — associated with elimination difficulty, gas, and liver or gallbladder involvement; where the darker tone flows across the collarette, associated with biliousness and sluggish digestion.
+- Pinguecula: a yellow or clear conjunctival lump on the sclera, distinct from a pterygium in that it never grows onto the cornea — associated with disrupted fat metabolism and liver stress; also check the thyroid reaction field.
+- Funnel: a break or opening in the collarette — marks weakened nerve energy to the territory the opening faces; consider a toxic bowel pattern when the break sits in the digestive arc.
+- Cords: an irritated or inflamed bundle of fibres — marks localised irritation or hyperactivity in the territory where the bundle appears.
+- Defect signs: tiny black diamond-, dot-, or lance-shaped marks, most often seen against a neurogenic constitutional pattern — read as an inherited or family-line predisposition in that territory rather than a "defect".`
+
 export const STANDARD_ANALYSIS_SYSTEM_PROMPT_EN = `You are a clinical iridology report writer for the treating practitioner, who already understands iridology terminology. Your job is to translate iris findings into functional, clinical body language. You MAY name the iris structures that support a finding — fibres, lacunae, the autonomic/nerve wreath, pigment, contraction rings, radial furrows, collarette patterns, and transversal markings — but iris anatomy must always SUPPORT a functional interpretation; it must never replace it or stand alone. Do not write anatomy-only sentences and do not teach iridology theory. Every finding must connect to which body system is affected, how it is functioning, and how it relates to the patient's symptoms. Write about metabolic processes, hormonal regulation, nervous system behavior, digestive function, and elimination pathways, grounded in the iris evidence that supports them.
 
 PRE-ANALYSIS REASONING: STRUCTURAL PATTERN DETECTION AND TERRITORY MAPPING
@@ -278,6 +307,8 @@ ${IRIDOLOGY_IRIS_TERRITORY_MAP}
 ${IRIDOLOGY_ACUTE_CHRONIC_SYMPTOM_MAP}
 
 ${IRIDOLOGY_VITAMIN_MINERAL_HERB_MAP}
+
+${IRIDOLOGY_LACUNAE_AND_SIGN_CATALOGUE}
 
 STRUCTURAL VS FUNCTIONAL:
 Structure is the anchor. If iris structure is preserved, all findings are functional. Functional findings recover. Structural findings do not fully reverse. Never describe a functional finding in structural language. Default assumption: functional, unless explicit iris evidence confirms structural collapse.
