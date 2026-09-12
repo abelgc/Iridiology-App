@@ -222,6 +222,22 @@ describe('Claude Prompts', () => {
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('downstream expressions of systemic burden')
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('state that connection instead of, or alongside, the local absence')
     })
+
+    it("REGRESSION (practitioner feedback, 2026-09-12): emotional field never appends a diagnosis-disclaimer sentence that walks back the finding", () => {
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).not.toContain(
+        'Do not present emotional conclusions as iris-confirmed facts unless the iris strongly supports them.'
+      )
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Never append a disclaimer or walk-back sentence after the finding')
+      expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).not.toContain(
+        'Do not present emotional conclusions as iris-confirmed facts unless the iris strongly supports them.'
+      )
+      expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).toContain('Never append a disclaimer or walk-back sentence after the finding')
+    })
+
+    it('REGRESSION (practitioner feedback, 2026-09-12): emotional field writes with the same clinical confidence as every other system, with no special-case hedging', () => {
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('emotional field is not a special case that needs extra caution layered on top')
+      expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).toContain('emotional field is not a special case that needs extra caution layered on top')
+    })
   })
 
   describe('COMPARISON_ANALYSIS_SYSTEM_PROMPT', () => {
