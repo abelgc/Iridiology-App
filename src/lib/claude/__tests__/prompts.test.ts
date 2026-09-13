@@ -241,9 +241,19 @@ describe('Claude Prompts', () => {
 
     it("REGRESSION (Ana Iranzo real report, 2026-09-13): never lets a section be built around image quality — requires a best-effort reading of whatever is visible instead", () => {
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('PARTIAL VISIBILITY')
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('never earn more than a single brief clause per section')
-      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('something is always visible')
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('never let the request substitute for the clinical reading itself')
+    })
+
+    it("REGRESSION (Ana Iranzo second real report, 2026-09-13): the visibility caveat is allowed once in the whole report, in section_1_general_terrain only — not once per section", () => {
+      const p = STANDARD_ANALYSIS_SYSTEM_PROMPT
+      expect(p).toContain('earn at most ONE brief mention across the entire report')
+      expect(p).toContain('section_1_general_terrain only')
+      expect(p).toContain('Reason forward instead')
+      // The exact real BAD example from the second report (section_7_hepatic) — still restates
+      // the visibility gap instead of reasoning forward from the constitutional finding already
+      // on the table:
+      expect(p).toContain('not directly exposed in either image, but')
+      expect(p).not.toContain('never earn more than a single brief clause per section')
     })
   })
 
