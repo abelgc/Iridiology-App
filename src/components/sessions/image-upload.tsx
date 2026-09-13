@@ -4,10 +4,14 @@ import { useState, useRef, useEffect } from 'react'
 import { Upload, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { computeCenterCrop } from '@/lib/image-crop'
+import { autoContrastInPlace } from '@/lib/image-enhance'
 
 // Conservative centre-crop ratio applied before resize — see the P2 image-pipeline diagnosis
-// referenced by the iridology-app-map skill for why this exists.
-const CROP_KEEP_RATIO = 0.75
+// referenced by the iridology-app-map skill for why this exists. Raised from 0.75 to 0.9
+// (2026-09-13) after a real case (Ana Iranzo) showed the tighter crop clipping visible iris
+// area in an off-centre, ptosis-affected capture — this still trims obvious periocular
+// margin without risking as much of the iris itself on imperfect framing.
+const CROP_KEEP_RATIO = 0.9
 
 interface ImageUploadProps {
   label: string
@@ -81,7 +85,13 @@ export function ImageUpload({ label, value, onChange, required = false }: ImageU
       const canvas = document.createElement('canvas')
       canvas.width = width
       canvas.height = height
-      canvas.getContext('2d')!.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, width, height)
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, width, height)
+      // Auto-contrast pass: compensates for underexposed/shadow-heavy captures (eyelid
+      // shadow, poor lighting) before the image reaches the model — see image-enhance.ts.
+      const imageData = ctx.getImageData(0, 0, width, height)
+      autoContrastInPlace(imageData.data)
+      ctx.putImageData(imageData, 0, 0)
       const base64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1]
       onChange(base64)
     }

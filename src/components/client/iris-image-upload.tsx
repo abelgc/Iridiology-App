@@ -7,12 +7,16 @@ import {
   readImageDimensions,
 } from '@/lib/client/image-validation'
 import { computeCenterCrop } from '@/lib/image-crop'
+import { autoContrastInPlace } from '@/lib/image-enhance'
 
 type Eye = 'right' | 'left'
 
 // Conservative centre-crop ratio applied before resize — see the P2 image-pipeline diagnosis
-// referenced by the iridology-app-map skill for why this exists.
-const CROP_KEEP_RATIO = 0.75
+// referenced by the iridology-app-map skill for why this exists. Raised from 0.75 to 0.9
+// (2026-09-13) after a real case (Ana Iranzo) showed the tighter crop clipping visible iris
+// area in an off-centre, ptosis-affected capture — this still trims obvious periocular
+// margin without risking as much of the iris itself on imperfect framing.
+const CROP_KEEP_RATIO = 0.9
 
 async function compressImage(file: File, maxDim = 1536, quality = 0.8): Promise<string> {
   const url = URL.createObjectURL(file)
@@ -35,6 +39,11 @@ async function compressImage(file: File, maxDim = 1536, quality = 0.8): Promise<
       const ctx = canvas.getContext('2d')
       if (!ctx) { reject(new Error('canvas_unavailable')); return }
       ctx.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, canvas.width, canvas.height)
+      // Auto-contrast pass: compensates for underexposed/shadow-heavy captures (eyelid
+      // shadow, poor lighting) before the image reaches the model — see image-enhance.ts.
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      autoContrastInPlace(imageData.data)
+      ctx.putImageData(imageData, 0, 0)
       canvas.toBlob(
         (blob) => {
           if (!blob) { reject(new Error('compress_failed')); return }

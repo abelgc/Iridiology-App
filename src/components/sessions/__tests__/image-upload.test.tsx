@@ -18,7 +18,11 @@ beforeAll(() => {
   vi.stubGlobal('Image', MockImage)
   URL.createObjectURL = vi.fn(() => 'blob:mock') as unknown as typeof URL.createObjectURL
   URL.revokeObjectURL = vi.fn() as unknown as typeof URL.revokeObjectURL
-  HTMLCanvasElement.prototype.getContext = vi.fn(() => ({ drawImage: vi.fn() })) as unknown as HTMLCanvasElement['getContext']
+  HTMLCanvasElement.prototype.getContext = vi.fn(() => ({
+    drawImage: vi.fn(),
+    getImageData: vi.fn(() => ({ data: new Uint8ClampedArray(4) })),
+    putImageData: vi.fn(),
+  })) as unknown as HTMLCanvasElement['getContext']
   HTMLCanvasElement.prototype.toDataURL = vi.fn(() => 'data:image/jpeg;base64,TESTBASE64')
 })
 
