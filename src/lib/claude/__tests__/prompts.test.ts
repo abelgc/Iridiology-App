@@ -60,6 +60,24 @@ describe('Claude Prompts', () => {
       expect(g).toContain('not a fixed or exhaustive list')
       expect(g).toContain('ANY colour')
     })
+
+    it('REGRESSION (Jensen reference books, 2026-09-13): reads the four-stage inflammation progression using the palette that matches the iris base colour — brown irides use a yellow-based palette, not a blue-eye vocabulary', () => {
+      const g = IRIDOLOGY_COLOUR_FIBRE_SCLERA_GUIDE
+      expect(g).toContain('INFLAMMATION STAGE BY BASE IRIS COLOUR')
+      expect(g).toContain('very light yellow')
+      expect(g).toContain('cloudy yellow')
+      expect(g).toContain('dull dark yellow-brown')
+      expect(g).toContain('greyish-white')
+      expect(g).toContain('not a photography failure')
+    })
+
+    it('REGRESSION (Jensen reference books, 2026-09-13): scopes the safety boundary to all eye pathology, not just jaundice, and excludes physical artifacts from iris-sign interpretation', () => {
+      const g = IRIDOLOGY_COLOUR_FIBRE_SCLERA_GUIDE
+      expect(g).toContain('Iris signs never indicate pathology of the eye itself')
+      expect(g).toContain('cataract')
+      expect(g).toContain('glaucoma')
+      expect(g).toContain('surgical scar')
+    })
   })
 
   describe('IRIDOLOGY_LACUNAE_AND_SIGN_CATALOGUE', () => {
@@ -94,6 +112,21 @@ describe('Claude Prompts', () => {
     it('is woven into the standard analysis prompt as supplementary evidence, alongside the existing catalogues', () => {
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('IRIDOLOGY LACUNAE TYPES AND ADDITIONAL SIGNS')
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Scurf rim')
+    })
+
+    it("REGRESSION (Jensen reference books, 2026-09-13): adds named signs from Jensen's catalogue not previously covered — absorption ring, stomach acidity rings, lymphatic rosary, sodium vs cholesterol ring, venous congestion, bowel wall signs", () => {
+      const c = IRIDOLOGY_LACUNAE_AND_SIGN_CATALOGUE
+      expect(c).toContain('Absorption ring')
+      expect(c).toContain('Overacid stomach ring')
+      expect(c).toContain('Underacid stomach ring')
+      expect(c).toContain('Lymphatic rosary')
+      expect(c).toContain('Sodium ring')
+      expect(c).toContain('Cholesterol ring')
+      expect(c).toContain('Venous congestion')
+      expect(c).toContain('Bowel adhesions')
+      expect(c).toContain('Ballooned bowel')
+      expect(c).toContain('Bowel stricture')
+      expect(c).toContain('Fishhook stomach')
     })
   })
 
@@ -254,6 +287,24 @@ describe('Claude Prompts', () => {
       // on the table:
       expect(p).toContain('not directly exposed in either image, but')
       expect(p).not.toContain('never earn more than a single brief clause per section')
+    })
+
+    it("REGRESSION (Jensen reference books, 2026-09-13): a murky/dense brown iris gets Jensen's own difficult-eyes procedure — abstain from guessing the cause, anchor on coarse landmarks first, calibrate darkness per individual", () => {
+      const p = STANDARD_ANALYSIS_SYSTEM_PROMPT
+      expect(p).toContain('DIFFICULT EYES')
+      expect(p).toContain('do not guess at the cause')
+      expect(p).toContain('coarse landmarks')
+      expect(p).toContain('Calibrate darkness expectations to this individual')
+    })
+
+    it('REGRESSION (Jensen reference books, 2026-09-13): requires a corroborating pattern across a system before stating a tendency with confidence, not a single isolated sign', () => {
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('Corroboration')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('single isolated sign')
+    })
+
+    it('REGRESSION (Jensen reference books, 2026-09-13): excludes physical artifacts (scars, surgical remnants, foreign bodies) from the sign inventory before interpreting anything', () => {
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('ARTIFACT EXCLUSION')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('surgical scar')
     })
   })
 
