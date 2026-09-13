@@ -238,6 +238,13 @@ describe('Claude Prompts', () => {
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('emotional field is not a special case that needs extra caution layered on top')
       expect(TECHNICAL_REVIEW_SYSTEM_PROMPT).toContain('emotional field is not a special case that needs extra caution layered on top')
     })
+
+    it("REGRESSION (Ana Iranzo real report, 2026-09-13): never lets a section be built around image quality — requires a best-effort reading of whatever is visible instead", () => {
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('PARTIAL VISIBILITY')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('never earn more than a single brief clause per section')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('something is always visible')
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('never let the request substitute for the clinical reading itself')
+    })
   })
 
   describe('COMPARISON_ANALYSIS_SYSTEM_PROMPT', () => {

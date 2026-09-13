@@ -163,6 +163,30 @@ describe('Jyotish Emotional Field Enhancement', () => {
       expect(result).toBe(false)
     })
 
+    it('REGRESSION (Ana Iranzo real report, 2026-09-13): returns true for a real HH:MM:SS clock time from the practitioner patient form, which the literal morning/evening check could never match', () => {
+      const data = createAstrologyData({ time_of_day: '14:30:00' })
+      const result = shouldEnhanceWithJyotish(data)
+      expect(result).toBe(true)
+    })
+
+    it('REGRESSION (Ana Iranzo real report, 2026-09-13): returns true for midnight (00:00:00) — a real birth time that must not be silently skipped', () => {
+      const data = createAstrologyData({ time_of_day: '00:00:00' })
+      const result = shouldEnhanceWithJyotish(data)
+      expect(result).toBe(true)
+    })
+
+    it('accepts an HH:MM time with no seconds', () => {
+      const data = createAstrologyData({ time_of_day: '09:15' })
+      const result = shouldEnhanceWithJyotish(data)
+      expect(result).toBe(true)
+    })
+
+    it('still rejects a non-time, non-morning/evening string', () => {
+      const data = createAstrologyData({ time_of_day: '25:99:00' })
+      const result = shouldEnhanceWithJyotish(data)
+      expect(result).toBe(false)
+    })
+
     it('should return false when multiple fields are missing', () => {
       const data: Partial<JyotishEnhancementData> = {
         date_of_birth: '1990-01-15',

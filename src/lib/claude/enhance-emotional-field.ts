@@ -16,7 +16,17 @@ interface ChakraRecommendation {
   reasoning: string
 }
 
+const TIME_OF_DAY_PATTERN = /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/
+
 export function shouldEnhanceWithJyotish(data: any): boolean {
+  // The /client intake form saves the literal string 'morning' or 'evening'. The
+  // /practitioner patient form instead saves a real clock time ("00:00:00", "14:30:00"),
+  // which the literal check alone could never match — accept both, including midnight.
+  const hasValidTimeOfDay =
+    data?.time_of_day === 'morning' ||
+    data?.time_of_day === 'evening' ||
+    (typeof data?.time_of_day === 'string' && TIME_OF_DAY_PATTERN.test(data.time_of_day))
+
   return !!(
     data?.date_of_birth &&
     typeof data.date_of_birth === 'string' &&
@@ -24,7 +34,7 @@ export function shouldEnhanceWithJyotish(data: any): boolean {
     typeof data.country_of_birth === 'string' &&
     data?.city_of_birth &&
     typeof data.city_of_birth === 'string' &&
-    (data?.time_of_day === 'morning' || data?.time_of_day === 'evening')
+    hasValidTimeOfDay
   )
 }
 
