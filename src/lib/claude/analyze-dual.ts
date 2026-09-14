@@ -64,6 +64,12 @@ export async function analyzeIrisDual(
   const providers = options.providers ?? (await getBothProviders())
 
   if (!providers) {
+    // getBothProviders() returns null whenever active_provider !== 'both' or either API key is
+    // missing — this silently drops dual-model analysis + synthesis down to a single provider.
+    // Log it loudly: nothing else distinguishes this path from full dual-mode in the report itself.
+    console.warn(
+      '[analyzeIrisDual] getBothProviders() returned null — falling back to SINGLE-PROVIDER analysis (no synthesis). Check the settings table: active_provider must be exactly "both" and both API keys must be set.',
+    )
     const { analyzeIris } = await import('./analyze')
     const singleResult = await analyzeIris(request, language, undefined, forceLanguage)
     return finalizeReport(await getAIProvider(), singleResult)
@@ -128,15 +134,15 @@ export async function analyzeIrisDual(
 === ANALYSIS A (YOUR OWN — structural and stylistic foundation) ===
 ${claudeResult.value.text}
 
-=== ANALYSIS B (GPT-4o — mine for bold clinical assertions only) ===
+=== ANALYSIS B (GPT-4o — mine for clinical assertions and concrete visual detail) ===
 ${openaiResult.value.text}
 
 === SYNTHESIS INSTRUCTIONS ===
 1. Start from Analysis A. Its JSON structure, writing style, and clinical format are correct.
-2. From Analysis B, extract ONLY statements that are:
+2. From Analysis B, extract:
    - A specific, named clinical finding or assertion ("hepatic congestion", "adrenal stress markers", "lymphatic stasis in zone 4")
-   - Absent or understated in Analysis A
-   - A clinical claim — NOT a pure visual description ("the collarette is slightly irregular" = discard). A colour or scleral sign tied to a health meaning (e.g. brown over the liver area, or scleral yellowing → liver/gallbladder) IS a clinical finding — keep it.
+   - A concrete visual fact — colour name, fibre texture, shape, or structure — that is absent or less specific in Analysis A, even if Analysis B did not spell out its meaning in the same clause; supply the functional meaning yourself when integrating it, rather than discarding the fact for lacking an explicit tag.
+   - Discard only genuine padding: hedging, meta-commentary about the analysis itself, or a repeat of something Analysis A already states with equal or greater specificity.
 3. Integrate extracted findings into the appropriate sections of Analysis A, phrased in your voice.
 4. Where both analyses agree on a finding, state it with stronger confidence.
 5. Where they contradict, keep Analysis A's position and note the discrepancy in one clause.

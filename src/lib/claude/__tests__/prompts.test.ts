@@ -302,6 +302,34 @@ describe('Claude Prompts', () => {
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('single isolated sign')
     })
 
+    it('REGRESSION (Ana Iranzo third real report, 2026-09-14): an unexposed territory is not treated as an uncorroborated isolated sign — Corroboration must not become a new excuse to restate visibility gaps', () => {
+      const p = STANDARD_ANALYSIS_SYSTEM_PROMPT
+      expect(p).toContain('an unexposed territory is not an uncorroborated isolated sign')
+      expect(p).toContain('without citing the absence as a reason for caution')
+    })
+
+    it('REGRESSION (Ana Iranzo third real report, 2026-09-14): DIFFICULT EYES ties directly back to PARTIAL VISIBILITY and bans narrating the difficulty itself, instead of reinforcing a separate "hard case" framing', () => {
+      const p = STANDARD_ANALYSIS_SYSTEM_PROMPT
+      expect(p).toContain('do not narrate the difficulty as a separate observation')
+      expect(p).toContain('not itself something to mention in the output')
+      // Old wording that re-primed "difficulty" narration every time this section fired:
+      expect(p).not.toContain('patience will be necessary')
+      expect(p).not.toContain('Treat a difficult eye as a lower-confidence, more provisional case, not an empty one.')
+    })
+
+    it('REGRESSION (Ana Iranzo third real report, 2026-09-14): SECTION DISCIPLINE no longer bans naming multiple concrete visual observations per section, only repetition and anatomy-without-interpretation', () => {
+      const p = STANDARD_ANALYSIS_SYSTEM_PROMPT
+      expect(p).toContain('Name the concrete visual facts you actually see')
+      expect(p).not.toContain('Avoid excessive narration of iris morphology.')
+    })
+
+    it('REGRESSION (Ana Iranzo third real report, 2026-09-14): the MEANING LAW requires naming the plain, ordinary colour word (e.g. hazel) alongside any constitutional-family label, not the jargon label alone', () => {
+      const g = IRIDOLOGY_COLOUR_FIBRE_SCLERA_GUIDE
+      expect(g).toContain('Name the colour in plain, ordinary terms')
+      expect(g).toContain('hazel')
+      expect(g).toContain('is not a substitute for stating the actual colour observed')
+    })
+
     it('REGRESSION (Jensen reference books, 2026-09-13): excludes physical artifacts (scars, surgical remnants, foreign bodies) from the sign inventory before interpreting anything', () => {
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('ARTIFACT EXCLUSION')
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('surgical scar')
