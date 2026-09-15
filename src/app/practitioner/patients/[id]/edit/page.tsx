@@ -96,7 +96,7 @@ export default function PatientEditPage({ params }: PatientEditPageProps) {
 
   return (
     <div className="p-8">
-      <div className="max-w-2xl">
+      <div className="max-w-3xl">
         <h1 className="mb-8 text-3xl font-bold">Edit Patient</h1>
         <Card>
           <CardContent className="pt-6">

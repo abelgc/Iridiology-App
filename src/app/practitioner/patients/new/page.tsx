@@ -45,7 +45,7 @@ export default function NewPatientPage() {
 
   return (
     <div className="p-8">
-      <div className="max-w-2xl">
+      <div className="max-w-3xl">
         <h1 className="mb-8 text-3xl font-bold">Create New Patient</h1>
         <Card>
           <CardContent className="pt-6">

@@ -24,6 +24,7 @@ import {
   FormControl,
   FormMessage,
 } from '@/components/ui/form'
+import { Separator } from '@/components/ui/separator'
 
 interface PatientFormProps {
   patient?: Patient
@@ -95,7 +96,7 @@ export function PatientForm({ patient, onSubmit, isLoading }: PatientFormProps) 
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
         <FormField
           control={form.control}
           name="full_name"
@@ -110,166 +111,182 @@ export function PatientForm({ patient, onSubmit, isLoading }: PatientFormProps) 
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="date_of_birth"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Date of Birth</FormLabel>
-              <FormControl>
-                <DatePicker
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Select date of birth"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="space-y-4">
+          <h3 className="text-sm font-medium text-muted-foreground">Birth details</h3>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="date_of_birth"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Date of Birth</FormLabel>
+                  <FormControl>
+                    <DatePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select date of birth"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <FormField
-          control={form.control}
-          name="country_of_birth"
-          render={({ field }) => (
             <FormItem>
-              <FormLabel>Country of Birth (optional)</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., India" {...field} value={field.value || ''} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="city_of_birth"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>City of Birth (optional)</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., Mumbai" {...field} value={field.value || ''} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormItem>
-          <FormLabel>Time of Birth (optional)</FormLabel>
-          <div className="flex gap-2">
-            <Select value={timeHour} onValueChange={(v) => setTimeHour(v ?? '')}>
-              <SelectTrigger className="w-20">
-                <SelectValue placeholder="H" />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from({ length: 12 }, (_, i) => String(i + 1)).map((h) => (
-                  <SelectItem key={h} value={h}>{h}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={timeMinute} onValueChange={(v) => setTimeMinute(v ?? '')}>
-              <SelectTrigger className="w-20">
-                <SelectValue placeholder="MM" />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map((m) => (
-                  <SelectItem key={m} value={m}>{m}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={timePeriod} onValueChange={(v) => setTimePeriod((v ?? 'AM') as 'AM' | 'PM')}>
-              <SelectTrigger className="w-20">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="AM">AM</SelectItem>
-                <SelectItem value="PM">PM</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </FormItem>
-
-        <FormField
-          control={form.control}
-          name="gender"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Gender</FormLabel>
-              <Select value={field.value || ''} onValueChange={field.onChange}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select gender" />
+              <FormLabel>Time of Birth (optional)</FormLabel>
+              <div className="flex gap-2">
+                <Select value={timeHour} onValueChange={(v) => setTimeHour(v ?? '')}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="H" />
                   </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 12 }, (_, i) => String(i + 1)).map((h) => (
+                      <SelectItem key={h} value={h}>{h}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={timeMinute} onValueChange={(v) => setTimeMinute(v ?? '')}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="MM" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map((m) => (
+                      <SelectItem key={m} value={m}>{m}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={timePeriod} onValueChange={(v) => setTimePeriod((v ?? 'AM') as 'AM' | 'PM')}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="AM">AM</SelectItem>
+                    <SelectItem value="PM">PM</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </FormItem>
+
+            <FormField
+              control={form.control}
+              name="country_of_birth"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Country of Birth (optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., India" {...field} value={field.value || ''} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="city_of_birth"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>City of Birth (optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Mumbai" {...field} value={field.value || ''} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        <Separator />
+
+        <div className="space-y-4">
+          <h3 className="text-sm font-medium text-muted-foreground">Contact</h3>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="gender"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Gender</FormLabel>
+                  <Select value={field.value || ''} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select gender" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Male">Male</SelectItem>
+                      <SelectItem value="Female">Female</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                      <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input type="email" placeholder="patient@example.com" {...field} value={field.value || ''} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone</FormLabel>
+                  <FormControl>
+                    <Input type="tel" placeholder="Phone number" {...field} value={field.value || ''} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        <Separator />
+
+        <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="general_history"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>General History</FormLabel>
+                <FormControl>
+                  <Textarea placeholder="Patient medical history" {...field} value={field.value || ''} />
                 </FormControl>
-                <SelectContent>
-                  <SelectItem value="Male">Male</SelectItem>
-                  <SelectItem value="Female">Female</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                  <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input type="email" placeholder="patient@example.com" {...field} value={field.value || ''} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="phone"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Phone</FormLabel>
-              <FormControl>
-                <Input type="tel" placeholder="Phone number" {...field} value={field.value || ''} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="general_history"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>General History</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Patient medical history" {...field} value={field.value || ''} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="notes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Notes</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Additional notes" {...field} value={field.value || ''} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="notes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Notes</FormLabel>
+                <FormControl>
+                  <Textarea placeholder="Additional notes" {...field} value={field.value || ''} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Saving...' : patient ? 'Update Patient' : 'Create Patient'}
