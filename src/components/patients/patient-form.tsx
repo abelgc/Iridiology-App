@@ -8,6 +8,7 @@ import { patientCreateSchema, PatientCreateInput } from '@/lib/validators/patien
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { DatePicker } from '@/components/ui/date-picker'
 import {
   Select,
   SelectContent,
@@ -116,7 +117,11 @@ export function PatientForm({ patient, onSubmit, isLoading }: PatientFormProps) 
             <FormItem>
               <FormLabel>Date of Birth</FormLabel>
               <FormControl>
-                <Input type="date" {...field} value={field.value || ''} />
+                <DatePicker
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select date of birth"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

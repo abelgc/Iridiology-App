@@ -64,7 +64,7 @@ describe('analyzeIrisDual — silent single-provider fallback logging', () => {
   it('logs a clear warning when getBothProviders() returns null, instead of silently running single-provider analysis', async () => {
     await analyzeIrisDual(makeRequest(), 'en', {})
 
-    const warned = warnSpy.mock.calls.some((call) =>
+    const warned = warnSpy.mock.calls.some((call: unknown[]) =>
       typeof call[0] === 'string' &&
       call[0].includes('falling back to SINGLE-PROVIDER analysis') &&
       call[0].includes('active_provider'),

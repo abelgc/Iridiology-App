@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { analyzeIrisDual } from '../analyze-dual'
-import type { AIProvider, CompletionResponse } from '@/lib/ai/types'
+import type { AIProvider, CompletionRequest, CompletionResponse } from '@/lib/ai/types'
 import type { AnalysisRequest } from '@/types/claude'
 import type { ReportContent } from '@/types/report'
 
@@ -55,7 +55,7 @@ describe('analyzeIrisDual — synthesis prompt content', () => {
     const report = minimalReport()
     const response: CompletionResponse = { text: JSON.stringify(report), stopReason: 'end_turn' }
 
-    const anthropicComplete = vi.fn(async () => response)
+    const anthropicComplete = vi.fn(async (_request: CompletionRequest) => response)
     const anthropic: AIProvider = { complete: anthropicComplete }
     const openai: AIProvider = { complete: vi.fn(async () => response) }
 
@@ -67,7 +67,7 @@ describe('analyzeIrisDual — synthesis prompt content', () => {
       (call) => typeof call[0]?.userText === 'string' && call[0].userText.includes('SYNTHESIS INSTRUCTIONS'),
     )
     expect(synthesisCall).toBeDefined()
-    const userText = synthesisCall![0].userText as string
+    const userText = synthesisCall![0].userText
 
     expect(userText).toContain('supply the functional meaning yourself')
     expect(userText).not.toContain('NOT a pure visual description')
