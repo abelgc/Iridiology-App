@@ -55,7 +55,7 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
     patientId: defaultPatientId || '',
     mode: 'standard',
     sessionDate: new Date().toISOString().split('T')[0],
-    language: 'es',
+    language: 'en',
     symptoms: '',
     practitionerNotes: '',
     rightIrisBase64: null,

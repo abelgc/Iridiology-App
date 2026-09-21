@@ -75,4 +75,19 @@ describe('POST /api/translate — max_tokens truncation handling', () => {
     expect(res.status).toBe(200)
     expect(complete).toHaveBeenCalledTimes(1)
   })
+
+  it("REGRESSION (practitioner report, 2026-09-21): targetLang 'en' names English as the output language, instead of silently falling back to Spanish", async () => {
+    const complete = vi.fn().mockResolvedValueOnce({
+      text: JSON.stringify({ section_1_general_terrain: 'Translated content.' }),
+      stopReason: 'end_turn',
+    })
+    mockGetAIProvider.mockResolvedValue({ complete })
+
+    await POST(makeRequest({ reportId: 'r1', targetLang: 'en' }))
+
+    const systemPrompt: string = complete.mock.calls[0][0].systemPrompt
+    expect(systemPrompt).toContain('into English')
+    expect(systemPrompt).not.toContain('into Spanish')
+    expect(systemPrompt).not.toContain('Translate English')
+  })
 })

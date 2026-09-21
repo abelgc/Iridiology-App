@@ -4,14 +4,22 @@ import { sanitizeJsonControlCharacters, describeJsonSyntaxError } from '@/lib/cl
 import { type ReportContent } from '@/types/report'
 import { NextRequest, NextResponse } from 'next/server'
 
-const LANG_NAMES: Record<string, string> = { es: 'Spanish', de: 'German' }
+const LANG_NAMES: Record<string, string> = { en: 'English', es: 'Spanish', de: 'German' }
+
+export const maxDuration = 120
 
 export async function POST(request: NextRequest) {
   let sanitized = ''
   try {
     const { reportId, targetLang = 'es' } = await request.json()
     const targetLangName = LANG_NAMES[targetLang] ?? 'Spanish'
-    const TRANSLATE_SYSTEM_PROMPT = `You are a medical translator specialising in iridology reports. Translate English iridology report content into ${targetLangName}.
+    // The source report can now natively be English, Spanish, or German (practitioners
+    // pick the language at generation time) — this must never assume English source, only
+    // ever name the OUTPUT language. Asking the model to "translate English" content that
+    // is already in the target language previously produced a confused, slow response
+    // (reported live as a timeout) whenever targetLang === 'en' for a non-English report,
+    // since 'en' was missing from LANG_NAMES entirely.
+    const TRANSLATE_SYSTEM_PROMPT = `You are a medical translator specialising in iridology reports. Translate the given iridology report content into ${targetLangName}, regardless of what language it is currently written in.
 
 RULES:
 - Translate ONLY the values in the JSON, never the keys.
