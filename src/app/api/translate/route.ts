@@ -6,7 +6,11 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const LANG_NAMES: Record<string, string> = { en: 'English', es: 'Spanish', de: 'German' }
 
-export const maxDuration = 120
+// Matches /api/analyze and /api/reports/[id]/client-voice — both call the same AI providers
+// for a full 14-section report and both already use 300s. A tighter cap here was the actual
+// cause of live "Translation failed" errors: real reports can need two sequential model calls
+// (the truncation retry) and 120s wasn't enough, where 300s always was.
+export const maxDuration = 300
 
 export async function POST(request: NextRequest) {
   let sanitized = ''
