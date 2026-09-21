@@ -120,6 +120,7 @@ vi.mock('@/lib/ai/get-provider', () => ({
 vi.mock('@/app/api/client/upload/language-check', () => ({
   detectsCorrectLanguage: vi.fn().mockReturnValue(true),
 }))
+import { detectsCorrectLanguage } from '../language-check'
 
 vi.mock('@/lib/claude/enhance-emotional-field', () => ({
   shouldEnhanceWithJyotish: () => false,
@@ -165,6 +166,17 @@ describe('POST /api/client/upload', () => {
     await waitUntilPromise
     expect(insertReport).toHaveBeenCalledTimes(1)
     expect(mockTriggerStage2).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000000')
+  })
+
+  it('sets language_flag: true on the stage-1 advance when detectsCorrectLanguage reports a mismatch, and omits it entirely on a match', async () => {
+    vi.mocked(detectsCorrectLanguage).mockReturnValueOnce(false)
+    const { POST } = await import('@/app/api/client/upload/route')
+    const res = await POST(makeRequest())
+    expect(res.status).toBe(200)
+    await waitUntilPromise
+
+    const advanceCall = updateCalls.find((c) => c.payload.status === 'stage2_processing')
+    expect(advanceCall?.payload.language_flag).toBe(true)
   })
 
   it('parses each eye image data URL independently and passes the real declared media type through, not a hardcoded image/jpeg', async () => {

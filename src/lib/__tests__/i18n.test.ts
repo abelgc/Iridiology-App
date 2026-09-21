@@ -8,6 +8,12 @@ describe('i18n', () => {
     expect(enKeys).toEqual(esKeys)
   })
 
+  it('exposes de with the same keys as en (never asserted before — de silently falls back to the raw key on any gap)', () => {
+    const enKeys = Object.keys(translations.en).sort()
+    const deKeys = Object.keys(translations.de).sort()
+    expect(deKeys).toEqual(enKeys)
+  })
+
   it('t() returns the string for the given lang and key', () => {
     expect(t('en', 'continue')).toBe('Continue')
     expect(t('es', 'continue')).toBe('Continuar')

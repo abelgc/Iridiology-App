@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { patientCreateSchema } from '@/lib/validators/patient'
 import { NextRequest, NextResponse } from 'next/server'
+import { ZodError } from 'zod'
 
 export async function GET(request: NextRequest) {
   try {
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(data, { status: 201 })
   } catch (error) {
-    if (error instanceof Error && 'code' in error && error.code === 'ZOD_ERROR') {
+    if (error instanceof ZodError) {
       return NextResponse.json(
         { error: 'Validation error', details: error },
         { status: 400 }

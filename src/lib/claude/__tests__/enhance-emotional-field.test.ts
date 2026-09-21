@@ -786,6 +786,27 @@ describe('Jyotish Emotional Field Enhancement', () => {
       expect(mockProvider.complete).toHaveBeenCalledTimes(2)
     })
 
+    it("REGRESSION (Maike Kedher report, 2026-09-21): builds the mandatory chakra sentence in Spanish, with the localized chakra name, instead of handing the model a hardcoded English sentence to include verbatim", async () => {
+      const mockReport = createMockReport()
+      const astrologyData = createAstrologyData()
+
+      const mockProvider = { complete: vi.fn() }
+      mockProvider.complete
+        .mockResolvedValueOnce({
+          text: JSON.stringify({ chakra: 'Solar Plexus Chakra', emotion: 'confianza en el propio poder personal', reasoning: 'x' }),
+          stopReason: 'end_turn',
+        })
+        .mockResolvedValueOnce({ text: 'Texto mejorado.', stopReason: 'end_turn' })
+      mockGetAIProvider.mockResolvedValueOnce(mockProvider)
+
+      await enhanceEmotionalFieldWithJyotish(mockReport, 'Maike Kedher', astrologyData, 'es')
+
+      const blendUserText: string = mockProvider.complete.mock.calls[1][0].userText
+      expect(blendUserText).toContain('Se recomienda trabajar el Chakra del Plexo Solar y el trabajo interno de confianza en el propio poder personal.')
+      expect(blendUserText).not.toContain('It is recommended to work on')
+      expect(blendUserText).not.toContain('Solar Plexus Chakra chakra')
+    })
+
     it('REGRESSION: retries the blend call with double max_tokens when truncated, instead of silently accepting a cut-off blend', async () => {
       const mockReport = createMockReport()
       const astrologyData = createAstrologyData()

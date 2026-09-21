@@ -48,6 +48,12 @@ export async function PUT(
       .from('reports')
       .update({
         report_content: validatedData.report_content,
+        // The client-voice handout (rewriteReportForClient) is generated holistically —
+        // the Planner reads the whole report to build one cross-referenced brief — so a
+        // single edited section can change what the brief should say. Any edit must
+        // invalidate the entire cached rewrite per language, not just the touched section,
+        // or client-voice keeps serving a stale pre-edit handout indefinitely.
+        client_report_translations: {},
         is_edited: true,
         updated_at: new Date().toISOString(),
       })

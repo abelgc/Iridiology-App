@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { patientUpdateSchema } from '@/lib/validators/patient'
 import { NextRequest, NextResponse } from 'next/server'
+import { ZodError } from 'zod'
 
 export async function GET(
   request: NextRequest,
@@ -63,7 +64,7 @@ export async function PUT(
 
     return NextResponse.json(data, { status: 200 })
   } catch (error) {
-    if (error instanceof Error && 'code' in error && error.code === 'ZOD_ERROR') {
+    if (error instanceof ZodError) {
       return NextResponse.json(
         { error: 'Validation error', details: error },
         { status: 400 }
@@ -93,7 +94,7 @@ export async function DELETE(
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json(null, { status: 204 })
+    return new NextResponse(null, { status: 204 })
   } catch (error) {
     // The client is shown a generic message on purpose; this only survives in
     // Vercel's short-lived function logs.
