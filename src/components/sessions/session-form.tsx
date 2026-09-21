@@ -36,6 +36,7 @@ interface FormData {
   patientId: string
   mode: AnalysisMode
   sessionDate: string
+  language: 'en' | 'es' | 'de'
   symptoms: string
   practitionerNotes: string
   rightIrisBase64: string | null
@@ -54,6 +55,7 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
     patientId: defaultPatientId || '',
     mode: 'standard',
     sessionDate: new Date().toISOString().split('T')[0],
+    language: 'es',
     symptoms: '',
     practitionerNotes: '',
     rightIrisBase64: null,
@@ -189,7 +191,7 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
 
       const requestBody =
         formData.mode === 'standard'
-          ? { patientId: formData.patientId, rightIrisBase64: formData.rightIrisBase64, leftIrisBase64: formData.leftIrisBase64, patientData }
+          ? { patientId: formData.patientId, rightIrisBase64: formData.rightIrisBase64, leftIrisBase64: formData.leftIrisBase64, patientData, language: formData.language }
           : formData.mode === 'comparison'
             ? { patientId: formData.patientId, rightIrisBase64: formData.rightIrisBase64, leftIrisBase64: formData.leftIrisBase64, previousRightIrisBase64: formData.previousRightIrisBase64, previousLeftIrisBase64: formData.previousLeftIrisBase64, previousSessionDate: '', patientData }
             : { patientId: formData.patientId, rightIrisBase64: formData.rightIrisBase64, leftIrisBase64: formData.leftIrisBase64, practitionerInterpretation: formData.practitionerInterpretation, patientData }
@@ -289,6 +291,25 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px]"
         />
       </Card>
+
+      {/* Report Language */}
+      {formData.mode === 'standard' && (
+        <Card className="p-4 md:p-6">
+          <label className="block text-sm font-medium text-gray-700 mb-3">Report Language</label>
+          <select
+            value={formData.language}
+            onChange={(e) => {
+              const v = e.target.value as FormData['language']
+              setFormData(prev => ({ ...prev, language: v }))
+            }}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="es">Español</option>
+            <option value="en">English</option>
+            <option value="de">Deutsch</option>
+          </select>
+        </Card>
+      )}
 
       {/* Symptoms */}
       <Card className="p-4 md:p-6">

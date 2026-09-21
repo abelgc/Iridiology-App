@@ -536,5 +536,37 @@ describe('Claude Prompts', () => {
         )
       }
     })
+
+    describe('REGRESSION (Maike Kedher report, 2026-09-21): section_14_recommendations must not stay hardcoded to English prefixes when the rest of the report is in another language', () => {
+      it('localizes the three mandatory prefixes for Spanish', () => {
+        const p = getStandardAnalysisSystemPrompt('es')
+        expect(p).toContain('Vitaminas:')
+        expect(p).toContain('Minerales:')
+        expect(p).toContain('Hierbas:')
+      })
+
+      it('localizes the three mandatory prefixes for German', () => {
+        const p = getStandardAnalysisSystemPrompt('de')
+        expect(p).toContain('Vitamine:')
+        expect(p).toContain('Mineralien:')
+        expect(p).toContain('Kräuter:')
+      })
+
+      it('keeps the English prefixes for English reports, with no localization note appended', () => {
+        const p = getStandardAnalysisSystemPrompt('en')
+        expect(p).toContain('"Vitamins:", "Minerals:", "Herbs:"')
+        expect(p).not.toContain('use these exact localized prefixes')
+      })
+
+      it('explicitly carves out the catalogue item names from translation, to avoid the model improvising a herb/vitamin/mineral name in a different language', () => {
+        const p = getStandardAnalysisSystemPrompt('es')
+        expect(p).toContain('never translate, substitute, or improvise a translation for a specific supplement or herb name')
+      })
+
+      it('instructs the organ header and connecting prose to follow the same language directive as the rest of the report', () => {
+        const p = getStandardAnalysisSystemPrompt('es')
+        expect(p).toContain('the bold organ header and every other sentence in this section')
+      })
+    })
   })
 })

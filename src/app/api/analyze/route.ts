@@ -9,13 +9,18 @@ import { withTimeout } from '@/lib/utils'
 export const runtime = 'nodejs'
 export const maxDuration = 300
 
+const SUPPORTED_REPORT_LANGUAGES = new Set(['en', 'es', 'de'])
+
 export async function POST(request: NextRequest) {
   const supabase = createAdminClient()
 
   try {
     const body = (await request.json()) as AnalysisRequest
 
-    const { patientId, rightIrisBase64, leftIrisBase64, patientData } = body
+    const { patientId, rightIrisBase64, leftIrisBase64, patientData, language } = body
+    const reportLanguage = typeof language === 'string' && SUPPORTED_REPORT_LANGUAGES.has(language)
+      ? language
+      : 'en'
 
     // Create session immediately
     const { data: sessionData, error: sessionError } = await supabase
@@ -45,7 +50,11 @@ export async function POST(request: NextRequest) {
       console.log(`[analyze] session ${sessionId} — starting dual-model analysis...`)
       try {
         const result = await withTimeout(
-          analyzeIrisDual({ sessionId, patientId, rightIrisBase64, leftIrisBase64, patientData }),
+          analyzeIrisDual(
+            { sessionId, patientId, rightIrisBase64, leftIrisBase64, patientData },
+            reportLanguage,
+            { forceLanguage: true },
+          ),
           280_000,
           'Analysis timed out after 280s',
         )

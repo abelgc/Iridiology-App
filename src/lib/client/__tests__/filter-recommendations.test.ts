@@ -58,4 +58,42 @@ describe('consolidateRecommendationsForTier', () => {
     const plain = 'No catalogue-backed recommendation applies this session.'
     expect(consolidateRecommendationsForTier(plain, true)).toBe(plain)
   })
+
+  describe('REGRESSION (Maike Kedher report, 2026-09-21): section_14_recommendations can now arrive with localized prefixes', () => {
+    const SPANISH_TWO_ORGAN_TEXT = `**Hígado**
+Vitaminas: A, B12
+Minerales: Hierro
+Hierbas: Diente de león
+
+**Riñones**
+Vitaminas: A, B12
+Minerales: Hierro
+Hierbas: Alfalfa`
+
+    it('parses Spanish-prefixed input and dedupes shared items across organs, instead of silently falling back to raw unfiltered text', () => {
+      const result = consolidateRecommendationsForTier(SPANISH_TWO_ORGAN_TEXT, true, 'es')
+      expect(result).not.toBe(SPANISH_TWO_ORGAN_TEXT)
+      const sections = parseSections(result)
+      expect(sections['Vitaminas']['A']).toEqual(['Hígado', 'Riñones'])
+    })
+
+    it('renders section headers localized to the requested lang, not hardcoded English', () => {
+      const result = consolidateRecommendationsForTier(SPANISH_TWO_ORGAN_TEXT, true, 'es')
+      expect(result).toContain('**Vitaminas**')
+      expect(result).not.toContain('**Vitamins**')
+    })
+
+    it('still strips minerals/herbs for the non-premium tier when the input is Spanish-prefixed', () => {
+      const result = consolidateRecommendationsForTier(SPANISH_TWO_ORGAN_TEXT, false, 'es')
+      expect(result).not.toContain('Minerales')
+      expect(result).not.toContain('Hierbas')
+      expect(result).toContain('Vitaminas')
+    })
+
+    it('still handles English input unchanged when lang is omitted (back-compat)', () => {
+      const result = consolidateRecommendationsForTier(TWO_ORGAN_TEXT, true)
+      const sections = parseSections(result)
+      expect(sections.Vitamins['A']).toEqual(['Liver', 'Kidneys'])
+    })
+  })
 })

@@ -262,7 +262,7 @@ export function ReportPdfDocument({ report, generatedAt, lang, isPremium = false
     key,
     body:
       key === 'section_14_recommendations'
-        ? consolidateRecommendationsForTier(report[key], isPremium)
+        ? consolidateRecommendationsForTier(report[key], isPremium, lang)
         : report[key],
   })).filter((s) => typeof s.body === 'string' && s.body.trim().length > 0)
 

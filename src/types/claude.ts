@@ -21,6 +21,9 @@ export interface AnalysisRequest {
     practitioner_notes: string | null
   }
   health_questionnaire?: Record<string, unknown> | null
+  // Only /api/analyze (standard mode) reads this today — /api/compare and /api/review
+  // don't select it yet, that's a deliberate follow-up, not silently broken.
+  language?: string
 }
 
 export interface ComparisonRequest extends AnalysisRequest {

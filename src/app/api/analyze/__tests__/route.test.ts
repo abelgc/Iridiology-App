@@ -53,7 +53,7 @@ vi.mock('@/lib/supabase/server', () => ({
 
 import { POST } from '../route'
 
-function makeRequest(patientData: Record<string, unknown> = {}) {
+function makeRequest(patientData: Record<string, unknown> = {}, language?: string) {
   return new Request('http://test', {
     method: 'POST',
     body: JSON.stringify({
@@ -61,6 +61,7 @@ function makeRequest(patientData: Record<string, unknown> = {}) {
       rightIrisBase64: 'a',
       leftIrisBase64: 'b',
       patientData: { symptoms: '', practitioner_notes: '', ...patientData },
+      ...(language ? { language } : {}),
     }),
   }) as never
 }
@@ -118,5 +119,40 @@ describe('POST /api/analyze', () => {
     await waitUntilPromise
 
     expect(updateMock.mock.calls.find(([arg]) => arg.status === 'error')).toBeTruthy()
+  })
+
+  describe('REGRESSION (Maike Kedher report, 2026-09-21): report language selection', () => {
+    it('passes the selected language through to analyzeIrisDual with forceLanguage, instead of always defaulting to English', async () => {
+      mockAnalyze.mockResolvedValue({ section_1_general_terrain: 'x' })
+      const res = await POST(makeRequest({}, 'es'))
+      expect(res.status).toBe(200)
+      await waitUntilPromise
+
+      expect(mockAnalyze).toHaveBeenCalledTimes(1)
+      const [, language, options] = mockAnalyze.mock.calls[0]
+      expect(language).toBe('es')
+      expect(options).toEqual({ forceLanguage: true })
+    })
+
+    it('defaults to English with forceLanguage when no language is selected', async () => {
+      mockAnalyze.mockResolvedValue({ section_1_general_terrain: 'x' })
+      const res = await POST(makeRequest())
+      expect(res.status).toBe(200)
+      await waitUntilPromise
+
+      const [, language, options] = mockAnalyze.mock.calls[0]
+      expect(language).toBe('en')
+      expect(options).toEqual({ forceLanguage: true })
+    })
+
+    it('falls back to English for an unsupported language value instead of passing it through unchecked', async () => {
+      mockAnalyze.mockResolvedValue({ section_1_general_terrain: 'x' })
+      const res = await POST(makeRequest({}, 'fr'))
+      expect(res.status).toBe(200)
+      await waitUntilPromise
+
+      const [, language] = mockAnalyze.mock.calls[0]
+      expect(language).toBe('en')
+    })
   })
 })

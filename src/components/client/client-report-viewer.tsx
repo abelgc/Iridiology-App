@@ -112,7 +112,7 @@ export function ClientReportViewer({
             const label = t(REPORT_SECTION_I18N_KEYS[key] as TranslationKey)
             const content =
               key === 'section_14_recommendations'
-                ? consolidateRecommendationsForTier(displayReport[key], isPremium)
+                ? consolidateRecommendationsForTier(displayReport[key], isPremium, lang)
                 : displayReport[key]!
             return (
               <section key={key} id={`report-section-${key}`}>

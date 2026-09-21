@@ -639,13 +639,34 @@ function buildLanguageDirective(lang: string): string {
   return `LANGUAGE DIRECTIVE: You MUST write the ENTIRE report in ${languageName}. Do not use any other language under any circumstance. Never default to English unless the language is explicitly set to English. Write every section, every sentence, every word in ${languageName}.`
 }
 
+const RECOMMENDATION_LABELS: Record<string, { vitamins: string; minerals: string; herbs: string }> = {
+  en: { vitamins: 'Vitamins:', minerals: 'Minerals:', herbs: 'Herbs:' },
+  es: { vitamins: 'Vitaminas:', minerals: 'Minerales:', herbs: 'Hierbas:' },
+  de: { vitamins: 'Vitamine:', minerals: 'Mineralien:', herbs: 'Kräuter:' },
+}
+
+// Keep in sync with KIND_LABELS in src/lib/client/filter-recommendations.ts — that parser
+// must recognise whichever localized prefix the model was instructed to use here.
+function buildRecommendationsLanguageNote(lang: string): string {
+  if (lang === 'en') return ''
+  const labels = RECOMMENDATION_LABELS[lang] ?? RECOMMENDATION_LABELS.en
+  const languageName = LANGUAGE_NAMES[lang] ?? 'English'
+  return ` In ${languageName}, use these exact localized prefixes instead of the English ones: "${labels.vitamins}", "${labels.minerals}", "${labels.herbs}" — downstream code matches on these per-language strings, so use them verbatim. Write the bold organ header and every other sentence in this section, including the no-catalogue-match fallback sentence, in ${languageName} as well — this section follows the same LANGUAGE DIRECTIVE as the rest of the report. The one exception: the individual vitamin, mineral, and herb item names listed after each prefix stay exactly as given in the catalogue above, in English — never translate, substitute, or improvise a translation for a specific supplement or herb name.`
+}
+
 export function getStandardAnalysisSystemPrompt(lang: string): string {
   const languageDirective = buildLanguageDirective(lang)
   // Base prompt is STANDARD_ANALYSIS_SYSTEM_PROMPT_EN for all languages —
   // the clinical logic is the same; only the output language changes.
   const base = STANDARD_ANALYSIS_SYSTEM_PROMPT_EN
-  return base.replace(
+  const withLanguage = base.replace(
     'LANGUAGE: Write ALL report content exclusively in English, regardless of the patient\'s name, nationality, or any other context. JSON keys are identifiers only — do not infer language from them.',
     languageDirective
+  )
+  const recommendationsNote = buildRecommendationsLanguageNote(lang)
+  if (!recommendationsNote) return withLanguage
+  return withLanguage.replace(
+    'Followed immediately by three lines, each starting with exactly one of these three prefixes, verbatim, and nothing else before the prefix on that line: "Vitamins:", "Minerals:", "Herbs:". Downstream code filters report content by these exact prefix strings — never rename, reorder, merge, or omit one of the three lines for an included organ.',
+    'Followed immediately by three lines, each starting with exactly one of these three prefixes, verbatim, and nothing else before the prefix on that line: "Vitamins:", "Minerals:", "Herbs:". Downstream code filters report content by these exact prefix strings — never rename, reorder, merge, or omit one of the three lines for an included organ.' + recommendationsNote
   )
 }
