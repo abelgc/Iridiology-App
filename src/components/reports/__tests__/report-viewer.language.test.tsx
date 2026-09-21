@@ -169,6 +169,41 @@ describe('ReportViewer — render layer (component test, no persistence involved
   })
 })
 
+describe('REGRESSION (practitioner report, 2026-09-21): the EN/ES/DE flag must reflect the language the report was actually generated in, not always default to EN', () => {
+  beforeEach(() => {
+    global.fetch = vi.fn(async (url: unknown, init?: RequestInit) => {
+      const href = String(url)
+      if (href === '/api/translate' && init?.method === 'POST') {
+        const { targetLang } = JSON.parse(init.body as string)
+        return { ok: true, status: 200, json: async () => ({ content: targetLang === 'en' ? NATIVE_CONTENT : SPANISH_TRANSLATION }) } as Response
+      }
+      throw new Error(`Unexpected fetch: ${href}`)
+    }) as unknown as typeof fetch
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('detects a Spanish-generated report from its localized Vitaminas/Minerales/Hierbas prefixes and opens with ES active, not EN', async () => {
+    const spanishReport = makeReport()
+    spanishReport.report_content = {
+      ...NATIVE_CONTENT,
+      section_14_recommendations: '**Hígado**\nVitaminas: A\nMinerales: Hierro\nHierbas: Diente de león',
+    }
+    render(<ReportViewer report={spanishReport} />)
+
+    // Native content is already Spanish — it must render immediately with zero fetches.
+    expect(screen.getByText(NATIVE_CONTENT.section_2_emotional_field)).toBeInTheDocument()
+    expect(global.fetch).not.toHaveBeenCalled()
+
+    // Clicking EN (a *different* language than the detected native one) must trigger a
+    // translate call — proving ES, not EN, was the one already active.
+    fireEvent.click(screen.getByRole('button', { name: /^en$/i }))
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled())
+  })
+})
+
 describe('reports/[id] route — data layer (no component involved)', () => {
   beforeEach(() => {
     currentRow = { id: REPORT_ID, report_content: { ...NATIVE_CONTENT }, is_edited: false }

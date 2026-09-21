@@ -46,11 +46,26 @@ const VIEWER_LANGS = [
   { code: 'de' as const, label: 'DE', flag: DE_FLAG },
 ]
 
+// reports has no persisted language column — detect it from the one deterministic signal
+// we do control: the localized Vitamins/Minerals/Herbs prefixes section_14_recommendations
+// always carries (see RECOMMENDATION_LABELS in src/lib/claude/prompts.ts). Falls back to
+// 'en', matching the pre-existing default for reports generated before that fix shipped.
+function detectReportLanguage(content: ReportContent): 'en' | 'es' | 'de' {
+  const rec = content.section_14_recommendations ?? ''
+  if (rec.includes('Vitaminas:')) return 'es'
+  if (rec.includes('Vitamine:')) return 'de'
+  return 'en'
+}
+
 export function ReportViewer({ report, corrections = [], patientFullName }: ReportViewerProps) {
+  // The language report_content actually came back in — the one language that never needs
+  // an /api/translate round trip, since we already have it. Stable for the component's
+  // lifetime: report_content itself never changes language after generation.
+  const [nativeLang] = useState<'en' | 'es' | 'de'>(() => detectReportLanguage(report.report_content))
   const [localContent, setLocalContent] = useState<ReportContent>(report.report_content)
   const [translatedCache, setTranslatedCache] = useState<Partial<Record<string, Partial<ReportContent>>>>({})
   const [translatingTarget, setTranslatingTarget] = useState<string | null>(null)
-  const [lang, setLang] = useState<'en' | 'es' | 'de'>('en')
+  const [lang, setLang] = useState<'en' | 'es' | 'de'>(nativeLang)
   const [isTranslating, setIsTranslating] = useState(false)
   const [translateError, setTranslateError] = useState<string | null>(null)
 
@@ -100,7 +115,7 @@ export function ReportViewer({ report, corrections = [], patientFullName }: Repo
   }
 
   const handleSwitchLang = async (target: 'en' | 'es' | 'de') => {
-    if (target === 'en') { setLang('en'); return }
+    if (target === nativeLang) { setLang(target); return }
     if (!translatedCache[target]) {
       setIsTranslating(true)
       setTranslatingTarget(target)
@@ -171,7 +186,7 @@ export function ReportViewer({ report, corrections = [], patientFullName }: Repo
     }
   }
 
-  const displayContent = lang !== 'en' && translatedCache[lang]
+  const displayContent = lang !== nativeLang && translatedCache[lang]
     ? { ...localContent, ...translatedCache[lang] }
     : localContent
 

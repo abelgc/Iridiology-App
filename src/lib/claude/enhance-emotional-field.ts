@@ -18,6 +18,32 @@ interface ChakraRecommendation {
 
 const TIME_OF_DAY_PATTERN = /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/
 
+const CHAKRA_NAMES: Record<string, Record<string, string>> = {
+  'Root Chakra': { en: 'Root Chakra', es: 'Chakra Raíz', de: 'Wurzelchakra' },
+  'Sacral Chakra': { en: 'Sacral Chakra', es: 'Chakra Sacro', de: 'Sakralchakra' },
+  'Solar Plexus Chakra': { en: 'Solar Plexus Chakra', es: 'Chakra del Plexo Solar', de: 'Solarplexus-Chakra' },
+  'Heart Chakra': { en: 'Heart Chakra', es: 'Chakra del Corazón', de: 'Herzchakra' },
+  'Throat Chakra': { en: 'Throat Chakra', es: 'Chakra de la Garganta', de: 'Kehlkopfchakra' },
+  'Third Eye Chakra': { en: 'Third Eye Chakra', es: 'Chakra del Tercer Ojo', de: 'Stirnchakra' },
+  'Crown Chakra': { en: 'Crown Chakra', es: 'Chakra de la Corona', de: 'Kronenchakra' },
+}
+
+function localizedChakraName(chakra: string, language: string): string {
+  return CHAKRA_NAMES[chakra]?.[language] ?? chakra
+}
+
+// The mandatory sentence used to be hardcoded in English and handed to the model as a
+// "verbatim" literal, regardless of report language — it always won over the surrounding
+// "write in ${langInstruction}" instruction, producing an English sentence stitched into
+// an otherwise-Spanish/German section. Building it ourselves, in the target language,
+// removes the conflict instead of trying to out-word it.
+function mandatorySentence(chakra: string, emotion: string, language: string): string {
+  const name = localizedChakraName(chakra, language)
+  if (language === 'es') return `Se recomienda trabajar el ${name} y el trabajo interno de ${emotion}.`
+  if (language === 'de') return `Es wird empfohlen, am ${name} zu arbeiten sowie an der inneren Arbeit von ${emotion}.`
+  return `It is recommended to work on the ${name} and the inner work of ${emotion}.`
+}
+
 export function shouldEnhanceWithJyotish(data: any): boolean {
   // The /client intake form saves the literal string 'morning' or 'evening'. The
   // /practitioner patient form instead saves a real clock time ("00:00:00", "14:30:00"),
@@ -113,7 +139,7 @@ WORD COUNT LIMIT: ${wordLimit > 0 ? wordLimit : 120} words maximum (must not exc
 Rewrite the emotional field section integrating the chakra insight. Rules:
 1. Keep the original clinical iridology findings intact.
 2. Translate the chakra insight into nervous system and emotional body language only — never mention Jyotish, astrology, planets, houses, or any astrological term. If a sentence cannot be expressed as a physiological or behavioral pattern, discard it.
-3. Include exactly this sentence once, verbatim format: "It is recommended to work on the ${chakraRecommendation.chakra} chakra and the inner work of ${chakraRecommendation.emotion}."
+3. Include exactly this sentence once, verbatim: "${mandatorySentence(chakraRecommendation.chakra, chakraRecommendation.emotion, language)}"
 4. Stay within the word count limit.
 5. Write in plain prose paragraphs — no bullet points or symbols.
 
