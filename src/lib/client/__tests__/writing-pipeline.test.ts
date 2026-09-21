@@ -225,6 +225,22 @@ describe('rewriteReportForClient', () => {
     expect(system).toContain('Consulta con tu médico antes de cualquier ayuno o limpieza intensiva.')
   })
 
+  it("REGRESSION (Maike Kedher report, 2026-09-21): the Planner is told to preserve a concrete body location/zone in each system's clue, not just the abstract emotional pattern", async () => {
+    // Reproduces a reported failure: the client handout for section_2_emotional_field read
+    // "There is a pattern of internalized tension here... keeps your body braced" — the
+    // source finding actually named a specific location ("territorio pélvico y digestivo",
+    // "arco inferior... inervación intestinal y pélvico-reproductiva") that never survived
+    // into the client text. Verified against a second real report+cache pair too: the same
+    // pipeline sometimes DOES preserve the location and sometimes doesn't, because nothing
+    // in the Planner's prompt requires it — this is an inconsistency bug, not a total-loss
+    // bug, and the fix is to make preserving it a requirement instead of a coin flip.
+    await rewriteReportForClient(mockReport, 'en', 'Jane')
+    const plannerCall = createMock.mock.calls.find(([params]) => params.system.includes('You are the Planner'))
+    expect(plannerCall).toBeDefined()
+    const system: string = plannerCall![0].system
+    expect(system).toContain('preserve any concrete body location, organ, or zone')
+  })
+
   it('carries the given first name straight into the brief for Writer A', async () => {
     await rewriteReportForClient(mockReport, 'en', 'Maria')
     const writerACall = createMock.mock.calls.find(([params]) => params.system.includes('You are Writer A'))

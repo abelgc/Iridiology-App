@@ -185,6 +185,8 @@ Return ONLY a JSON object, no commentary, no markdown fences, with exactly these
 }
 Base every field only on what the report actually supports — never invent a finding, a symptom, a diagnosis, or a link that is not there. If you are unsure whether a safety flag or a diagnosis applies, leave it out.
 
+Each systemVerdicts clue must preserve any concrete body location, organ, or zone the source text ties to that system's finding — e.g. "pelvic and digestive area", "lower back and hips", "throat and thyroid region" — never compress a finding down to only the abstract pattern (e.g. "internalized tension") while dropping where in the body it actually shows up. If the source genuinely names no specific location for that system, leave the clue as the pattern alone — never invent one.
+
 For "section_2_emotional_field" specifically: if the source text names a specific chakra (e.g. "Root Chakra") and/or a specific emotion to work with, the clue MUST quote both names verbatim — never paraphrase, generalize, or drop them. This is a paid detail the client is specifically promised.
 
 LANGUAGE: Write every string value in your JSON response — dominantPattern, mainDriver, each symptomFindingMap entry, every clue, each crossSystemLinks entry, each knownDiagnoses entry's condition string, and safety.constraint — in ${languageName(lang)}. assignedSection values are section-key identifiers, not prose — always leave them in English exactly as listed above, never translate them. The source report above may already be in ${languageName(lang)}; keep it in that language, never translate or drift into English.`
