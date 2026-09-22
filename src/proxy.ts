@@ -45,7 +45,13 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  // getUser() makes a real network round trip to the Auth server on every single
+  // navigation — the dominant cost behind "every page in /practitioner feels slow."
+  // getClaims() gives the same security guarantee (full JWT verification, unlike
+  // getSession()) but verifies locally via WebCrypto once the project uses asymmetric
+  // JWT signing keys, with zero further code change needed to benefit from that.
+  const { data, error } = await supabase.auth.getClaims()
+  const user = !error && data ? data.claims : null
 
   const isLoginPage = pathname === '/login'
   const isPublicAuthPage = pathname === '/forgot-password' || pathname === '/reset-password'

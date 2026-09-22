@@ -2,11 +2,20 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
 let currentUser: { id: string } | null = null
+const getClaimsMock = vi.fn(() =>
+  Promise.resolve(
+    currentUser
+      ? { data: { claims: { sub: currentUser.id } }, error: null }
+      : { data: null, error: { message: 'no session' } },
+  ),
+)
+const getUserMock = vi.fn(() => Promise.resolve({ data: { user: currentUser } }))
 
 vi.mock('@supabase/ssr', () => ({
   createServerClient: () => ({
     auth: {
-      getUser: () => Promise.resolve({ data: { user: currentUser } }),
+      getClaims: getClaimsMock,
+      getUser: getUserMock,
     },
   }),
 }))
@@ -19,8 +28,31 @@ function req(pathname: string) {
 
 beforeEach(() => {
   currentUser = null
+  getClaimsMock.mockClear()
+  getUserMock.mockClear()
   process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://test-supabase'
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key'
+})
+
+describe('REGRESSION (2026-09-22): verifies the session via getClaims, not getUser', () => {
+  // getUser() always makes a network round trip to the Auth server on every single
+  // navigation — Supabase's own current guidance recommends getClaims() instead: same
+  // security guarantee (full JWT verification, unlike getSession()), but verified locally
+  // via WebCrypto when the project uses asymmetric signing keys, with no code change
+  // needed to benefit once that's turned on.
+  it('calls getClaims, never getUser, to check an authenticated request', async () => {
+    currentUser = { id: 'u1' }
+    await proxy(req('/practitioner'))
+    expect(getClaimsMock).toHaveBeenCalledTimes(1)
+    expect(getUserMock).not.toHaveBeenCalled()
+  })
+
+  it('treats a getClaims error the same as no session — redirects to /login', async () => {
+    currentUser = null
+    const res = await proxy(req('/practitioner'))
+    expect(res.status).toBe(307)
+    expect(res.headers.get('location')).toContain('/login')
+  })
 })
 
 // Every route a practitioner uses that is NOT under /client or /api/client — these are
