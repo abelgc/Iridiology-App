@@ -42,6 +42,13 @@ describe('Claude Prompts', () => {
       expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('Collarette')
       expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('Limbus')
     })
+
+    it('REGRESSION (spinal correlation missing, 2026-09-22): the ANS wreath arc territories never map to spinal nerve regions, unlike the Jensen summary\'s §5.13 clock-position-to-spine overlay', () => {
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('SPINAL NERVE CORRELATION')
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('cervical nerve')
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('thoracic spinal cord')
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('lumbar spinal cord')
+    })
   })
 
   describe('IRIDOLOGY_COLOUR_FIBRE_SCLERA_GUIDE', () => {
@@ -127,6 +134,48 @@ describe('Claude Prompts', () => {
       expect(c).toContain('Ballooned bowel')
       expect(c).toContain('Bowel stricture')
       expect(c).toContain('Fishhook stomach')
+    })
+
+    it('REGRESSION (transversal marking undefined, 2026-09-22): STEP 1 asks the model to inventory "Transversal markings" location and orientation, but the catalogue never defined what one actually is — unlike every other named sign here. Source: docs/reference/iridology-simplified-jensen-summary.md §5.9', () => {
+      const c = IRIDOLOGY_LACUNAE_AND_SIGN_CATALOGUE
+      expect(c).toContain('Transversal marking')
+      expect(c).toContain('cutting across the radial fibre pattern')
+      expect(c).toContain('horizontal, vertical, or diagonal')
+    })
+
+    it('REGRESSION (radii solaris undefined, 2026-09-22): Jensen summary §5.2 names a specific toxic-bowel sign never carried into the catalogue', () => {
+      const c = IRIDOLOGY_LACUNAE_AND_SIGN_CATALOGUE
+      expect(c).toContain('Radii solaris')
+      expect(c).toContain('spokes on a wheel')
+      expect(c).toContain('never evidence of an active infestation')
+    })
+
+    it('REGRESSION (nerve ring / cramp ring undefined, 2026-09-22): §5.3 defines a specific stress-ring sign distinct from generic contraction rings, never carried into the catalogue', () => {
+      const c = IRIDOLOGY_LACUNAE_AND_SIGN_CATALOGUE
+      expect(c).toContain('Nerve ring (cramp ring)')
+      expect(c).toContain('buckling or pinching')
+      expect(c).toContain('nervous indigestion')
+    })
+
+    it('REGRESSION (arcus senilis undefined, 2026-09-22): §5.7 names a specific cerebral-circulation sign never carried into the catalogue', () => {
+      const c = IRIDOLOGY_LACUNAE_AND_SIGN_CATALOGUE
+      expect(c).toContain('Arcus senilis')
+      expect(c).toContain('fuzzy-edged arc')
+      expect(c).toContain('never a diagnosis of cerebral pathology')
+    })
+
+    it('REGRESSION (psora vs drug deposit undefined, 2026-09-22): §5.11 distinguishes inherited from acquired pigment with different clinical weight, never carried into the catalogue', () => {
+      const c = IRIDOLOGY_LACUNAE_AND_SIGN_CATALOGUE
+      expect(c).toContain('Psora versus drug or chemical deposit')
+      expect(c).toContain('generally inherited pigment patch')
+      expect(c).toContain('inheritance-versus-acquisition')
+    })
+
+    it('REGRESSION (bowel pocket / diverticulum / spastic colon undefined, 2026-09-22): §5.12 names 3 bowel sub-signs beyond the 4 already covered (adhesions, ballooned, stricture, fishhook), never carried into the catalogue', () => {
+      const c = IRIDOLOGY_LACUNAE_AND_SIGN_CATALOGUE
+      expect(c).toContain('Bowel pocket')
+      expect(c).toContain('Diverticulum')
+      expect(c).toContain('Spastic colon')
     })
   })
 
