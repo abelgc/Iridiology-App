@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { createHash } from 'crypto'
 import { getAnthropicApiKey } from '@/lib/ai/get-provider'
 import { isNonRetryableAIError } from '@/lib/ai/errors'
 import { sanitizeJsonControlCharacters } from '@/lib/claude/json-repair'
@@ -382,6 +383,20 @@ async function runWriter(
     // prose after its JSON is exactly what broke stage 2 live on 2026-07-26.
     return await attempt()
   }
+}
+
+// A hash of everything that actually shapes the output — the Planner prompt and all three
+// Writer group prompts (which include SHARED_WRITER_RULES and every sectionInstructions
+// case) — for a fixed canonical language. Callers that cache rewriteReportForClient's
+// output key their cache by this hash, so a prompt edit (like the 2026-09-22
+// known-diagnosis fix) automatically invalidates every previously-cached translation
+// instead of relying on someone remembering to clear a cache by hand. 'en' is canonical
+// only because the RULES text is identical across languages — only interpolated nouns like
+// "English"/"Spanish" differ, which never changes what a fix like this one is checking for.
+export function currentPromptVersion(): string {
+  const canonical =
+    buildPlannerSystemPrompt('en') + WRITER_GROUPS.map((group) => buildWriterPrompt(group, 'en')).join('|')
+  return createHash('sha256').update(canonical).digest('hex').slice(0, 12)
 }
 
 export async function rewriteReportForClient(

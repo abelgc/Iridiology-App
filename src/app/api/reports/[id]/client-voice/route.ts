@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { rewriteReportForClient, firstNameFrom } from '@/lib/client/writing-pipeline'
+import { rewriteReportForClient, firstNameFrom, currentPromptVersion } from '@/lib/client/writing-pipeline'
 import {
   PRACTITIONER_ONLY_SECTION_KEYS,
   REPORT_SECTION_I18N_KEYS,
@@ -62,7 +62,12 @@ export async function POST(
   }
 
   const existingTranslations = (report.client_report_translations ?? {}) as Record<string, ReportContent>
-  const cached = existingTranslations[lang]
+  // Keyed by prompt version, not just language: a prompt edit changes the hash, so a cache
+  // entry written before that edit is a structural miss instead of being served stale (see
+  // currentPromptVersion's own comment — this is what the 2026-09-22 Jitamitra incident
+  // exposed: the cache had no way to know the code that produced it had changed).
+  const cacheKey = `${lang}::${currentPromptVersion()}`
+  const cached = existingTranslations[cacheKey]
 
   let clientContent: ReportContent
   try {
@@ -78,7 +83,7 @@ export async function POST(
 
       const { error: cacheError } = await supabase
         .from('reports')
-        .update({ client_report_translations: { ...existingTranslations, [lang]: clientContent } })
+        .update({ client_report_translations: { ...existingTranslations, [cacheKey]: clientContent } })
         .eq('id', id)
       if (cacheError) {
         console.error('[practitioner-client-voice] failed to persist cache:', cacheError)
