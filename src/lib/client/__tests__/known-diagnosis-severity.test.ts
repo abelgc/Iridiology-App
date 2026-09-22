@@ -108,15 +108,22 @@ beforeEach(() => {
 })
 
 describe('known-diagnosis severity (soft weakness vs hard diagnosis)', () => {
-  it('every Writer system prompt contains the soft/hard branching instructions', async () => {
+  it("REGRESSION (Jitamitra report, 2026-09-22): every Writer system prompt forbids the doctor-referral line and the 'Since you've mentioned' template for known diagnoses, regardless of severity", async () => {
+    // The soft/hard branch used to decide ONLY whether a diagnosis got a doctor-referral
+    // line — soft got reinforcement language, hard got the line. That branch is gone: no
+    // known diagnosis gets an automatic doctor line anymore, soft or hard, so the Writer
+    // prompt no longer needs (or has) severity-conditional prose instructions. The Planner
+    // still classifies severity (see the next test) — only the Writer-facing prose rule
+    // collapsed to one unified instruction.
     createMock.mockImplementation(implWith([]))
     await rewriteReportForClient(mockReport, 'en', 'Jane')
 
     const writerA = createMock.mock.calls.find(([p]: any) => p.system.includes('You are Writer A'))!
-    expect(writerA[0].system).toContain('If severity is "soft"')
-    expect(writerA[0].system).toContain('never redirect to a doctor for a soft entry')
-    expect(writerA[0].system).toContain('If severity is "hard"')
-    expect(writerA[0].system).toContain('doctor-coordination line')
+    const system: string = writerA[0].system
+    expect(system).not.toContain('If severity is "soft"')
+    expect(system).not.toContain('If severity is "hard"')
+    expect(system).toContain('Do not append a doctor-referral sentence for a known diagnosis')
+    expect(system).toMatch(/Never write "Since you.ve mentioned/)
   })
 
   it('the Planner system prompt asks for a severity classification with hard/soft examples', async () => {

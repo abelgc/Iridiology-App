@@ -241,6 +241,29 @@ describe('rewriteReportForClient', () => {
     expect(system).toContain('preserve any concrete body location, organ, or zone')
   })
 
+  it("REGRESSION (Jitamitra report, 2026-09-22): the Writer prompt must not instruct a doctor-coordination sentence for known diagnoses, and must not template 'Since you've mentioned X, and that lines up with what shows here'", async () => {
+    // Reproduces a reported failure, confirmed against a real generated report: 5 sections
+    // (hepatic, emotional, cognitive, endocrine, circulatory) each independently appended
+    // their own near-identical "keep it in view with your doctor; this works alongside
+    // that" sentence — one per known diagnosis, with zero cross-section coordination since
+    // the 3 Writers run in parallel and never see each other's output. The KNOWN DIAGNOSES
+    // rule template ("Since you've mentioned [condition], and that lines up with what shows
+    // here...") is also the exact parroting pattern reported: it restates the client's own
+    // intake wording instead of explaining what the iris-grounded finding actually is.
+    await rewriteReportForClient(mockReport, 'en', 'Jane')
+    const writerACall = createMock.mock.calls.find(([params]) => params.system.includes('You are Writer A'))
+    const system: string = writerACall![0].system
+    // The old worked examples themselves are gone — not just retitled. The new rule still
+    // has to name the banned phrases to forbid them, so a bare `not.toContain` on the
+    // phrases alone would false-fail on the ban text; check the specific old templates
+    // instead, and separately confirm the ban is actually stated.
+    expect(system).not.toContain('and that lines up with what shows here, keep it in view with your doctor')
+    expect(system).not.toContain('that lines up with a weak zone here')
+    expect(system).not.toContain('doctor-coordination line')
+    expect(system).toContain('Do not append a doctor-referral sentence for a known diagnosis')
+    expect(system).toMatch(/Never write "Since you.ve mentioned/)
+  })
+
   it('carries the given first name straight into the brief for Writer A', async () => {
     await rewriteReportForClient(mockReport, 'en', 'Maria')
     const writerACall = createMock.mock.calls.find(([params]) => params.system.includes('You are Writer A'))
