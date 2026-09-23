@@ -8,6 +8,7 @@ import { buildPatientContext } from './context'
 import { buildUserPrompt } from './analyze'
 import { parseReportResponse } from './parse'
 import { guardAgainstSystemFixation, guardAgainstHistoryCallbackOveruse } from './rewrite-fixation'
+import { recordReportMetrics } from './report-metrics'
 import type { ReportContent } from '@/types/report'
 import type { AnalysisError } from './analyze'
 import type { AnalysisRequest } from '@/types/claude'
@@ -33,13 +34,22 @@ async function finalizeReport(
  * `response_too_long:`-tagged Error (matching this app's existing failure_reason convention —
  * see writing-pipeline.ts) instead of returning text guaranteed to fail JSON parsing.
  */
+interface GuardedCompletion {
+  response: CompletionResponse
+  retried: boolean
+  ms: number
+}
+
 async function completeWithTruncationGuard(
   provider: AIProvider,
   request: CompletionRequest,
   retryMaxTokens: number,
-): Promise<CompletionResponse> {
+): Promise<GuardedCompletion> {
+  const startedAt = Date.now()
   const response = await provider.complete(request)
-  if (response.stopReason !== 'max_tokens') return response
+  if (response.stopReason !== 'max_tokens') {
+    return { response, retried: false, ms: Date.now() - startedAt }
+  }
 
   const retryResponse = await provider.complete({ ...request, maxTokens: retryMaxTokens })
   if (retryResponse.stopReason === 'max_tokens') {
@@ -47,7 +57,7 @@ async function completeWithTruncationGuard(
       `response_too_long: response still truncated after increasing token limit to ${retryMaxTokens}`,
     )
   }
-  return retryResponse
+  return { response: retryResponse, retried: true, ms: Date.now() - startedAt }
 }
 
 export interface DualAnalysisOptions {
@@ -62,6 +72,7 @@ export async function analyzeIrisDual(
 ): Promise<ReportContent | AnalysisError> {
   const { forceLanguage = false } = options
   const providers = options.providers ?? (await getBothProviders())
+  const overallStartedAt = Date.now()
 
   if (!providers) {
     // getBothProviders() returns null whenever active_provider !== 'both' or either API key is
@@ -108,6 +119,14 @@ export async function analyzeIrisDual(
   if (claudeResult.status === 'rejected') {
     console.error('[analyzeIrisDual] Claude failed:', claudeResult.reason)
     const message = claudeResult.reason?.message ?? 'Claude analysis failed'
+    await recordReportMetrics({
+      sessionId: request.sessionId,
+      route: 'analyze',
+      outcome: 'failed',
+      totalMs: Date.now() - overallStartedAt,
+      openaiLegMs: openaiResult.status === 'fulfilled' ? openaiResult.value.ms : undefined,
+      openaiLegRetried: openaiResult.status === 'fulfilled' ? openaiResult.value.retried : undefined,
+    })
     // Tag non-retryable causes (400 invalid_request_error / 401 auth, e.g. insufficient
     // account credit) so it's obvious on sight in a failure_reason column that this needs
     // an account fix — this leg already fails fast with no retry either way.
@@ -119,8 +138,19 @@ export async function analyzeIrisDual(
 
   if (openaiResult.status === 'rejected') {
     console.warn('[analyzeIrisDual] GPT-4o failed, using Claude only:', openaiResult.reason)
-    const parsed = parseReportResponse(claudeResult.value.text)
-    if ('code' in parsed) return { code: 'analysis_failed', message: parsed.message }
+    const parsed = parseReportResponse(claudeResult.value.response.text)
+    const metricsBase = {
+      sessionId: request.sessionId,
+      route: 'analyze' as const,
+      totalMs: Date.now() - overallStartedAt,
+      claudeLegMs: claudeResult.value.ms,
+      claudeLegRetried: claudeResult.value.retried,
+    }
+    if ('code' in parsed) {
+      await recordReportMetrics({ ...metricsBase, outcome: 'failed' })
+      return { code: 'analysis_failed', message: parsed.message }
+    }
+    await recordReportMetrics({ ...metricsBase, outcome: 'completed' })
     return finalizeReport(anthropic, parsed)
   }
 
@@ -132,10 +162,10 @@ export async function analyzeIrisDual(
   const synthesisPrompt = `You performed two independent iris analyses of the same patient. Produce the definitive clinical report.
 
 === ANALYSIS A (YOUR OWN — structural and stylistic foundation) ===
-${claudeResult.value.text}
+${claudeResult.value.response.text}
 
 === ANALYSIS B (GPT-4o — mine for clinical assertions and concrete visual detail) ===
-${openaiResult.value.text}
+${openaiResult.value.response.text}
 
 === SYNTHESIS INSTRUCTIONS ===
 1. Start from Analysis A. Its JSON structure, writing style, and clinical format are correct.
@@ -151,9 +181,9 @@ ${openaiResult.value.text}
 
 The reader is the practitioner and must NEVER see references to "Analysis A", "Analysis B", the model names, or any meta-commentary comparing the two source analyses. Never write phrases such as "Analysis B offered no contradiction". Produce one clean, integrated clinical report only.`
 
-  let synthesisResponse: CompletionResponse
+  let synthesis: GuardedCompletion
   try {
-    synthesisResponse = await completeWithTruncationGuard(
+    synthesis = await completeWithTruncationGuard(
       anthropic,
       {
         systemPrompt: `You are a senior clinical iridologist producing a definitive iris analysis report. Be direct. Every sentence must make a clinical claim.
@@ -167,21 +197,52 @@ LANGUAGE DIRECTIVE: You MUST write the ENTIRE response in ${langLabel}, includin
     )
   } catch (error) {
     console.warn('[analyzeIrisDual] synthesis truncated twice, falling back to Claude-only result:', error)
-    const claudeParsed = parseReportResponse(claudeResult.value.text)
-    if ('code' in claudeParsed) return { code: 'analysis_failed', message: claudeParsed.message }
+    const claudeParsed = parseReportResponse(claudeResult.value.response.text)
+    const metricsBase = {
+      sessionId: request.sessionId,
+      route: 'analyze' as const,
+      totalMs: Date.now() - overallStartedAt,
+      claudeLegMs: claudeResult.value.ms,
+      claudeLegRetried: claudeResult.value.retried,
+      openaiLegMs: openaiResult.value.ms,
+      openaiLegRetried: openaiResult.value.retried,
+      synthesisMs: Date.now() - synthesisStartedAt,
+      synthesisRetried: true,
+    }
+    if ('code' in claudeParsed) {
+      await recordReportMetrics({ ...metricsBase, outcome: 'failed' })
+      return { code: 'analysis_failed', message: claudeParsed.message }
+    }
+    await recordReportMetrics({ ...metricsBase, outcome: 'completed' })
     return finalizeReport(anthropic, claudeParsed)
   }
 
-  console.log(`[analyzeIrisDual] synthesis completed in ${Date.now() - synthesisStartedAt}ms (total: ${Date.now() - dualStartedAt}ms)`)
+  console.log(`[analyzeIrisDual] synthesis completed in ${synthesis.ms}ms (total: ${Date.now() - dualStartedAt}ms)`)
 
-  const parsed = parseReportResponse(synthesisResponse.text)
+  const parsed = parseReportResponse(synthesis.response.text)
+  const metricsBase = {
+    sessionId: request.sessionId,
+    route: 'analyze' as const,
+    totalMs: Date.now() - overallStartedAt,
+    claudeLegMs: claudeResult.value.ms,
+    claudeLegRetried: claudeResult.value.retried,
+    openaiLegMs: openaiResult.value.ms,
+    openaiLegRetried: openaiResult.value.retried,
+    synthesisMs: synthesis.ms,
+    synthesisRetried: synthesis.retried,
+  }
   if ('code' in parsed) {
     console.warn('[analyzeIrisDual] synthesis parse failed, falling back to Claude-only result')
-    const claudeParsed = parseReportResponse(claudeResult.value.text)
-    if ('code' in claudeParsed) return { code: 'analysis_failed', message: claudeParsed.message }
+    const claudeParsed = parseReportResponse(claudeResult.value.response.text)
+    if ('code' in claudeParsed) {
+      await recordReportMetrics({ ...metricsBase, outcome: 'failed' })
+      return { code: 'analysis_failed', message: claudeParsed.message }
+    }
+    await recordReportMetrics({ ...metricsBase, outcome: 'completed' })
     return finalizeReport(anthropic, claudeParsed)
   }
 
   console.log('[analyzeIrisDual] synthesis complete ✓')
+  await recordReportMetrics({ ...metricsBase, outcome: 'completed' })
   return finalizeReport(anthropic, parsed)
 }

@@ -6,6 +6,7 @@ import { parseComparisonResponse } from './parse-comparison'
 import { ComparisonReportContent } from '@/types/comparison-report'
 import { ComparisonRequest } from '@/types/claude'
 import { calculateAge } from '@/lib/utils'
+import { recordReportMetrics } from './report-metrics'
 import type { AIProvider, CompletionRequest, CompletionResponse } from '@/lib/ai/types'
 
 export interface ComparisonError {
@@ -18,13 +19,22 @@ export interface ComparisonError {
  * `max_tokens`, retries once at `retryMaxTokens`. If still truncated, throws a
  * `response_too_long:`-tagged Error instead of returning text guaranteed to fail JSON parsing.
  */
+interface GuardedCompletion {
+  response: CompletionResponse
+  retried: boolean
+  ms: number
+}
+
 async function completeWithTruncationGuard(
   provider: AIProvider,
   request: CompletionRequest,
   retryMaxTokens: number,
-): Promise<CompletionResponse> {
+): Promise<GuardedCompletion> {
+  const startedAt = Date.now()
   const response = await provider.complete(request)
-  if (response.stopReason !== 'max_tokens') return response
+  if (response.stopReason !== 'max_tokens') {
+    return { response, retried: false, ms: Date.now() - startedAt }
+  }
 
   const retryResponse = await provider.complete({ ...request, maxTokens: retryMaxTokens })
   if (retryResponse.stopReason === 'max_tokens') {
@@ -32,7 +42,7 @@ async function completeWithTruncationGuard(
       `response_too_long: response still truncated after increasing token limit to ${retryMaxTokens}`,
     )
   }
-  return retryResponse
+  return { response: retryResponse, retried: true, ms: Date.now() - startedAt }
 }
 
 export const COMPARISON_SYNTHESIS_INSTRUCTIONS = `=== SYNTHESIS INSTRUCTIONS ===
@@ -103,6 +113,7 @@ async function parseWithRetry(
 }
 
 export async function compareIris(request: ComparisonRequest): Promise<ComparisonReportContent | ComparisonError> {
+  const overallStartedAt = Date.now()
   const images = [
     { data: request.previousRightIrisBase64, mediaType: request.previousRightIrisMediaType ?? 'image/jpeg' },
     { data: request.previousLeftIrisBase64, mediaType: request.previousLeftIrisMediaType ?? 'image/jpeg' },
@@ -186,29 +197,49 @@ export async function compareIris(request: ComparisonRequest): Promise<Compariso
     ])
 
     if (claudeResult.status === 'rejected') {
+      await recordReportMetrics({
+        sessionId: request.sessionId,
+        route: 'compare',
+        outcome: 'failed',
+        totalMs: Date.now() - overallStartedAt,
+        openaiLegMs: openaiResult.status === 'fulfilled' ? openaiResult.value.ms : undefined,
+        openaiLegRetried: openaiResult.status === 'fulfilled' ? openaiResult.value.retried : undefined,
+      })
       return { code: 'analysis_failed', message: claudeResult.reason?.message ?? 'Claude comparison failed' }
     }
 
     if (openaiResult.status === 'rejected') {
       // GPT failed — fall back to the Claude-only comparison rather than error out.
-      const parsed = parseComparisonResponse(claudeResult.value.text)
-      if ('code' in parsed) return { code: 'analysis_failed', message: parsed.message }
+      const parsed = parseComparisonResponse(claudeResult.value.response.text)
+      const metricsBase = {
+        sessionId: request.sessionId,
+        route: 'compare' as const,
+        totalMs: Date.now() - overallStartedAt,
+        claudeLegMs: claudeResult.value.ms,
+        claudeLegRetried: claudeResult.value.retried,
+      }
+      if ('code' in parsed) {
+        await recordReportMetrics({ ...metricsBase, outcome: 'failed' })
+        return { code: 'analysis_failed', message: parsed.message }
+      }
+      await recordReportMetrics({ ...metricsBase, outcome: 'completed' })
       return parsed
     }
 
     const synthesisPrompt = `You performed two independent COMPARATIVE iris analyses of the same patient (previous session vs current session). Produce the definitive comparative clinical report.
 
 === ANALYSIS A (YOUR OWN — structural and stylistic foundation) ===
-${claudeResult.value.text}
+${claudeResult.value.response.text}
 
 === ANALYSIS B (GPT-4o — mine for bold clinical assertions only) ===
-${openaiResult.value.text}
+${openaiResult.value.response.text}
 
 ${COMPARISON_SYNTHESIS_INSTRUCTIONS}`
 
-    let synthesisResponse: CompletionResponse
+    const synthesisStartedAt = Date.now()
+    let synthesis: GuardedCompletion
     try {
-      synthesisResponse = await completeWithTruncationGuard(
+      synthesis = await completeWithTruncationGuard(
         anthropic,
         {
           systemPrompt: `You are a senior clinical iridologist producing a definitive comparative iris analysis report (previous vs current session). Be direct. Every sentence must make a clinical claim.`,
@@ -220,19 +251,50 @@ ${COMPARISON_SYNTHESIS_INSTRUCTIONS}`
       )
     } catch (error) {
       console.warn('[compareIris] synthesis truncated twice, falling back to Claude-only comparison:', error)
-      const claudeParsed = parseComparisonResponse(claudeResult.value.text)
-      if ('code' in claudeParsed) return { code: 'analysis_failed', message: claudeParsed.message }
+      const claudeParsed = parseComparisonResponse(claudeResult.value.response.text)
+      const metricsBase = {
+        sessionId: request.sessionId,
+        route: 'compare' as const,
+        totalMs: Date.now() - overallStartedAt,
+        claudeLegMs: claudeResult.value.ms,
+        claudeLegRetried: claudeResult.value.retried,
+        openaiLegMs: openaiResult.value.ms,
+        openaiLegRetried: openaiResult.value.retried,
+        synthesisMs: Date.now() - synthesisStartedAt,
+        synthesisRetried: true,
+      }
+      if ('code' in claudeParsed) {
+        await recordReportMetrics({ ...metricsBase, outcome: 'failed' })
+        return { code: 'analysis_failed', message: claudeParsed.message }
+      }
+      await recordReportMetrics({ ...metricsBase, outcome: 'completed' })
       return claudeParsed
     }
 
-    const parsed = parseComparisonResponse(synthesisResponse.text)
+    const parsed = parseComparisonResponse(synthesis.response.text)
+    const metricsBase = {
+      sessionId: request.sessionId,
+      route: 'compare' as const,
+      totalMs: Date.now() - overallStartedAt,
+      claudeLegMs: claudeResult.value.ms,
+      claudeLegRetried: claudeResult.value.retried,
+      openaiLegMs: openaiResult.value.ms,
+      openaiLegRetried: openaiResult.value.retried,
+      synthesisMs: synthesis.ms,
+      synthesisRetried: synthesis.retried,
+    }
     if ('code' in parsed) {
       // Synthesis parse failed — fall back to the Claude-only comparison.
-      const claudeParsed = parseComparisonResponse(claudeResult.value.text)
-      if ('code' in claudeParsed) return { code: 'analysis_failed', message: claudeParsed.message }
+      const claudeParsed = parseComparisonResponse(claudeResult.value.response.text)
+      if ('code' in claudeParsed) {
+        await recordReportMetrics({ ...metricsBase, outcome: 'failed' })
+        return { code: 'analysis_failed', message: claudeParsed.message }
+      }
+      await recordReportMetrics({ ...metricsBase, outcome: 'completed' })
       return claudeParsed
     }
 
+    await recordReportMetrics({ ...metricsBase, outcome: 'completed' })
     return parsed
   } catch (error) {
     return {
