@@ -181,7 +181,7 @@ export async function compareIris(request: ComparisonRequest): Promise<Compariso
     const { anthropic, openai } = both
 
     const [claudeResult, openaiResult] = await Promise.allSettled([
-      completeWithTruncationGuard(anthropic, { systemPrompt: COMPARISON_ANALYSIS_SYSTEM_PROMPT, userText: userPrompt, images, maxTokens: 8192 }, 12288),
+      completeWithTruncationGuard(anthropic, { systemPrompt: COMPARISON_ANALYSIS_SYSTEM_PROMPT, userText: userPrompt, images, maxTokens: 16000 }, 24000),
       completeWithTruncationGuard(openai, { systemPrompt: COMPARISON_ANALYSIS_SYSTEM_PROMPT, userText: userPrompt, images, maxTokens: 8192 }, 12288),
     ])
 
@@ -214,9 +214,9 @@ ${COMPARISON_SYNTHESIS_INSTRUCTIONS}`
           systemPrompt: `You are a senior clinical iridologist producing a definitive comparative iris analysis report (previous vs current session). Be direct. Every sentence must make a clinical claim.`,
           userText: synthesisPrompt,
           images: [],
-          maxTokens: 8192,
+          maxTokens: 16000,
         },
-        12288,
+        24000,
       )
     } catch (error) {
       console.warn('[compareIris] synthesis truncated twice, falling back to Claude-only comparison:', error)

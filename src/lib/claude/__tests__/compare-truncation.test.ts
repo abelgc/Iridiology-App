@@ -90,7 +90,23 @@ describe('compareIris — max_tokens truncation handling (dual-provider path)', 
 
     expect('code' in result).toBe(false)
     expect(anthropicComplete).toHaveBeenCalledTimes(3) // truncated + retry + synthesis
-    expect(anthropicComplete.mock.calls[1][0].maxTokens).toBe(12288)
+    expect(anthropicComplete.mock.calls[1][0].maxTokens).toBe(24000)
+  })
+
+  it('REGRESSION (2026-09-23 production timeout — same fix as analyze-dual): the dual-provider Claude leg and synthesis start at 16000, not 8192, so a long comparison report does not need the truncation retry', async () => {
+    const anthropicComplete = vi.fn().mockResolvedValue({ text: validComparisonJson(), stopReason: 'end_turn' })
+    const openaiComplete = vi.fn().mockResolvedValue({ text: validComparisonJson(), stopReason: 'end_turn' })
+    mockGetBothProviders.mockResolvedValue({
+      anthropic: { complete: anthropicComplete },
+      openai: { complete: openaiComplete },
+    })
+
+    const result = await compareIris(request)
+
+    expect('code' in result).toBe(false)
+    expect(anthropicComplete).toHaveBeenCalledTimes(2) // leg + synthesis, no retry needed
+    expect(anthropicComplete.mock.calls[0][0].maxTokens).toBe(16000)
+    expect(anthropicComplete.mock.calls[1][0].maxTokens).toBe(16000)
   })
 
   it('REGRESSION: falls back to Claude-only when the synthesis is truncated twice', async () => {

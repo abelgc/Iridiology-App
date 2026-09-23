@@ -99,7 +99,7 @@ export async function analyzeIrisDual(
   const dualStartedAt = Date.now()
 
   const [claudeResult, openaiResult] = await Promise.allSettled([
-    completeWithTruncationGuard(anthropic, { systemPrompt, userText: userPrompt, images, maxTokens: 8192 }, 12288),
+    completeWithTruncationGuard(anthropic, { systemPrompt, userText: userPrompt, images, maxTokens: 16000 }, 24000),
     completeWithTruncationGuard(openai, { systemPrompt, userText: userPrompt, images, maxTokens: 8192 }, 12288),
   ])
 
@@ -161,9 +161,9 @@ The reader is the practitioner and must NEVER see references to "Analysis A", "A
 LANGUAGE DIRECTIVE: You MUST write the ENTIRE response in ${langLabel}, including every JSON value, even if Analysis A or Analysis B below are written in a different language — translate and rewrite them into ${langLabel}. Do not use any other language under any circumstance. This is a hard requirement.`,
         userText: synthesisPrompt,
         images: [],
-        maxTokens: 8192,
+        maxTokens: 16000,
       },
-      12288,
+      24000,
     )
   } catch (error) {
     console.warn('[analyzeIrisDual] synthesis truncated twice, falling back to Claude-only result:', error)

@@ -61,7 +61,22 @@ describe('analyzeIrisDual — max_tokens truncation handling', () => {
 
     expect('code' in result).toBe(false)
     expect(anthropicComplete).toHaveBeenCalledTimes(3) // truncated attempt + retry + synthesis
-    expect(anthropicComplete.mock.calls[1][0].maxTokens).toBe(12288)
+    expect(anthropicComplete.mock.calls[1][0].maxTokens).toBe(24000)
+  })
+
+  it('REGRESSION (2026-09-23 production timeout, session f666e4d4): the Claude leg and synthesis start at a high enough max_tokens that a genuinely long report does not need the truncation retry at all — the retry doubles wall-clock time and was the direct cause of the 280s timeout', async () => {
+    const anthropicComplete = vi.fn().mockResolvedValue({ text: validReportJson(), stopReason: 'end_turn' })
+    const anthropic = { complete: anthropicComplete }
+    const openai = { complete: vi.fn().mockResolvedValue({ text: validReportJson(), stopReason: 'end_turn' }) }
+
+    const result = await analyzeIrisDual(request, 'en', {
+      providers: { anthropic: anthropic as any, openai: openai as any },
+    })
+
+    expect('code' in result).toBe(false)
+    expect(anthropicComplete).toHaveBeenCalledTimes(2) // leg + synthesis, no retry needed
+    expect(anthropicComplete.mock.calls[0][0].maxTokens).toBe(16000) // the parallel leg
+    expect(anthropicComplete.mock.calls[1][0].maxTokens).toBe(16000) // the synthesis call
   })
 
   it('REGRESSION (2026-07-19 production incident): falls back to Claude-only when the synthesis response is truncated twice', async () => {
