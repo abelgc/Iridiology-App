@@ -155,4 +155,37 @@ describe('POST /api/analyze', () => {
       expect(language).toBe('en')
     })
   })
+
+  describe('REGRESSION (Vidya Dasi Poland report, 2026-09-27): Jyotish emotional-field rewrite keeps the report language', () => {
+    const birthData = {
+      date_of_birth: '1990-01-01',
+      country_of_birth: 'PL',
+      city_of_birth: 'Gliwice',
+      time_of_day: '07:35:00',
+      full_name: 'Vidya',
+    }
+
+    async function runWithLanguage(language?: string) {
+      mockAnalyze.mockResolvedValue({ section_1_general_terrain: 'English terrain', section_2_emotional_field: 'English emotional field' })
+      mockShouldJyotish.mockReturnValue(true)
+      mockEnhance.mockResolvedValue({ section_2_emotional_field: 'rewritten' })
+      const res = await POST(makeRequest(birthData, language))
+      expect(res.status).toBe(200)
+      await waitUntilPromise
+      expect(mockEnhance).toHaveBeenCalledTimes(1)
+      return mockEnhance.mock.calls[0][3]
+    }
+
+    it('passes German through to the emotional-field rewrite instead of omitting it', async () => {
+      expect(await runWithLanguage('de')).toBe('de')
+    })
+
+    it('passes an explicit English selection through to the emotional-field rewrite', async () => {
+      expect(await runWithLanguage('en')).toBe('en')
+    })
+
+    it('passes the English default through when no language is selected, instead of leaving the argument unset', async () => {
+      expect(await runWithLanguage()).toBe('en')
+    })
+  })
 })

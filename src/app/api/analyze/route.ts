@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
                   city_of_birth: patientData.city_of_birth!,
                   time_of_day: patientData.time_of_day!,
                 },
+                reportLanguage,
               ),
               30_000,
               'jyotish_timeout',
