@@ -8,6 +8,7 @@ import { buildPatientContext } from './context'
 import { buildUserPrompt } from './analyze'
 import { parseReportResponse } from './parse'
 import { guardAgainstSystemFixation, guardAgainstHistoryCallbackOveruse } from './rewrite-fixation'
+import { guardAgainstZoneDenial } from './rewrite-zone-denial'
 import { recordReportMetrics } from './report-metrics'
 import type { ReportContent } from '@/types/report'
 import type { AnalysisError } from './analyze'
@@ -25,7 +26,8 @@ async function finalizeReport(
 ): Promise<ReportContent | AnalysisError> {
   if ('code' in result) return result
   const afterSystemGuard = await guardAgainstSystemFixation(provider, result)
-  return guardAgainstHistoryCallbackOveruse(provider, afterSystemGuard)
+  const afterHistoryGuard = await guardAgainstHistoryCallbackOveruse(provider, afterSystemGuard)
+  return guardAgainstZoneDenial(provider, afterHistoryGuard)
 }
 
 /**

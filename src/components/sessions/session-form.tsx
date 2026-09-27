@@ -91,6 +91,20 @@ export function SessionForm({ defaultPatientId }: SessionFormProps) {
     loadPatients()
   }, [])
 
+  // New Session from the patient page sets patientId before this list loads, so the
+  // dropdown's onChange never runs and practitioner notes stay empty. Copy them once
+  // the list arrives. A note already typed in the box is left as the session override.
+  useEffect(() => {
+    if (!defaultPatientId || patients.length === 0) return
+    const selected = patients.find((p) => p.id === defaultPatientId)
+    if (!selected?.notes) return
+    setFormData((prev) => {
+      if (prev.patientId !== defaultPatientId) return prev
+      if (prev.practitionerNotes.trim()) return prev
+      return { ...prev, practitionerNotes: selected.notes || '' }
+    })
+  }, [defaultPatientId, patients])
+
   // Auto-load last session when comparison mode + patient selected
   useEffect(() => {
     if (formData.mode !== 'comparison' || !formData.patientId) {

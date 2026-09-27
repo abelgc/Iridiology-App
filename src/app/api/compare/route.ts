@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requirePractitioner } from '@/lib/auth/require-practitioner'
 import { waitUntil } from '@vercel/functions'
 import { withTimeout } from '@/lib/utils'
+import { resolvePractitionerNotes } from '@/lib/sessions/resolve-practitioner-notes'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -26,6 +27,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const practitionerNotes = await resolvePractitionerNotes(supabase, patientId, patientData.practitioner_notes)
+    const resolvedPatientData = { ...patientData, practitioner_notes: practitionerNotes }
+
     const { data: sessionData, error: sessionError } = await supabase
       .from('sessions')
       .insert({
@@ -33,7 +37,7 @@ export async function POST(request: NextRequest) {
         session_date: new Date().toISOString().split('T')[0],
         analysis_mode: 'comparison',
         symptoms: patientData.symptoms,
-        practitioner_notes: patientData.practitioner_notes,
+        practitioner_notes: practitionerNotes,
         status: 'analyzing',
       })
       .select()
@@ -57,7 +61,7 @@ export async function POST(request: NextRequest) {
             previousRightIrisBase64, previousLeftIrisBase64,
             rightIrisBase64, leftIrisBase64,
             previousSessionDate: '',
-            patientData,
+            patientData: resolvedPatientData,
           }),
           285_000,
           'Analysis timed out after 285s',
