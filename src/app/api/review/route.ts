@@ -4,6 +4,7 @@ import { TechnicalReviewRequest } from '@/types/claude'
 import { NextRequest, NextResponse } from 'next/server'
 import { waitUntil } from '@vercel/functions'
 import { withTimeout } from '@/lib/utils'
+import { resolvePractitionerNotes } from '@/lib/sessions/resolve-practitioner-notes'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -23,6 +24,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const practitionerNotes = await resolvePractitionerNotes(supabase, patientId, patientData.practitioner_notes)
+    const resolvedPatientData = { ...patientData, practitioner_notes: practitionerNotes }
+
     const { data: sessionData, error: sessionError } = await supabase
       .from('sessions')
       .insert({
@@ -30,7 +34,7 @@ export async function POST(request: NextRequest) {
         session_date: new Date().toISOString().split('T')[0],
         analysis_mode: 'technical_review',
         symptoms: patientData.symptoms,
-        practitioner_notes: patientData.practitioner_notes,
+        practitioner_notes: practitionerNotes,
         practitioner_interpretation: practitionerInterpretation,
         status: 'analyzing',
       })
@@ -54,7 +58,7 @@ export async function POST(request: NextRequest) {
             sessionId, patientId,
             rightIrisBase64, leftIrisBase64,
             practitionerInterpretation,
-            patientData,
+            patientData: resolvedPatientData,
           }),
           280_000,
           'Analysis timed out after 280s',

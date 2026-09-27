@@ -50,6 +50,32 @@ describe('SessionForm — language selector (added 2026-09-21)', () => {
     expect(getLanguageSelect()).toBeNull()
   })
 
+  it('REGRESSION (Vidya Dasi Poland, 2026-09-27): patient notes fill Practitioner Notes when New Session opens with that patient already selected', async () => {
+    global.fetch = vi.fn(async (url: unknown) => {
+      const href = String(url)
+      if (href === '/api/patients') {
+        return {
+          ok: true,
+          json: async () => [{
+            id: 'p1',
+            full_name: 'Vidya Dasi Poland',
+            notes: 'uric acid in kidneys, shoe lacunae',
+            general_history: null,
+          }],
+        } as Response
+      }
+      throw new Error(`Unexpected fetch: ${href}`)
+    }) as unknown as typeof fetch
+
+    render(<SessionForm defaultPatientId="p1" />)
+
+    await waitFor(() => {
+      const label = screen.getByText('Practitioner Notes')
+      const textarea = label.parentElement?.querySelector('textarea')
+      expect(textarea?.value).toBe('uric acid in kidneys, shoe lacunae')
+    })
+  })
+
   it('lets the practitioner pick Spanish or German', async () => {
     render(<SessionForm />)
     await waitFor(() => expect(screen.getByText('Jane Doe')).toBeInTheDocument())

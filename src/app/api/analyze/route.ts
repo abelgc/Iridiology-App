@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { enhanceEmotionalFieldWithJyotish, shouldEnhanceWithJyotish } from '@/lib/claude/enhance-emotional-field'
 import { waitUntil } from '@vercel/functions'
 import { withTimeout } from '@/lib/utils'
+import { resolvePractitionerNotes } from '@/lib/sessions/resolve-practitioner-notes'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -22,6 +23,9 @@ export async function POST(request: NextRequest) {
       ? language
       : 'en'
 
+    const practitionerNotes = await resolvePractitionerNotes(supabase, patientId, patientData.practitioner_notes)
+    const resolvedPatientData = { ...patientData, practitioner_notes: practitionerNotes }
+
     // Create session immediately
     const { data: sessionData, error: sessionError } = await supabase
       .from('sessions')
@@ -30,7 +34,7 @@ export async function POST(request: NextRequest) {
         session_date: new Date().toISOString().split('T')[0],
         analysis_mode: 'standard',
         symptoms: patientData.symptoms,
-        practitioner_notes: patientData.practitioner_notes,
+        practitioner_notes: practitionerNotes,
         status: 'analyzing',
       })
       .select()
@@ -51,7 +55,7 @@ export async function POST(request: NextRequest) {
       try {
         const result = await withTimeout(
           analyzeIrisDual(
-            { sessionId, patientId, rightIrisBase64, leftIrisBase64, patientData },
+            { sessionId, patientId, rightIrisBase64, leftIrisBase64, patientData: resolvedPatientData },
             reportLanguage,
             { forceLanguage: true },
           ),
@@ -72,18 +76,18 @@ export async function POST(request: NextRequest) {
         // and never let it fail the session — a timeout or error here falls back to the
         // unenhanced report rather than losing the whole analysis.
         const elapsedMs = Date.now() - startedAt
-        if (shouldEnhanceWithJyotish(patientData) && elapsedMs < 240_000) {
+        if (shouldEnhanceWithJyotish(resolvedPatientData) && elapsedMs < 240_000) {
           console.log(`[analyze] session ${sessionId} — enhancing emotional field with Jyotish...`)
           try {
             finalReport = await withTimeout(
               enhanceEmotionalFieldWithJyotish(
                 result,
-                patientData.full_name,
+                resolvedPatientData.full_name,
                 {
-                  date_of_birth: patientData.date_of_birth!,
-                  country_of_birth: patientData.country_of_birth!,
-                  city_of_birth: patientData.city_of_birth!,
-                  time_of_day: patientData.time_of_day!,
+                  date_of_birth: resolvedPatientData.date_of_birth!,
+                  country_of_birth: resolvedPatientData.country_of_birth!,
+                  city_of_birth: resolvedPatientData.city_of_birth!,
+                  time_of_day: resolvedPatientData.time_of_day!,
                 },
               ),
               30_000,

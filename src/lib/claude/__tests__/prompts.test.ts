@@ -288,6 +288,10 @@ describe('Claude Prompts', () => {
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('reparative or healing phase')
     })
 
+    it('REGRESSION (Vidya Dasi Poland, 2026-09-27): a later section must not call a zone unmarked when terrain already placed a marking there', () => {
+      expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('must not describe that region or the organ mapped to it as free of markings')
+    })
+
     it("REGRESSION (practitioner clinical review, 2026-08-27): requires cross-checking elimination organs before calling them unaffected, and prioritises kidney/intestine detox in the conclusion when a central organ is burdened", () => {
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('ELIMINATION PATHWAY CONSISTENCY')
       expect(STANDARD_ANALYSIS_SYSTEM_PROMPT).toContain('decongesting and supporting the kidneys and intestines generally comes first')

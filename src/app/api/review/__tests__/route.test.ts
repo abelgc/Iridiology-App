@@ -36,6 +36,15 @@ vi.mock('@/lib/supabase/server', () => ({
           },
         }
       }
+      if (table === 'patients') {
+        return {
+          select: () => ({
+            eq: () => ({
+              single: () => Promise.resolve({ data: { notes: null }, error: null }),
+            }),
+          }),
+        }
+      }
       if (table === 'reports') {
         return { insert: () => Promise.resolve({ data: null, error: null }) }
       }

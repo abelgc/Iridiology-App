@@ -29,18 +29,32 @@ function chain(finalResult: any): any {
 }
 
 const updateMock = vi.fn()
+const insertMock = vi.fn()
 let updateResolves: any = { data: { status: 'analyzing' }, error: null }
+let patientNotes: string | null = 'uric acid in kidneys, shoe lacunae'
 
 vi.mock('@/lib/supabase/server', () => ({
   createAdminClient: () => ({
     from: (table: string) => {
       if (table === 'sessions') {
         return {
-          insert: () => ({ select: () => ({ single: () => Promise.resolve({ data: { id: 'session-1' }, error: null }) }) }),
+          insert: (row: unknown) => {
+            insertMock(row)
+            return { select: () => ({ single: () => Promise.resolve({ data: { id: 'session-1' }, error: null }) }) }
+          },
           update: (...args: unknown[]) => {
             updateMock(...args)
             return chain(updateResolves)
           },
+        }
+      }
+      if (table === 'patients') {
+        return {
+          select: () => ({
+            eq: () => ({
+              single: () => Promise.resolve({ data: { notes: patientNotes }, error: null }),
+            }),
+          }),
         }
       }
       if (table === 'reports') {
@@ -70,6 +84,8 @@ describe('POST /api/analyze', () => {
   beforeEach(() => {
     waitUntilPromise = null
     updateMock.mockClear()
+    insertMock.mockClear()
+    patientNotes = 'uric acid in kidneys, shoe lacunae'
     mockAnalyze.mockReset()
     mockShouldJyotish.mockReset().mockReturnValue(false)
     mockEnhance.mockReset()
@@ -143,6 +159,27 @@ describe('POST /api/analyze', () => {
       const [, language, options] = mockAnalyze.mock.calls[0]
       expect(language).toBe('en')
       expect(options).toEqual({ forceLanguage: true })
+    })
+
+    it('REGRESSION (Vidya Dasi Poland, 2026-09-27): empty session notes still reach the model from the patient record', async () => {
+      mockAnalyze.mockResolvedValue({ section_1_general_terrain: 'x' })
+      const res = await POST(makeRequest({ practitioner_notes: '' }))
+      expect(res.status).toBe(200)
+      await waitUntilPromise
+
+      expect(insertMock).toHaveBeenCalledWith(expect.objectContaining({
+        practitioner_notes: 'uric acid in kidneys, shoe lacunae',
+      }))
+      expect(mockAnalyze.mock.calls[0][0].patientData.practitioner_notes).toBe('uric acid in kidneys, shoe lacunae')
+    })
+
+    it('keeps notes typed on the session when they differ from the patient record', async () => {
+      mockAnalyze.mockResolvedValue({ section_1_general_terrain: 'x' })
+      const res = await POST(makeRequest({ practitioner_notes: 'look again at the liver only' }))
+      expect(res.status).toBe(200)
+      await waitUntilPromise
+
+      expect(mockAnalyze.mock.calls[0][0].patientData.practitioner_notes).toBe('look again at the liver only')
     })
 
     it('falls back to English for an unsupported language value instead of passing it through unchecked', async () => {
