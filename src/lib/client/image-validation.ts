@@ -1,5 +1,5 @@
 export const IMAGE_MAX_BYTES = 10 * 1024 * 1024
-export const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png'] as const
+export const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'] as const
 export const MIN_DIMENSION = 800
 
 export type ValidationResult =

@@ -5,6 +5,7 @@ import { Upload, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { computeCenterCrop } from '@/lib/image-crop'
 import { autoContrastInPlace } from '@/lib/image-enhance'
+import { prepareUploadFile } from '@/lib/images/prepare-upload-file'
 
 // Conservative centre-crop ratio applied before resize — see the P2 image-pipeline diagnosis
 // referenced by the iridology-app-map skill for why this exists. Raised from 0.75 to 0.9
@@ -55,16 +56,21 @@ export function ImageUpload({ label, value, onChange, required = false }: ImageU
     }
   }
 
-  const processFile = (file: File) => {
+  const processFile = async (file: File) => {
     setError(null)
 
-    if (!file.type.startsWith('image/')) {
-      setError('Please select an image file')
+    let prepared: File
+    try {
+      prepared = await prepareUploadFile(file)
+    } catch (err) {
+      setError(err instanceof Error && err.message === 'not-image'
+        ? 'Please select an image file'
+        : 'Failed to read file')
       return
     }
 
     const img = new Image()
-    const objectUrl = URL.createObjectURL(file)
+    const objectUrl = URL.createObjectURL(prepared)
     img.onload = () => {
       URL.revokeObjectURL(objectUrl)
 
@@ -152,7 +158,7 @@ export function ImageUpload({ label, value, onChange, required = false }: ImageU
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/*,.heic,.heif,.jpg,.jpeg,.png,.webp,.gif,.avif"
             onChange={handleFileSelect}
             className="hidden"
           />
