@@ -2,6 +2,9 @@ import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
 import { SidebarProvider } from '@/components/layout/sidebar-provider'
 import { createClient } from '@/lib/supabase/server'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = { title: 'Practitioner', robots: { index: false, follow: false } }
 
 async function getUserEmail(): Promise<string> {
   try {

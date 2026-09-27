@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server'
+import { requirePractitioner } from '@/lib/auth/require-practitioner'
 import { createAdminClient } from '@/lib/supabase/server'
 
 const ALLOWED_KEYS = ['active_provider', 'anthropic_api_key', 'openai_api_key', 'anthropic_model', 'openai_model'] as const
 
 export async function GET() {
+  const denied = await requirePractitioner()
+  if (denied) return denied
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('settings')
@@ -25,6 +28,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const denied = await requirePractitioner()
+  if (denied) return denied
   const body = await request.json()
   const updates: Array<{ key: string; value: string }> = []
 

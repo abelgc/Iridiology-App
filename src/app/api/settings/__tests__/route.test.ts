@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+vi.mock('@/lib/auth/require-practitioner', () => ({ requirePractitioner: async () => null }))
+
 let selectResolves: { data: Array<{ key: string; value: string }> | null; error: { message: string } | null } = { data: [], error: null }
 const upsertMock = vi.fn()
 let upsertResolves: { error: { message: string } | null } = { error: null }

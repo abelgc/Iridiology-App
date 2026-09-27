@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+vi.mock('@/lib/auth/require-practitioner', () => ({ requirePractitioner: async () => null }))
 import { REPORT_SECTION_KEYS } from '@/types/report'
 
 function fullReportContent(overrides: Record<string, string> = {}) {

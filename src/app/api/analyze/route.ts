@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { analyzeIrisDual } from '@/lib/claude/analyze-dual'
 import { AnalysisRequest } from '@/types/claude'
 import { NextRequest, NextResponse } from 'next/server'
+import { requirePractitioner } from '@/lib/auth/require-practitioner'
 import { enhanceEmotionalFieldWithJyotish, shouldEnhanceWithJyotish } from '@/lib/claude/enhance-emotional-field'
 import { waitUntil } from '@vercel/functions'
 import { withTimeout } from '@/lib/utils'
@@ -12,6 +13,8 @@ export const maxDuration = 300
 const SUPPORTED_REPORT_LANGUAGES = new Set(['en', 'es', 'de'])
 
 export async function POST(request: NextRequest) {
+  const denied = await requirePractitioner()
+  if (denied) return denied
   const supabase = createAdminClient()
 
   try {

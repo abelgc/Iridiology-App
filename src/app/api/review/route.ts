@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { reviewIris } from '@/lib/claude/review'
 import { TechnicalReviewRequest } from '@/types/claude'
 import { NextRequest, NextResponse } from 'next/server'
+import { requirePractitioner } from '@/lib/auth/require-practitioner'
 import { waitUntil } from '@vercel/functions'
 import { withTimeout } from '@/lib/utils'
 
@@ -9,6 +10,8 @@ export const runtime = 'nodejs'
 export const maxDuration = 300
 
 export async function POST(request: NextRequest) {
+  const denied = await requirePractitioner()
+  if (denied) return denied
   const supabase = createAdminClient()
 
   try {

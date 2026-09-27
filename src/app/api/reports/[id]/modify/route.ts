@@ -1,11 +1,14 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { proposeReportModification } from '@/lib/claude/modify-report'
 import { NextRequest, NextResponse } from 'next/server'
+import { requirePractitioner } from '@/lib/auth/require-practitioner'
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const denied = await requirePractitioner()
+  if (denied) return denied
   const supabase = createAdminClient()
   const { id } = await params
 

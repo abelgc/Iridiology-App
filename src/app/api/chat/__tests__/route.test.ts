@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+vi.mock('@/lib/auth/require-practitioner', () => ({ requirePractitioner: async () => null }))
+
 let reportsRow: Record<string, unknown> | null
 let sessionsRow: Record<string, unknown> | null
 let patientsRow: Record<string, unknown> | null

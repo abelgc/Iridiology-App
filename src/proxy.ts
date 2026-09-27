@@ -16,6 +16,16 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next({ request })
   }
 
+  const isLoginPage = pathname === '/login'
+  const isPublicAuthPage = pathname === '/forgot-password' || pathname === '/reset-password'
+  // Deny by default inside /api: most practitioner API routes use the service-role
+  // client with no auth check of their own, so this gate is their only protection.
+  const isProtected = pathname.startsWith('/practitioner') || pathname.startsWith('/api/')
+
+  if (!isProtected && !isLoginPage && !isPublicAuthPage) {
+    return NextResponse.next({ request })
+  }
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -53,10 +63,7 @@ export async function proxy(request: NextRequest) {
   const { data, error } = await supabase.auth.getClaims()
   const user = !error && data ? data.claims : null
 
-  const isLoginPage = pathname === '/login'
-  const isPublicAuthPage = pathname === '/forgot-password' || pathname === '/reset-password'
-
-  if (!user && !isLoginPage && !isPublicAuthPage) {
+  if (!user && isProtected) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)

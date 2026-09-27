@@ -1,12 +1,15 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { patientUpdateSchema } from '@/lib/validators/patient'
 import { NextRequest, NextResponse } from 'next/server'
+import { requirePractitioner } from '@/lib/auth/require-practitioner'
 import { ZodError } from 'zod'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const denied = await requirePractitioner()
+  if (denied) return denied
   try {
     const { id } = await params
     const supabase = createAdminClient()
@@ -40,6 +43,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const denied = await requirePractitioner()
+  if (denied) return denied
   try {
     const { id } = await params
     const body = await request.json()
@@ -81,6 +86,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const denied = await requirePractitioner()
+  if (denied) return denied
   try {
     const { id } = await params
     const supabase = createAdminClient()

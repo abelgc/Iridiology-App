@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+vi.mock('@/lib/auth/require-practitioner', () => ({ requirePractitioner: async () => null }))
 import { NextRequest } from 'next/server'
 
 const state: { rows: Record<string, unknown>[]; insertError: { message: string } | null } = {
