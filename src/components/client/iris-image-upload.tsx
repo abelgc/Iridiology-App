@@ -8,6 +8,7 @@ import {
 } from '@/lib/client/image-validation'
 import { computeCenterCrop } from '@/lib/image-crop'
 import { autoContrastInPlace } from '@/lib/image-enhance'
+import { prepareUploadFile } from '@/lib/images/prepare-upload-file'
 
 type Eye = 'right' | 'left'
 
@@ -74,14 +75,21 @@ export function IrisImageUpload({
 
   async function handleFile(eye: Eye, file: File) {
     setError(null)
-    let dims: { width: number; height: number }
+    let prepared: File
     try {
-      dims = await readImageDimensions(file)
+      prepared = await prepareUploadFile(file)
     } catch {
       setError(t('errorImageFormat'))
       return
     }
-    const validation = await validateImage(file, dims)
+    let dims: { width: number; height: number }
+    try {
+      dims = await readImageDimensions(prepared)
+    } catch {
+      setError(t('errorImageFormat'))
+      return
+    }
+    const validation = await validateImage(prepared, dims)
     if (!validation.ok) {
       const map = {
         too_large: t('errorImageTooLarge'),
@@ -92,7 +100,7 @@ export function IrisImageUpload({
       return
     }
     try {
-      const dataUrl = await compressImage(file)
+      const dataUrl = await compressImage(prepared)
       if (eye === 'right') setRight(dataUrl)
       else setLeft(dataUrl)
     } catch {
@@ -240,7 +248,7 @@ function EyeZone({
       {filled && <span className="upload-zone-check">✓</span>}
       <input
         type="file"
-        accept="image/jpeg,image/png"
+        accept="image/jpeg,image/png,image/webp,image/gif,image/avif,image/heic,image/heif,.heic,.heif,.jpg,.jpeg,.png,.webp,.gif,.avif"
         style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
         onChange={(e) => {
           const file = e.target.files?.[0]

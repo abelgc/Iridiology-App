@@ -2,13 +2,19 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { vi, beforeAll, afterAll } from 'vitest'
 import { ImageUpload } from '../image-upload'
 
+vi.mock('heic2any', () => ({
+  default: vi.fn(async () => new Blob(['jpeg-bytes'], { type: 'image/jpeg' })),
+}))
+
 // jsdom has no real image decoding or canvas. Mock the browser APIs the
 // component uses to compress images so the onChange pipeline can run.
 class MockImage {
   onload: (() => void) | null = null
   onerror: (() => void) | null = null
-  width = 100
-  height = 100
+  width = 1000
+  height = 1000
+  naturalWidth = 1000
+  naturalHeight = 1000
   set src(_value: string) {
     setTimeout(() => this.onload?.(), 0)
   }
@@ -80,6 +86,22 @@ describe('ImageUpload', () => {
     await waitFor(() => {
       expect(screen.getByText('Please select an image file')).toBeInTheDocument()
     })
+    expect(mockChange).not.toHaveBeenCalled()
+  })
+
+  it('accepts a .heic file when the browser reports an empty MIME type', async () => {
+    const mockChange = vi.fn()
+    const { container } = render(<ImageUpload label="Test Image" value={null} onChange={mockChange} />)
+
+    const file = new File(['heic-bytes'], 'iris.heic', { type: '' })
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+
+    fireEvent.change(input, { target: { files: [file] } })
+
+    await waitFor(() => {
+      expect(mockChange).toHaveBeenCalledWith('TESTBASE64')
+    })
+    expect(screen.queryByText('Please select an image file')).not.toBeInTheDocument()
   })
 
   it('displays preview when image is selected', () => {

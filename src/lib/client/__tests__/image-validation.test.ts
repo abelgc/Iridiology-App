@@ -13,7 +13,7 @@ function makeBlob(bytes: number, type: string): Blob {
 describe('image-validation', () => {
   it('exposes the documented constants', () => {
     expect(IMAGE_MAX_BYTES).toBe(10 * 1024 * 1024)
-    expect(ALLOWED_MIME_TYPES).toEqual(['image/jpeg', 'image/png'])
+    expect(ALLOWED_MIME_TYPES).toEqual(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'])
     expect(MIN_DIMENSION).toBe(800)
   })
 
@@ -25,10 +25,17 @@ describe('image-validation', () => {
   })
 
   it('rejects unsupported mime types', async () => {
-    const blob = makeBlob(1024, 'image/gif')
+    const blob = makeBlob(1024, 'image/bmp')
     const result = await validateImage(blob, { width: 1024, height: 1024 })
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.reason).toBe('bad_format')
+  })
+
+  it('accepts webp, gif and avif', async () => {
+    for (const type of ['image/webp', 'image/gif', 'image/avif']) {
+      const result = await validateImage(makeBlob(1024, type), { width: 1024, height: 1024 })
+      expect(result.ok).toBe(true)
+    }
   })
 
   it('rejects images smaller than 800x800', async () => {
