@@ -4,8 +4,6 @@ import Link from 'next/link'
 import { LanguageProvider } from '@/lib/i18n-context'
 import { LanguageToggle } from '@/components/client/language-toggle'
 
-export const metadata = { title: 'Narasimha Solutions — Iridology Analysis' }
-
 export default function ClientLayout({ children }: { children: ReactNode }) {
   return (
     <LanguageProvider>
@@ -20,6 +18,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
               alt="Narasimha Solutions"
               width={46}
               height={46}
+              loading="eager"
               className="rounded-full object-cover"
               style={{ border: '2px solid #d4a04a' }}
             />

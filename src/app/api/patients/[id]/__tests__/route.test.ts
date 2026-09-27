@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+vi.mock('@/lib/auth/require-practitioner', () => ({ requirePractitioner: async () => null }))
+
 const state: {
   row: Record<string, unknown> | null
   selectError: { code?: string; message: string } | null

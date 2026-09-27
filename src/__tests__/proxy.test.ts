@@ -147,3 +147,23 @@ describe('proxy() auth boundary', () => {
     expect(res.status).not.toBe(307)
   })
 })
+
+describe('REGRESSION (SEO audit 2026-09-26): public and unknown paths are not sent to /login', () => {
+  // Every unmatched URL used to end on the login screen, so crawlers saw soft 404s and
+  // no public page outside /client (legal, FAQ, locale homes) could ever be reached.
+  it.each(['/this-page-does-not-exist-xyz', '/privacy', '/about', '/es'])(
+    'lets an anonymous request for %s through so Next.js can answer it',
+    async (pathname) => {
+      currentUser = null
+      const res = await proxy(req(pathname))
+      expect(res.status).not.toBe(307)
+    },
+  )
+
+  it('still sends an anonymous request for an API route nobody listed to /login', async () => {
+    currentUser = null
+    const res = await proxy(req('/api/some-future-route'))
+    expect(res.status).toBe(307)
+    expect(res.headers.get('location')).toContain('/login')
+  })
+})

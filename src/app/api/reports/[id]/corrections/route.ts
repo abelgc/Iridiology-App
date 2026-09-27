@@ -1,11 +1,14 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { correctionCreateSchema } from '@/lib/validators/correction'
 import { NextRequest, NextResponse } from 'next/server'
+import { requirePractitioner } from '@/lib/auth/require-practitioner'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const denied = await requirePractitioner()
+  if (denied) return denied
   const supabase = createAdminClient()
   const { id } = await params
 
@@ -33,6 +36,8 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const denied = await requirePractitioner()
+  if (denied) return denied
   const supabase = createAdminClient()
   const { id: reportId } = await params
 

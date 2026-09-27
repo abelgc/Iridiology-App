@@ -33,6 +33,7 @@ export function TierSelector() {
     <>
       {/* Cards */}
       <section style={{ padding: '12px 16px 36px', maxWidth: '720px', margin: '0 auto' }}>
+        <h2 className="sr-only">{t('chooseTier')}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
           {/* Basic */}

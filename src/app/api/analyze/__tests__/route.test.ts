@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+vi.mock('@/lib/auth/require-practitioner', () => ({ requirePractitioner: async () => null }))
+
 let waitUntilPromise: Promise<unknown> | null = null
 vi.mock('@vercel/functions', () => ({
   waitUntil: (p: Promise<unknown>) => {

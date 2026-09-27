@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, DM_Sans, Fraunces } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   // reject a relative one. Without Open Graph tags, scrapers fell back to the
   // favicon, which only worked while that file happened to be 1024x1024.
   metadataBase: new URL("https://narasimhasolutions.com"),
-  title: "Narasimha Solutions — Iridology Analysis",
+  title: { default: "Narasimha Solutions — Iridology Analysis", template: "%s | Narasimha Solutions" },
   description: "Professional iris analysis by Narasimha Solutions",
   openGraph: {
     title: "Narasimha Solutions — Iridology Analysis",
@@ -35,7 +35,8 @@ export const metadata: Metadata = {
     url: "https://narasimhasolutions.com",
     siteName: "Narasimha Solutions",
     type: "website",
-    locale: "es_ES",
+    locale: "en_US",
+    alternateLocale: ["es_ES", "de_DE"],
     // Declared explicitly rather than via the opengraph-image file convention:
     // that convention emits a hashed query string (?opengraph-image.<hash>.png)
     // and the URL changes on every deploy that touches the file. Messaging
@@ -57,6 +58,18 @@ export const metadata: Metadata = {
     description: "Professional iris analysis by Narasimha Solutions",
     images: ["/og.png"],
   },
+  // Served from public/ rather than the app/icon.png convention for the same reason as
+  // og.png: the convention's hashed query plus Vercel's ?dpl= left two "?" in the URL.
+  icons: {
+    icon: [{ url: "/icon.png", type: "image/png", sizes: "256x256" }],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180" }],
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -66,9 +79,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${cormorant.variable} ${dmSans.variable} ${fraunces.variable} h-full antialiased`} suppressHydrationWarning>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-      </head>
       <body className="min-h-full flex flex-col bg-white">
         {children}
         <Toaster />

@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+vi.mock('@/lib/auth/require-practitioner', () => ({ requirePractitioner: async () => null }))
+
 const mockGetAIProvider = vi.fn()
 vi.mock('@/lib/ai/get-provider', () => ({
   getAIProvider: () => mockGetAIProvider(),

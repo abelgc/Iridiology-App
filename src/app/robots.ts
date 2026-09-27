@@ -14,5 +14,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/api/', '/practitioner'],
       },
     ],
+    sitemap: 'https://narasimhasolutions.com/sitemap.xml',
   }
 }

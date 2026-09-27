@@ -21,7 +21,7 @@ export interface ReportMetricsInput {
 export async function recordReportMetrics(input: ReportMetricsInput): Promise<void> {
   try {
     const supabase = createAdminClient()
-    await supabase.from('report_metrics').insert({
+    const { error } = await supabase.from('report_metrics').insert({
       session_id: input.sessionId,
       route: input.route,
       outcome: input.outcome,
@@ -33,6 +33,7 @@ export async function recordReportMetrics(input: ReportMetricsInput): Promise<vo
       synthesis_ms: input.synthesisMs ?? null,
       synthesis_retried: input.synthesisRetried ?? false,
     })
+    if (error) console.error('[recordReportMetrics] failed to record metrics (non-fatal):', error)
   } catch (error) {
     console.error('[recordReportMetrics] failed to record metrics (non-fatal):', error)
   }

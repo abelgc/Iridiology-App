@@ -2,8 +2,11 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { chatAboutReport } from '@/lib/claude/chat'
 import { ChatRequest } from '@/types/claude'
 import { NextRequest, NextResponse } from 'next/server'
+import { requirePractitioner } from '@/lib/auth/require-practitioner'
 
 export async function POST(request: NextRequest) {
+  const denied = await requirePractitioner()
+  if (denied) return denied
   const supabase = createAdminClient()
 
   try {

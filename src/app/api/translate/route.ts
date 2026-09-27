@@ -3,6 +3,7 @@ import { getAIProvider } from '@/lib/ai/get-provider'
 import { sanitizeJsonControlCharacters, describeJsonSyntaxError } from '@/lib/claude/json-repair'
 import { type ReportContent } from '@/types/report'
 import { NextRequest, NextResponse } from 'next/server'
+import { requirePractitioner } from '@/lib/auth/require-practitioner'
 
 const LANG_NAMES: Record<string, string> = { en: 'English', es: 'Spanish', de: 'German' }
 
@@ -13,6 +14,8 @@ const LANG_NAMES: Record<string, string> = { en: 'English', es: 'Spanish', de: '
 export const maxDuration = 300
 
 export async function POST(request: NextRequest) {
+  const denied = await requirePractitioner()
+  if (denied) return denied
   let sanitized = ''
   try {
     const { reportId, targetLang = 'es' } = await request.json()

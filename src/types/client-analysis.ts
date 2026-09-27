@@ -5,6 +5,7 @@ export type ClientAnalysisStatus =
   | 'intake_pending'
   | 'paid'
   | 'analyzing'
+  | 'stage2_processing'
   | 'completed'
   | 'failed'
 

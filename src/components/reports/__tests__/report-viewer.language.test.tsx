@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+
+vi.mock('@/lib/auth/require-practitioner', () => ({ requirePractitioner: async () => null }))
 import { render, screen, fireEvent, waitFor, waitForElementToBeRemoved } from '@testing-library/react'
 import { NextRequest } from 'next/server'
 import { ReportViewer } from '../report-viewer'

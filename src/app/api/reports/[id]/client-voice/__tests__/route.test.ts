@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+vi.mock('@/lib/auth/require-practitioner', () => ({ requirePractitioner: async () => null }))
+
 let currentReportRow: any
 let updatePayloads: any[] = []
 
