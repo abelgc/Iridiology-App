@@ -19,7 +19,11 @@ function report(overrides: Partial<ReportContent>): ReportContent {
     section_13_strengths_of_the_body: 'Recovery capacity is present.',
     section_14_recommendations: '**Liver**\nVitamins: A\nMinerals: Iron\nHerbs: Dandelion root',
   }
-  return { ...base, ...overrides }
+  const merged: ReportContent = { ...base }
+  for (const [key, value] of Object.entries(overrides)) {
+    if (value !== undefined) merged[key] = value
+  }
+  return merged
 }
 
 describe('detectZoneDenial', () => {
