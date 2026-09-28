@@ -38,6 +38,40 @@ function formatAxesAsBullets(content: string): string {
   return lines.map((l) => `- ${l.replace(/^[-*]\s*/, '')}`).join('\n')
 }
 
+function capitalizeFirst(text: string): string {
+  const trimmed = text.trim()
+  if (!trimmed) return trimmed
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1)
+}
+
+function ensurePeriod(text: string): string {
+  return /[.!?]$/.test(text) ? text : `${text}.`
+}
+
+function formatComparisonFinding(line: string): string {
+  const colon = line.indexOf(':')
+  if (colon === -1) return line
+
+  const name = line.slice(0, colon).trim()
+  const rest = line.slice(colon + 1).trim()
+  const separator = ' — '
+  const splitAt = rest.indexOf(separator)
+
+  if (splitAt === -1) {
+    return `**${name}**\n\n${ensurePeriod(capitalizeFirst(rest))}`
+  }
+
+  const observation = ensurePeriod(capitalizeFirst(rest.slice(0, splitAt)))
+  const meaning = ensurePeriod(capitalizeFirst(rest.slice(splitAt + separator.length)))
+  return `**${name}**\n\n${observation}\n\n${meaning}`
+}
+
+function formatComparisonSection(content: string): string {
+  const lines = content.split('\n').map((line) => line.trim()).filter(Boolean)
+  if (lines.length === 0) return content
+  return lines.map(formatComparisonFinding).join('\n\n')
+}
+
 export function ReportSection({
   sectionKey,
   content,
@@ -56,7 +90,11 @@ export function ReportSection({
   const i18nKey = REPORT_SECTION_I18N_KEYS[sectionKey as keyof typeof REPORT_SECTION_I18N_KEYS] as TranslationKey | undefined
   const label = i18nKey ? t(lang, i18nKey) : getSectionLabel(sectionKey)
   const hasQualityWarning = content.includes('Hallazgo limitado por calidad de imagen')
-  const displayContent = sectionKey === 'section_11_detected_axes' ? formatAxesAsBullets(content) : content
+  const displayContent = sectionKey === 'section_11_detected_axes'
+    ? formatAxesAsBullets(content)
+    : sectionKey.startsWith('comp_')
+      ? formatComparisonSection(content)
+      : content
 
   return (
     <div className="border rounded-lg bg-white dark:bg-gray-900 mb-4 print:border-gray-300 print:mb-6 print:break-inside-avoid">
