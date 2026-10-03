@@ -8,8 +8,13 @@ import path from 'path'
  */
 
 const HEIC_RIGHT = path.join(__dirname, 'fixtures', 'iris-right.heic')
+// Same face as docs/adi lakshmi dasi left.jpg (720×1280). Client validation
+// rejects either side under 800px before the crop runs, so the fixture is that
+// photo scaled up. The detector still searches a 160px-wide copy.
+const FACE_LEFT = path.join(__dirname, 'fixtures', 'face-eye-left.jpg')
 const TOKEN = '33333333-3333-4333-8333-333333333333'
 const UPLOAD_URL = `/client/upload?token=${TOKEN}`
+const FORMAT_ERROR = 'This photo could not be read. Use JPEG, PNG, WebP, GIF, AVIF or HEIC.'
 
 test.describe('HEIC upload — /client (iris-image-upload.tsx)', () => {
   test.beforeEach(async ({ page }) => {
@@ -34,7 +39,35 @@ test.describe('HEIC upload — /client (iris-image-upload.tsx)', () => {
 
     const rightZone = page.locator('.upload-zone').first()
     await expect(rightZone).toHaveClass(/filled/, { timeout: 60_000 })
-    await expect(page.getByText('This photo could not be read. Use JPEG, PNG, WebP, GIF, AVIF or HEIC.')).toHaveCount(0)
+    await expect(page.getByText(FORMAT_ERROR)).toHaveCount(0)
+    expect(pageErrors, 'no uncaught client-side exception').toEqual([])
+  })
+})
+
+test.describe('face crop — /client (iris-image-upload.tsx)', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.route(`**/api/client/reports/${TOKEN}`, (route) =>
+      route.fulfill({
+        status: 409,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'not_ready', status: 'paid' }),
+      }),
+    )
+  })
+
+  test('a face photo fills the upload zone with no crop review', async ({ page }) => {
+    const pageErrors: string[] = []
+    page.on('pageerror', (e) => pageErrors.push(e.message))
+
+    await page.goto(UPLOAD_URL)
+
+    const input = page.locator('input[type="file"]').first()
+    await input.setInputFiles(FACE_LEFT)
+
+    const rightZone = page.locator('.upload-zone').first()
+    await expect(rightZone).toHaveClass(/filled/, { timeout: 30_000 })
+    await expect(page.getByText(FORMAT_ERROR)).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Use crop' })).toHaveCount(0)
     expect(pageErrors, 'no uncaught client-side exception').toEqual([])
   })
 })

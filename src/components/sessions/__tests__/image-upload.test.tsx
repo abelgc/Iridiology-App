@@ -67,11 +67,42 @@ describe('ImageUpload', () => {
 
     fireEvent.change(input, { target: { files: [file] } })
 
+    // The photo is not sent until the practitioner accepts the proposed crop.
+    expect(mockChange).not.toHaveBeenCalled()
+    fireEvent.click(await screen.findByRole('button', { name: 'Use crop' }))
+
     await waitFor(() => {
       expect(mockChange).toHaveBeenCalled()
       const callArg = mockChange.mock.calls[0][0]
       expect(typeof callArg).toBe('string')
     })
+  })
+
+  it('shows the crop step instead of sending the photo straight away', async () => {
+    const mockChange = vi.fn()
+    const { container } = render(<ImageUpload label="Test Image" value={null} onChange={mockChange} />)
+
+    const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' })
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+    fireEvent.change(input, { target: { files: [file] } })
+
+    expect(await screen.findByRole('button', { name: 'Use crop' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Use full photo' })).toBeInTheDocument()
+    expect(mockChange).not.toHaveBeenCalled()
+  })
+
+  it('Cancel goes back to the drop zone without sending anything', async () => {
+    const mockChange = vi.fn()
+    const { container } = render(<ImageUpload label="Test Image" value={null} onChange={mockChange} />)
+
+    const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' })
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+    fireEvent.change(input, { target: { files: [file] } })
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Cancel' }))
+
+    expect(mockChange).not.toHaveBeenCalled()
+    expect(screen.getByText(/browse your photos|drag and drop your image here/i)).toBeInTheDocument()
   })
 
   it('shows error when non-image file is selected', async () => {
@@ -97,6 +128,8 @@ describe('ImageUpload', () => {
     const input = container.querySelector('input[type="file"]') as HTMLInputElement
 
     fireEvent.change(input, { target: { files: [file] } })
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Use crop' }))
 
     await waitFor(() => {
       expect(mockChange).toHaveBeenCalledWith('TESTBASE64')
