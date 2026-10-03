@@ -6,18 +6,11 @@ import {
   validateImage,
   readImageDimensions,
 } from '@/lib/client/image-validation'
-import { computeCenterCrop } from '@/lib/image-crop'
 import { autoContrastInPlace } from '@/lib/image-enhance'
+import { findIrisCrop } from '@/lib/image-eye-crop'
 import { prepareUploadFile } from '@/lib/images/prepare-upload-file'
 
 type Eye = 'right' | 'left'
-
-// Conservative centre-crop ratio applied before resize — see the P2 image-pipeline diagnosis
-// referenced by the iridology-app-map skill for why this exists. Raised from 0.75 to 0.9
-// (2026-09-13) after a real case (Ana Iranzo) showed the tighter crop clipping visible iris
-// area in an off-centre, ptosis-affected capture — this still trims obvious periocular
-// margin without risking as much of the iris itself on imperfect framing.
-const CROP_KEEP_RATIO = 0.9
 
 async function compressImage(file: File, maxDim = 1536, quality = 0.8): Promise<string> {
   const url = URL.createObjectURL(file)
@@ -25,13 +18,9 @@ async function compressImage(file: File, maxDim = 1536, quality = 0.8): Promise<
     const img = new Image()
     img.onload = () => {
       URL.revokeObjectURL(url)
-      const { naturalWidth: w, naturalHeight: h } = img
 
-      // Centre-crop before resizing: captures include eyelid, lashes, and eyebrow that carry
-      // no clinical value, and the model never sees more than what survives this step. A
-      // fixed-ratio centre crop, not iris detection — assumes reasonably centred framing, so
-      // it trims outer margin without risking the iris itself.
-      const crop = computeCenterCrop(w, h, CROP_KEEP_RATIO)
+      // No eye found: keep the whole frame. A centre crop lands on the cheek in a phone close-up.
+      const crop = findIrisCrop(img) ?? { x: 0, y: 0, width: img.naturalWidth, height: img.naturalHeight }
 
       const scale = Math.min(1, maxDim / Math.max(crop.width, crop.height))
       const canvas = document.createElement('canvas')

@@ -3,16 +3,39 @@
 import { useState, useRef, useEffect } from 'react'
 import { Upload, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { computeCenterCrop } from '@/lib/image-crop'
+import type { CropRect } from '@/lib/image-crop'
 import { autoContrastInPlace } from '@/lib/image-enhance'
+import { findIrisCrop } from '@/lib/image-eye-crop'
 import { prepareUploadFile } from '@/lib/images/prepare-upload-file'
+import { IrisCropEditor } from './iris-crop-editor'
 
-// Conservative centre-crop ratio applied before resize — see the P2 image-pipeline diagnosis
-// referenced by the iridology-app-map skill for why this exists. Raised from 0.75 to 0.9
-// (2026-09-13) after a real case (Ana Iranzo) showed the tighter crop clipping visible iris
-// area in an off-centre, ptosis-affected capture — this still trims obvious periocular
-// margin without risking as much of the iris itself on imperfect framing.
-const CROP_KEEP_RATIO = 0.9
+interface PendingPhoto {
+  img: HTMLImageElement
+  url: string
+  crop: CropRect | null
+}
+
+function encodeCrop(img: HTMLImageElement, crop: CropRect): string {
+  const MAX = 1536
+  let width = crop.width
+  let height = crop.height
+  if (width > MAX || height > MAX) {
+    const scale = Math.min(MAX / width, MAX / height)
+    width = Math.round(width * scale)
+    height = Math.round(height * scale)
+  }
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')!
+  ctx.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, width, height)
+  // Auto-contrast pass: compensates for underexposed/shadow-heavy captures (eyelid
+  // shadow, poor lighting) before the image reaches the model — see image-enhance.ts.
+  const imageData = ctx.getImageData(0, 0, width, height)
+  autoContrastInPlace(imageData.data)
+  ctx.putImageData(imageData, 0, 0)
+  return canvas.toDataURL('image/jpeg', 0.85).split(',')[1]
+}
 
 interface ImageUploadProps {
   label: string
@@ -25,6 +48,7 @@ export function ImageUpload({ label, value, onChange, required = false }: ImageU
   const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isTouchDevice, setIsTouchDevice] = useState(false)
+  const [pending, setPending] = useState<PendingPhoto | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -71,38 +95,24 @@ export function ImageUpload({ label, value, onChange, required = false }: ImageU
 
     const img = new Image()
     const objectUrl = URL.createObjectURL(prepared)
-    img.onload = () => {
+    img.onload = () => setPending({ img, url: objectUrl, crop: findIrisCrop(img) })
+    img.onerror = () => {
       URL.revokeObjectURL(objectUrl)
-
-      // Centre-crop before resizing: captures include eyelid, lashes, and eyebrow that carry
-      // no clinical value, and the model never sees more than what survives this step. A
-      // fixed-ratio centre crop, not iris detection — assumes reasonably centred framing, so
-      // it trims outer margin without risking the iris itself.
-      const crop = computeCenterCrop(img.naturalWidth, img.naturalHeight, CROP_KEEP_RATIO)
-
-      const MAX = 1536
-      let width = crop.width
-      let height = crop.height
-      if (width > MAX || height > MAX) {
-        const scale = Math.min(MAX / width, MAX / height)
-        width = Math.round(width * scale)
-        height = Math.round(height * scale)
-      }
-      const canvas = document.createElement('canvas')
-      canvas.width = width
-      canvas.height = height
-      const ctx = canvas.getContext('2d')!
-      ctx.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, width, height)
-      // Auto-contrast pass: compensates for underexposed/shadow-heavy captures (eyelid
-      // shadow, poor lighting) before the image reaches the model — see image-enhance.ts.
-      const imageData = ctx.getImageData(0, 0, width, height)
-      autoContrastInPlace(imageData.data)
-      ctx.putImageData(imageData, 0, 0)
-      const base64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1]
-      onChange(base64)
+      setError('Failed to read file')
     }
-    img.onerror = () => setError('Failed to read file')
     img.src = objectUrl
+  }
+
+  const closePending = () => {
+    if (pending) URL.revokeObjectURL(pending.url)
+    setPending(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const handleConfirmCrop = (crop: CropRect) => {
+    if (!pending) return
+    onChange(encodeCrop(pending.img, crop))
+    closePending()
   }
 
   const handleRemove = () => {
@@ -123,7 +133,16 @@ export function ImageUpload({ label, value, onChange, required = false }: ImageU
         {required && <span className="text-red-500 ml-1">*</span>}
       </label>
 
-      {value ? (
+      {pending ? (
+        <IrisCropEditor
+          src={pending.url}
+          imageWidth={pending.img.naturalWidth}
+          imageHeight={pending.img.naturalHeight}
+          initialCrop={pending.crop}
+          onConfirm={handleConfirmCrop}
+          onCancel={closePending}
+        />
+      ) : value ? (
         <div className="space-y-2">
           <div className="relative w-full h-32 md:h-48 bg-gray-100 rounded-lg overflow-hidden">
             <img
