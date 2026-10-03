@@ -19,12 +19,16 @@ interface PatientListProps {
   patients: PatientWithSessions[]
 }
 
+function formatSessionDateTime(iso: string): string {
+  return new Date(iso).toLocaleString('en-GB', { timeZone: 'Europe/Madrid' })
+}
+
 function getLastSession(sessions?: { created_at: string }[] | null): string {
   if (!sessions || sessions.length === 0) return '-'
   const latest = sessions.reduce((a, b) =>
     new Date(a.created_at) > new Date(b.created_at) ? a : b
   )
-  return new Date(latest.created_at).toLocaleString()
+  return formatSessionDateTime(latest.created_at)
 }
 
 export function PatientList({ patients }: PatientListProps) {
