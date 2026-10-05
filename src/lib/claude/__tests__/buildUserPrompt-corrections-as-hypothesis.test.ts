@@ -65,6 +65,16 @@ describe('buildUserPrompt — practitioner input is grounded, never denied; pati
     expect(prompt).toContain('not a finding to confirm')
   })
 
+  it('REGRESSION (Heidrun Schwarzenberger report, 2026-10-05): the "Clinical history" line carries the same caution as the symptoms line, instead of being injected bare', () => {
+    const request = baseRequest({ general_history: 'Antibiotics 2019, COVID 2021, sinus surgery 2003 and 2004, thyroidectomy 2017' })
+
+    const prompt = buildUserPrompt(request, null, null, null)
+
+    expect(prompt).toContain('thyroidectomy 2017')
+    expect(prompt).toMatch(/Clinical history \(.*never a source of findings on its own.*\):/)
+    expect(prompt).not.toContain('- Clinical history: Antibiotics')
+  })
+
   it('no longer instructs the model to prioritise matching its own past output', () => {
     const request = baseRequest()
     const prompt = buildUserPrompt(request, 'Previous findings summary', null, null)

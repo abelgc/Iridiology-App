@@ -27,51 +27,63 @@ SAFETY BOUNDARY:
 A completely yellow sclera (possible hepatitis or jaundice) is outside iridology — recommend medical referral rather than interpreting it as a functional sign.
 Iris signs never indicate pathology of the eye itself — they reflect conditions elsewhere in the body. Never comment on cataract, glaucoma, corneal scarring, retinal disease, or any other disease or injury of the eye as an organ; that is outside iridology's scope entirely, not a case needing calibrated language. A physical artifact — a surgical scar, a corneal foreign-body mark, an embedded object — is not a constitutional iris sign; recognise it as an artifact and exclude it from interpretation rather than reading it as tissue tendency.`
 
-export const IRIDOLOGY_IRIS_TERRITORY_MAP = `IRIS TERRITORY MAP — JENSEN CHART (developed by Bernard Jensen, D.C., Ph.D., with revisions by Ellen Jensen, Ph.D., D.Sc.):
+export const IRIDOLOGY_IRIS_TERRITORY_MAP = `IRIS TERRITORY MAP, JENSEN CHART (developed by Bernard Jensen, D.C., Ph.D., with revisions by Ellen Jensen, Ph.D., D.Sc.; hours transcribed from the chart):
 When a finding falls in a specific clock position or zone, name the territories it governs. Never write "upper zone" or "hepatic zone" without stating what those zones control. Every zone named must carry its territorial meaning in the same sentence.
+Both irises are read as a clock face as the observer sees them. In the RIGHT iris the nasal side is 3 o'clock and the temporal side is 9 o'clock. In the LEFT iris the nasal side is 9 o'clock and the temporal side is 3 o'clock. The map is a mirror: throat, thyroid and the back sit on the nasal side; lungs, thorax, breast and upper abdomen sit on the temporal side; kidney and leg sit at the bottom; brain sits at the top.
 
-RIGHT IRIS — clock positions reading clockwise from top:
-12 o'clock: Cerebrum, cerebral cortex, cranial circulation, intracranial pressure
-1 o'clock: Pituitary gland, hypothalamus, pineal gland, right brain hemisphere, neuroendocrine regulatory axis
-2 o'clock: Right ear (inner and outer), right sinus, right eye, right jaw and TMJ, right temporal region, right thyroid lobe
-3 o'clock: Right lung, right bronchi, right shoulder joint
-4 o'clock: Right breast, right axillary lymphatics, right arm, right diaphragm
-5 o'clock: Gallbladder, bile duct, stomach pylorus
-6 o'clock: Pancreatic head, duodenum, digestive enzyme production, gastric acid regulation
-7 o'clock: Ascending colon, appendix, ileocecal valve
-8 o'clock: Liver — primary hepatic zone (filtration, bile synthesis, hormonal metabolism)
-9 o'clock: Right kidney, right adrenal gland, right ureter
-10 o'clock: Right ovary or right testicle, right fallopian tube, uterus right side, right bladder
-11 o'clock: Right hip, right sciatic nerve, right leg and foot, right lumbar spine
+RIGHT IRIS, clock positions reading clockwise from top:
+12 o'clock: Cerebrum, corpus callosum, thalamus, hypothalamus. Pituitary and pineal sit at 12 just outside the collarette, with the pons.
+1 o'clock: Medial and frontal brain, forehead and temple, frontal sinus (the brain sector runs 11 to 1).
+1:30 to 2:30 o'clock: Face. Eye, nose, upper jaw, lower jaw, tongue and mouth, tonsils, pharynx, larynx, vocal cords. Pancreas reflex point at 2 at the collarette.
+3 o'clock: Throat. Thyroid and parathyroid (outer zones), trachea and oesophagus (middle zones), thymus at the collarette. The heart does not sit here.
+3:30 to 4:30 o'clock: Upper back. Cervical, thoracic and lumbar spine sectors, scapula, posterior liver reflex at 4 to 4:30, pancreas body at 4:30 at the collarette.
+5 o'clock: Lower back and pelvis. Sacrum, coccyx, urinary bladder, uterus or prostate at the collarette, vagina or penis, perineum, urethra.
+5:30 to 6:15 o'clock: Right kidney (outer zones), right adrenal at the collarette.
+6:15 to 6:45 o'clock: Right hip, thigh, knee, foot; groin, pelvis, abdominal wall, peritoneum; appendix at the collarette at about 6:30.
+7 to 7:30 o'clock: Right ovary or right testicle.
+7:30 to 8:30 o'clock: Liver, the primary hepatic zone (outer zones), diaphragm and upper abdomen; gallbladder and pancreas head at the collarette at about 8:30; right arm and hand at the outer rim.
+9 o'clock: Thorax. Pleura, ribs, lower breast; bronchioles and bronchus toward the collarette; thymus and a small cardiac reflex at the collarette at about 9 to 9:30.
+9:30 to 10 o'clock: Right lung, upper, middle and lower lobes; upper breast; right shoulder at about 10 in the outer zones.
+10:30 to 11 o'clock: Neck, right ear (outer, middle, inner), mastoid; sinus at the collarette at about 10:30; pancreas reflex point at 10 at the collarette; hepatic flexure inside the collarette at about 11.
+11 to 12 o'clock: Cerebellum, posterior brain, medulla.
 
-LEFT IRIS — clock positions reading anti-clockwise from top (mirror of right):
-12 o'clock: Cerebrum, cerebral cortex, cranial circulation, intracranial pressure
-11 o'clock: Left ear (inner and outer), left sinus, left eye, left jaw and TMJ, left temporal region, left thyroid lobe
-10 o'clock: Left thyroid, throat, cervical spine, left neck
-9 o'clock: Left shoulder, left arm, left axillary lymphatics, left diaphragm
-8 o'clock: Left lung, left bronchi
-7 o'clock: Left breast, cardiac lymphatics
-6 o'clock: Heart — primary cardiac zone (cardiac muscle, pericardium, coronary circulation, cardiac rhythm). Heart is dominant in the LEFT iris.
-5 o'clock: Stomach fundus, spleen, pancreatic tail
-4 o'clock: Sigmoid colon, descending colon, splenic flexure
-3 o'clock: Left kidney, left adrenal gland, left ureter
-2 o'clock: Left ovary or left testicle, left fallopian tube, uterus left side, left bladder
-1 o'clock: Left hip, left sciatic nerve, left leg and foot, left lumbar spine
+LEFT IRIS, clock positions reading anti-clockwise from top (mirror of right):
+12 o'clock: Cerebrum, corpus callosum, thalamus, hypothalamus. Pituitary and pineal sit at 12 just outside the collarette, with the pons.
+11 o'clock: Medial and frontal brain, forehead and temple, frontal sinus.
+10:30 to 9:30 o'clock: Face. Eye, nose, upper jaw, lower jaw, tongue and mouth, tonsils, pharynx, larynx, vocal cords. Pancreas reflex point at 10 at the collarette.
+9 o'clock: Throat. Thyroid and parathyroid (outer zones), trachea and oesophagus (middle zones), thymus and a small cardiac reflex at the collarette at about 9:30.
+8:30 to 7:30 o'clock: Upper back. Cervical, thoracic and lumbar spine sectors, scapula, posterior liver reflex at about 8, pancreas body at about 7:30 at the collarette.
+7 o'clock: Lower back and pelvis. Sacrum, coccyx, urinary bladder, uterus or prostate and rectum at the collarette, vagina or penis, perineum, scrotum, anus, urethra.
+6:45 to 6:15 o'clock: Left kidney (outer zones), left adrenal at the collarette.
+6 to 5:30 o'clock: Left hip, thigh, knee, foot; groin, pelvis, abdominal wall, peritoneum.
+5:15 to 4:45 o'clock: Left ovary or left testicle.
+4:45 to 4 o'clock: Spleen (outer zones), diaphragm and upper abdomen; pancreas tail at the collarette at about 4:15; left arm and hand at the outer rim.
+4 to 3:30 o'clock: Thorax. Pleura, ribs, lower breast; solar plexus at the collarette at about 3:30.
+3 o'clock: Heart, the primary cardiac zone, a large area at the collarette from about 2:45 to 3:15 together with the aorta, bronchus and bronchioles; thymus just below it. Heart is dominant in the LEFT iris.
+2:30 to 2 o'clock: Left lung, upper, middle and lower lobes; upper breast; left shoulder at about 2 in the outer zones.
+1:30 to 1 o'clock: Neck, left ear (outer, middle, inner), mastoid; sinus at the collarette at about 1:30; splenic flexure inside the collarette at about 1.
+1 to 12 o'clock: Cerebellum, posterior brain, medulla.
 
-ZONE RINGS — from centre outward:
-Pupillary zone (innermost): Stomach, gastric function, digestive enzyme production, direct nerve supply to gut wall
-Collarette — ANS wreath: The autonomic nerve ring. Its tone, shape, expansion, contraction, and flowered openings reflect the overall autonomic state and the digestive-nervous interface. Position of findings relative to the wreath determines whether the burden is central (digestive) or peripheral (organ or eliminative).
-Inner ciliary zone: Parenchymal organs and glands at each clock position above
-Outer ciliary zone: Musculoskeletal system, connective tissue, peripheral nervous system
-Limbus and iris edge: Skin, lymphatics, peripheral circulation, eliminative expression, lymphatic rosary
+INTESTINAL TERRITORY (inside the collarette, both irises): Stomach is the ring around the pupil. The intestinal ring lies between stomach and collarette: transverse colon across the top at 12 in both irises. RIGHT iris: ascending colon climbs the temporal side from about 7 to 11, cecum at about 6, appendix at about 6:30, small intestine, Peyer's patches, pylorus and duodenum on the nasal side from about 1 to 5. LEFT iris: descending colon runs down the temporal side from about 1 to 5, sigmoid at about 6, rectum at about 7, cardia at about 9, small intestine on the nasal side from about 7 to 11. The spine (atlas, cervical, thoracic, lumbar, sacrum) is printed on the border between the stomach and intestinal rings.
 
-ANS WREATH ARC TERRITORIES — always name what the arc governs, not just "upper arc" or "lower arc":
-Upper arc (10–2 o'clock sweep, both irises): Cranial nerve regulation, hypothalamic-pituitary-pineal axis, cerebral autonomic tone, intracranial pressure, sensory organs (ears, sinuses, eyes), jaw and TMJ tension, cervical nerve supply, cerebral circulation. Reduced tension here = decompression of cranial-pituitary axis, less intracranial load, potential improvement in ear or sinus drainage, reduced jaw tension.
-Right arc of right iris (2–4 o'clock): Right pulmonary autonomic, right cardiac contribution, right axillary lymphatic drainage
-Left arc of right iris (8–10 o'clock): Hepatic-biliary autonomic innervation, right renal innervation
-Lower arc (4–8 o'clock sweep, both irises): Intestinal and pelvic autonomic innervation, reproductive nerve supply, bladder and urinary control, sciatic nerve, lumbar spine load
-Right arc of left iris (2–4 o'clock): Cardiac autonomic innervation, left pulmonary, cardiac rhythm regulation
-Left arc of left iris (8–10 o'clock): Left renal-adrenal autonomic, left reproductive innervation
+ZONE RINGS, from centre outward (legend printed on the Jensen chart):
+1. Stomach, nutritive zone (Pupillary zone, innermost ring around the pupil)
+2. Intestines, nutritive zone (out to the collarette)
+Collarette, ANS wreath: The autonomic nerve ring. Its tone, shape, expansion, contraction, and flowered openings reflect the overall autonomic state and the digestive-nervous interface. Position of findings relative to the wreath determines whether the burden is central (digestive) or peripheral (organ or eliminative).
+3. Blood and lymph, humoral zone (first ring outside the collarette; glands and reflex points printed at the collarette belong here)
+4. Musculature
+5. Bony structure
+6. Superficial lymph and blood
+7. Skin and orifices (Limbus and iris edge: skin, lymphatic rosary, peripheral circulation, eliminative expression)
+Zones 3 to 7 together form the ciliary zone. Organ labels at each clock position span zones 3 to 6; the large organs (liver, kidney, thyroid, spleen, heart, lung) sit mainly in zones 4 to 6.
+
+ANS WREATH ARC TERRITORIES, always name what the arc governs, not just "upper arc" or "lower arc":
+Upper arc (10 to 2 o'clock sweep, both irises): Cranial nerve regulation, hypothalamic-pituitary-pineal axis, cerebral autonomic tone, intracranial pressure, sensory organs (ears, sinuses, eyes), jaw and TMJ tension, cervical nerve supply, cerebral circulation. Reduced tension here = decompression of cranial-pituitary axis, less intracranial load, potential improvement in ear or sinus drainage, reduced jaw tension.
+Nasal arc of right iris (2 to 4 o'clock): Throat, thyroid and parathyroid, trachea, oesophagus, thymus, cervical and thoracic spine supply.
+Temporal arc of right iris (8 to 10 o'clock): Lungs, bronchi, pleura, cardiac reflex and thymus, gallbladder and pancreas head at 8:30, diaphragm.
+Lower arc (4 to 8 o'clock sweep, both irises): Intestinal and pelvic autonomic innervation, kidney and adrenal at 6, reproductive nerve supply, bladder and urinary control, sciatic nerve, lumbar spine load.
+Temporal arc of left iris (2 to 4 o'clock): Cardiac autonomic innervation at 3, aorta, left lung and bronchi, solar plexus at 3:30, cardiac rhythm regulation.
+Nasal arc of left iris (8 to 10 o'clock): Throat, thyroid and parathyroid, trachea, oesophagus, thymus, posterior liver reflex, cervical and thoracic spine supply.
 
 SPINAL NERVE CORRELATION (via the ANS wreath, supplementary to the arc territories above): 11 to 1 o'clock across the top of the wreath maps to cervical nerve involvement — white colouration there suggests cervical nerve inflammation. 11 to 8 o'clock and 1 to 5 o'clock map to the thoracic spinal cord region. 5 to 8 o'clock maps to the lumbar spinal cord region. Read this alongside, never instead of, the organ territories already mapped to these same arcs above.`
 
@@ -86,41 +98,41 @@ This catalogue is ADDITIONAL supporting evidence — it supplements and never re
 
 Skin (limbus and iris edge — eliminative expression): Acute — excessive sweating, skin eruptions, skin infections, fever, chills, redness. Chronic — acne, eczema, dry skin, poor circulation, poor lymphatic drainage.
 Lymphatic glands (limbus and iris edge — lymphatic rosary): Acute — swollen glands, inflamed nodes, fever, infection. Chronic — breast nodules, reduced immunity, chronic inflammation, unexplained weight loss.
-Spleen (left 5 o'clock — stomach fundus, spleen, pancreatic tail): Acute — excess white blood cells, spleen inflammation, anemia. Chronic — fatigue, low immunity, anemia, excessive bleeding tendency.
-Diaphragm (right 4 o'clock — breast, axillary lymphatics, arm, diaphragm): Acute — chest pain, difficulty breathing. Chronic — shortness of breath, persistent breathing difficulty.
-Pleura (right 3 o'clock and left 8 o'clock — lung zones): Acute — pain on breathing. Chronic — side pain, worse at night.
+Spleen (left 4 to 4:45 o'clock, outer zones; pancreas tail at the collarette): Acute — excess white blood cells, spleen inflammation, anemia. Chronic — fatigue, low immunity, anemia, excessive bleeding tendency.
+Diaphragm (right 8 o'clock and left 4 o'clock, with upper abdomen, arm and hand): Acute — chest pain, difficulty breathing. Chronic — shortness of breath, persistent breathing difficulty.
+Pleura (right 9 o'clock and left 3:30 to 4 o'clock, thorax sector): Acute — pain on breathing. Chronic — side pain, worse at night.
 General elimination burden (when several eliminative-pathway zones — skin, lymphatics, colon, kidneys — show findings together): Acute — fever, inflammation. Chronic — fatigue, generalised weakness; treat as the summary pattern rather than a single-organ finding.
-Colon (right 7 o'clock — ascending colon, appendix, ileocecal valve; left 4 o'clock — sigmoid, descending colon, splenic flexure): Acute — gas, abdominal pain, diarrhoea, constipation, inflammation. Chronic — abdominal distension, flatulence, chronic constipation or diarrhoea, fatigue.
-Lungs (right 3 o'clock, left 8 o'clock): Acute — productive cough, difficulty breathing, fever, chills. Chronic — persistent breathing difficulty, chronic cough, recurrent pulmonary infection.
+Colon (intestinal ring inside the collarette: ascending colon right 7 to 11, cecum and appendix right 6 to 6:30, transverse colon at 12, descending colon left 1 to 5, sigmoid left 6, rectum left 7): Acute — gas, abdominal pain, diarrhoea, constipation, inflammation. Chronic — abdominal distension, flatulence, chronic constipation or diarrhoea, fatigue.
+Lungs (right 9:30 to 10 o'clock, left 2 to 2:30 o'clock): Acute — productive cough, difficulty breathing, fever, chills. Chronic — persistent breathing difficulty, chronic cough, recurrent pulmonary infection.
 Bronchi (same zone as lungs): Acute — dry cough, chest pain, wheezing, shortness of breath. Chronic — chronic bronchitis, chest tightness, persistent respiratory difficulty.
-Kidneys (right 9 o'clock, left 3 o'clock — kidney, adrenal, ureter): Acute — lower back pain, fever, urinary frequency, cloudy urine. Chronic — fluid retention, hypertension, persistent lower back pain, associated skin involvement.
-Uterus (right and left 10–2 o'clock — uterus, fallopian tube, bladder): Acute — pain during menstruation, abnormal flow, fever. Chronic — constipation, prolonged menstrual pain, pelvic or abdominal pressure.
+Kidneys (both irises, 5:30 to 6:45 o'clock; adrenal at the collarette near 6): Acute — lower back pain, fever, urinary frequency, cloudy urine. Chronic — fluid retention, hypertension, persistent lower back pain, associated skin involvement.
+Uterus (right 5 o'clock, left 7 o'clock, at the collarette with the bladder): Acute — pain during menstruation, abnormal flow, fever. Chronic — constipation, prolonged menstrual pain, pelvic or abdominal pressure.
 Vagina (same zone as uterus): Acute — infection or discharge, pain, swelling, excessive lubrication. Chronic — persistent discharge, recurrent infection, insufficient lubrication.
-Mammary glands (right 4 o'clock, left 7 o'clock — breast, axillary lymphatics): Acute — nipple sensitivity, inflammation, pain. Chronic — lumps, discharge, painful menstrual periods.
-Prostate (right and left 10–2 o'clock — reproductive zone): Acute — fever, back pain, painful urination, abnormal discharge. Chronic — constipation, urinary difficulty, pelvic pain.
-Ovaries and testicles (right and left 10–2 o'clock): Acute — pelvic pain between periods, abnormal discharge. Chronic — infertility, reduced libido, irregular or absent menstruation.
+Mammary glands (upper breast right 9:30 to 10 and left 2 to 2:30; lower breast right 9 and left 3:30 to 4): Acute — nipple sensitivity, inflammation, pain. Chronic — lumps, discharge, painful menstrual periods.
+Prostate (right 5 o'clock, left 7 o'clock, at the collarette): Acute — fever, back pain, painful urination, abnormal discharge. Chronic — constipation, urinary difficulty, pelvic pain.
+Ovaries and testicles (right 7 to 7:30 o'clock, left 4:45 to 5:15 o'clock): Acute — pelvic pain between periods, abnormal discharge. Chronic — infertility, reduced libido, irregular or absent menstruation.
 Penis (reproductive zone): Acute — uncontrolled or painful erection, painful urination. Chronic — impotence, recurrent herpes.
 Autonomic nervous system and ANS wreath (collarette): Acute — sympathetic activation: elevated heart rate, rapid breathing, excessive sweating, insomnia. Chronic — parasympathetic dominance: general weakness, fatigue, slowed heart rate.
-Medulla and brain stem (12 o'clock, cranial zone): Acute — rapid pulse, agitated breathing, difficulty swallowing, excessive sweating. Chronic — slow pulse, persistent breathing difficulty, chronic swallowing problems.
-Sexual drive and limbic system (cranial-pituitary axis, 1 o'clock): Acute — premature ejaculation, heightened arousal, rapid orgasm. Chronic — reduced libido, difficulty sustaining arousal.
+Medulla and brain stem (right 11 to 12, left 12 to 1, cerebellum sector): Acute — rapid pulse, agitated breathing, difficulty swallowing, excessive sweating. Chronic — slow pulse, persistent breathing difficulty, chronic swallowing problems.
+Sexual drive and limbic system (cranial zone, brain flair at 12): Acute — premature ejaculation, heightened arousal, rapid orgasm. Chronic — reduced libido, difficulty sustaining arousal.
 Inherent mental regulation — hunger, thirst, respiratory pattern (cranial zone): Acute — intense anxiety, insomnia, excessive hunger. Chronic — chronic drowsiness, persistent hunger dysregulation.
 Sensory locomotion — motor control and coordination (outer ciliary zone): Acute — uncoordinated movement, loss of motor control, sensory disturbance. Chronic — loss of motor coordination, sensory deterioration.
 Animation — sleep, emotion, and behaviour regulation (cranial zone): Acute — personality change, hyperactive behaviour, involuntary movement. Chronic — persistent personality change, significant behavioural disturbance.
-Adrenal glands (right 9 o'clock, left 3 o'clock — same zone as kidneys): Acute — hypoglycaemia, hypertension, diarrhoea, excessive sweating. Chronic — fatigue, insomnia, muscular pain.
-Pituitary (right 1 o'clock — pituitary, hypothalamus, pineal): Acute — excessive bone growth, thickened skin. Chronic — weight gain at hips and thighs, fluid retention.
-Thyroid (right 2 o'clock, left 10–11 o'clock): Acute — excess thyroid hormone activity, rapid weight loss. Chronic — lethargy, hair loss, cold intolerance.
+Adrenal glands (both irises at the collarette near 6, inside the kidney sector): Acute — hypoglycaemia, hypertension, diarrhoea, excessive sweating. Chronic — fatigue, insomnia, muscular pain.
+Pituitary (both irises at 12 just outside the collarette, with pineal and pons; hypothalamus 12 to 12:30): Acute — excessive bone growth, thickened skin. Chronic — weight gain at hips and thighs, fluid retention.
+Thyroid (right 3 o'clock, left 9 o'clock, with parathyroid): Acute — excess thyroid hormone activity, rapid weight loss. Chronic — lethargy, hair loss, cold intolerance.
 Thymus (lymphatic-immune zone): Acute — excessive lymphatic activity, frequent colds. Chronic — weakened immune response.
-Pancreas (right 6 o'clock — pancreatic head, duodenum; left 5 o'clock — pancreatic tail): Acute — hypoglycaemia, extreme fatigue, fainting episodes. Chronic — excessive thirst, weight loss, joint pain, impaired nutrient absorption.
-Stomach (pupillary zone; right 5–6 o'clock and left 5 o'clock — pylorus and fundus): Acute — acidity, nausea, abdominal pain. Chronic — post-meal drowsiness, indigestion, associated B12 deficiency signs.
-Liver (right 8 o'clock — primary hepatic zone): Acute — elevated temperature, skin eruptions. Chronic — weight loss, cholesterol imbalance, persistent fatigue.
-Gallbladder (right 5 o'clock — gallbladder, bile duct): Acute — upper right abdominal pain. Chronic — indigestion, reduced appetite, constipation.
+Pancreas (head right 8:30, body right 4:30 and left 7:30, tail left 4:15, all at the collarette; reflex points at 2 and 10 at the collarette in both irises): Acute — hypoglycaemia, extreme fatigue, fainting episodes. Chronic — excessive thirst, weight loss, joint pain, impaired nutrient absorption.
+Stomach (pupillary ring; pylorus right 4 to 5 and cardia left 9 inside the collarette): Acute — acidity, nausea, abdominal pain. Chronic — post-meal drowsiness, indigestion, associated B12 deficiency signs.
+Liver (right 7:30 to 8:30 o'clock, primary hepatic zone; posterior liver reflex right 4 and left 8): Acute — elevated temperature, skin eruptions. Chronic — weight loss, cholesterol imbalance, persistent fatigue.
+Gallbladder (right 8:30 o'clock at the collarette, with the pancreas head): Acute — upper right abdominal pain. Chronic — indigestion, reduced appetite, constipation.
 Small intestine (pupillary and inner ciliary zone — digestive enzyme production): Acute — indigestion from rapid depletion, excess acidity, spasm and incoordination. Chronic — weight loss, poor digestion, poor nutrient absorption.
-Pharynx and oesophagus (left 10 o'clock — throat, cervical spine): Acute — temporary voice loss, pain on swallowing. Chronic — excess pharyngeal phlegm, persistent swallowing difficulty.
+Pharynx and oesophagus (pharynx and larynx right 2 to 2:30 and left 9:30 to 10; oesophagus and trachea right 3 and left 9): Acute — temporary voice loss, pain on swallowing. Chronic — excess pharyngeal phlegm, persistent swallowing difficulty.
 Cerebrum and cranial circulation (12 o'clock, both irises): Acute — sudden or severe headache, dizziness, disorientation, transient vision or speech disturbance, sharp rise in intracranial pressure sensation. Chronic — recurrent headache or migraine, poor concentration, memory lapses, persistent mental fatigue, chronic sleep disruption.
-Ear, sinus, eye, jaw and TMJ, temporal region (right 2 o'clock, left 11 o'clock): Acute — ear pain or infection, sinus congestion and pressure, eye irritation or redness, acute jaw pain or lockjaw. Chronic — recurrent ear infections or reduced hearing, chronic sinus congestion, chronic dry or strained eyes, persistent jaw clicking or TMJ tension, chronic headache radiating from the temple.
-Shoulder joint (right 3 o'clock, left 9 o'clock): Acute — sudden shoulder pain, restricted movement after strain, localised swelling. Chronic — persistent stiffness, reduced range of motion, recurring tension, chronic postural compensation.
-Heart — primary cardiac zone (left 6 o'clock, dominant in the left iris): Acute — palpitations, chest tightness, sudden elevated heart rate, breathlessness on exertion. Chronic — persistent irregular rhythm sensation, reduced exercise tolerance, chronic fatigue linked to circulatory effort, long-standing blood pressure irregularity.
-Hip, sciatic nerve, leg and foot, lumbar spine (right 11 o'clock, left 1 o'clock): Acute — sudden lower back pain, sharp sciatic pain radiating down the leg, acute hip joint pain. Chronic — persistent lower back stiffness, chronic sciatica, reduced hip mobility, recurrent leg or foot discomfort.`
+Ear, sinus, eye, jaw and TMJ, temporal region (ear and mastoid right 10:30 to 11 and left 1 to 1:30; eye, jaw and sinus right 1:30 to 2 and left 10 to 10:30): Acute — ear pain or infection, sinus congestion and pressure, eye irritation or redness, acute jaw pain or lockjaw. Chronic — recurrent ear infections or reduced hearing, chronic sinus congestion, chronic dry or strained eyes, persistent jaw clicking or TMJ tension, chronic headache radiating from the temple.
+Shoulder joint (right 10 o'clock, left 2 o'clock, outer zones): Acute — sudden shoulder pain, restricted movement after strain, localised swelling. Chronic — persistent stiffness, reduced range of motion, recurring tension, chronic postural compensation.
+Heart, primary cardiac zone (left 3 o'clock at the collarette with the aorta, dominant in the left iris; small reflex at 9 to 9:30 in both irises): Acute — palpitations, chest tightness, sudden elevated heart rate, breathlessness on exertion. Chronic — persistent irregular rhythm sensation, reduced exercise tolerance, chronic fatigue linked to circulatory effort, long-standing blood pressure irregularity.
+Hip, sciatic nerve, leg and foot, lumbar spine (hip and leg both irises 6 to 6:45; lumbar spine right 4:30 and left 7:45; sacrum right 5 and left 7): Acute — sudden lower back pain, sharp sciatic pain radiating down the leg, acute hip joint pain. Chronic — persistent lower back stiffness, chronic sciatica, reduced hip mobility, recurrent leg or foot discomfort.`
 
 // Organ and territory names below match IRIDOLOGY_ACUTE_CHRONIC_SYMPTOM_MAP exactly so the two
 // catalogues can be cross-referenced directly. Shoulder joint is intentionally absent — the source
@@ -237,10 +249,10 @@ STEP 1 — INVENTORY ALL IRIS PATTERNS:
 Scan both irises systematically. For each of the following, note topographic location (clock position and zone) where visible:
 Open lacunae (location, depth, size, zone). Closed lacunae (location, density). Crypts (location and zone). ANS wreath state (flowered, irregular, compressed, expanded, tight, relaxed, displaced). Collarette shape and topology (position relative to pupil, irregularities). Contraction rings (number, depth, position: inner, mid, or outer zone). Radial furrows (direction, length, terminal zone). Solar furrows (presence and zone). Transversal markings (location and orientation). Pigment patterns (type, colour family, topographic location, density). Pupillary patterns (flattening direction, displacement, tension arc). Solar plexus zone (texture, density, lacunae, compression). Tissue depletion zones (location and extent). Tissue congestion zones (location and extent). Significant asymmetries between right and left iris.
 
-This inventory must be exhaustive, not illustrative: list every open lacuna and every pigment spot you can identify in each iris, not only the most prominent one — a single dominant finding must never cause you to skip smaller or peripheral lacunae or pigment spots that mark a distinct weak zone. Read each pigment spot's colour as a phase indicator: white suggests an acute phase, grey a subacute phase, dark grey or black a chronic phase — weigh this together with, never instead of, the acute/chronic and severity rules elsewhere in this prompt. When several solar furrows are visible in the intestinal territory (7 o'clock right iris, 4 o'clock left iris), treat the count itself as a positive indicator of persistent intestinal toxic load, not merely a structural note in passing.
+This inventory must be exhaustive, not illustrative: list every open lacuna and every pigment spot you can identify in each iris, not only the most prominent one — a single dominant finding must never cause you to skip smaller or peripheral lacunae or pigment spots that mark a distinct weak zone. Read each pigment spot's colour as a phase indicator: white suggests an acute phase, grey a subacute phase, dark grey or black a chronic phase — weigh this together with, never instead of, the acute/chronic and severity rules elsewhere in this prompt. When several solar furrows are visible in the intestinal territory (the intestinal ring inside the collarette, both irises), treat the count itself as a positive indicator of persistent intestinal toxic load, not merely a structural note in passing.
 
 STEP 2 — TERRITORY MAPPING:
-Map each finding to its primary iridological territory. Examples: open lacunae at 1–2 o'clock right iris maps to thyroid territory; flowered ANS wreath maps to nervous system and adrenal territory; contraction rings map to nervous system and stress axis; hepatic zone pigment at 7–9 o'clock maps to hepatic territory; radial furrows toward the pupillary margin map to digestive and intestinal territory; outer zone depletion maps to lymphatic and immune territory; inferior pupil flattening maps to pelvic and renal territory; solar plexus patterns map to the digestive regulation and emotional-somatic interface.
+Map each finding to its primary iridological territory. Examples: open lacunae at 3 o'clock right iris map to thyroid territory; flowered ANS wreath maps to nervous system and adrenal territory; contraction rings map to nervous system and stress axis; hepatic zone pigment at 7–9 o'clock maps to hepatic territory; radial furrows toward the pupillary margin map to digestive and intestinal territory; outer zone depletion maps to lymphatic and immune territory; inferior pupil flattening maps to pelvic and renal territory; solar plexus patterns map to the digestive regulation and emotional-somatic interface.
 
 STEP 3 — PATTERN-GROUNDED SECTION WRITING:
 Every system section conclusion must now emerge from the territory map above. A system conclusion is only as strong as the iris findings that anchor it to that territory. Follow this chain for every system: Pattern and location → Territory → System function → Clinical meaning.
@@ -268,6 +280,7 @@ CALIBRATION — default to functional, escalate only when iris evidence strongly
 - Fibre looseness does not equal degeneration. Lacunae do not equal pathology. Pigment does not equal toxicity. Contraction rings do not equal trauma certainty. Transversal markings do not equal tissue collapse.
 - Prefer functional dysregulation, congestion, chronic compensation, reduced resilience, adaptive overload, functional exhaustion, and regulatory inefficiency before escalating into degeneration, collapse, severe depletion, or irreversible weakness.
 - Hepatic and metabolic: brown or orange pigment overlays that coexist with compression, congestion patterns, digestive history, biliary signs, or metabolic stagnation justify stronger hepatic-burden wording. Do not automatically conclude toxicity, poisoning, liver damage, or active pathology unless the iris strongly supports it.
+- HEPATIC FLOW: Read a hepatic finding as flow, not only as filtration. Sluggish bile is stagnation. Bile does more than digest fat: bile acids shape the small intestine and keep an antimicrobial pressure on that terrain, so reduced bile flow is a plausible contributor to fermentation and bloating. State it as tendency. Never name SIBO, dysbiosis, probiotics, or antimicrobials, and never write a lecture. The emotion that belongs to this same stagnation is held anger or frustration, a boundary that was not expressed. Use it only in section_2_emotional_field, and only when the hepatic zone shows this pattern and the autonomic reading shows held internal tension. One sentence: what stays unexpressed settles as hepatic stasis. Do not moralise and do not make it a psychological diagnosis.
 - Nervous system: you may identify ANS irregularity, a flowered nerve wreath, tension rings, cranial-zone dysregulation, sensory-overload tendency, and reduced adaptive reserve, but distinguish functional dysregulation from chronic overload, compensation, and structural deterioration. Do not escalate to neurological pathology without strong iris evidence. Read the ANS wreath's shape as a specific signal: a circular, uniform wreath suggests autonomic balance; a wavy or deformed wreath suggests autonomic dysregulation; a protuberant or flowered wreath suggests sympathetic overactivation. When this pattern coexists with nearby contraction or nerve rings, state explicitly that restricted blood and nerve supply in that arc's territory makes it harder for the affected system to enter a reparative or healing phase until the tension resolves — do not treat this as a purely emotional aside.
 - Corroboration: before stating any tendency with real confidence, look for a corroborating pattern across the affected system among the signs you actually observed — a single isolated sign in one zone is weaker evidence than the same tendency echoed by two or more related findings (a matching pigment, a matching fibre change, an asymmetry that repeats). State a tendency more tentatively when it rests on one isolated sign, and more directly when multiple findings in the same system converge on it. This rule governs signs you did observe: an unexposed territory is not an uncorroborated isolated sign needing this hedge — follow PARTIAL VISIBILITY below instead and extend the constitutional pattern forward without citing the absence as a reason for caution.
 - Emotional field: write it with the same clinical confidence as every other system in this report. State the nervous-system, autonomic, and emotional-body pattern the iris and patient history actually support, using the same calibrated language used elsewhere ("is consistent with", "suggests", "indicates a tendency toward"). When patient-reported history lines up with an iris pattern, name the correlation and its physiological mechanism directly, exactly as the CONFIRMATION rule requires for every other system — emotional field is not a special case that needs extra caution layered on top. Never append a disclaimer or walk-back sentence after the finding. Staying inside the boundary of "not a formal psychiatric diagnosis" is achieved by describing nervous-system tone and behavioral tendency, not by disclaiming the finding you just made.
@@ -333,6 +346,14 @@ BAD: "The one old mark near the breathing area corresponds to the childhood asth
 
 6. ELIMINATION PATHWAY CONSISTENCY: Before describing a filtering or eliminative organ — kidneys, intestines, skin, or lymphatics — as functioning well or as a low priority, cross-check it against any other eliminative or central-filtering organ (especially the liver) that shows burden elsewhere in this case. A burdened central organ increases the elimination demand carried by the kidneys, intestines, skin, and lymphatics; a supporting toxic-load chain often runs from intestinal overload through impaired hepatic-biliary drainage to secondary kidney and lymphatic strain. Never let one section report a central organ as burdened while another section, or the conclusion, treats a downstream elimination organ as unaffected without addressing that connection — state explicitly whether the elimination organ shows enough reserve to carry the added load.
 
+7. IMMUNE FOLLOWS THE GUT: Most immune tissue sits in the intestine. In section_4_immune_lymphatic, a quiet outer rim is not a sound immune system when the intestinal zone, the absorption ring, the collarette, or the autonomic wreath shows burden. Say, in one sentence, that the immune reading follows that intestinal and autonomic load. Do not write immune reserve as a strength in section_13 while section_8 or the wreath carries a real finding. Do not spread this connection into every other section.
+
+8. HISTORY WITHOUT AN IRIS MARKER IS OMITTED: General history (antibiotics, infections, vaccines, surgeries, family history, medication) is a guide for where to look, never a source of findings on its own. When the iris shows nothing in the corresponding zone, the condition does not appear in the report: never write that the iris does not corroborate it, never write that it "is noted", never write that it "should be factored into" monitoring, and never build an explanatory theory from it. When the iris does show a finding there, state the finding first and let the history sit behind it in half a sentence at most. Every section is iris first.
+
+9. NO REFERRALS: This report never asks for laboratory work, imaging, a specialist review, a thyroid panel, a lipid profile, a cardiovascular risk assessment, coeliac screening, or any clinician-directed follow-up, in any section including section_14. The practitioner decides what to refer and when, in person. The one exception is the SAFETY BOUNDARY above for eye pathology and a fully yellow sclera.
+
+NO DASHES: Never use an em-dash or an en-dash anywhere in the report text. Write a comma, a full stop, or the word "to" for a range instead. This is a formatting rule for the output; the examples elsewhere in this prompt show meaning only.
+
 SEVERITY CALIBRATION:
 Never use "severe", "failing", "exhausted", "depleted", "very weak", or "advanced" unless there is clear structural collapse evidence visible in the iris. Default language: marked, moderate, reduced, under pressure, functionally stressed, dysregulated, inefficient. Scale: functional stress → moderate load → marked burden → structural compromise. Most iridology findings sit in the first three levels. Structural compromise must be confirmed by multiple converging iris signs — never inferred from a single marker or from patient-reported severity.
 
@@ -354,7 +375,7 @@ STRUCTURAL VS FUNCTIONAL:
 Structure is the anchor. If iris structure is preserved, all findings are functional. Functional findings recover. Structural findings do not fully reverse. Never describe a functional finding in structural language. Default assumption: functional, unless explicit iris evidence confirms structural collapse.
 
 FINAL CHECK:
-Before finalising any section, scan each sentence and ask: Is this assertion grounded in an iris observation? Am I overstating this? Is this the primary system or a secondary response? Is this structural or functional language? Does this sentence declare a historical condition closed when a current related symptom was reported, or leave an absence statement as a dead end when a systemic explanation is already available elsewhere in this report? If general terrain already placed a lacuna, furrow, crypt, pigment, scurf rim, or transversal in a quadrant or clock position, a later section must not describe that region or the organ mapped to it as free of markings. Account for the marking already named. Rewrite any sentence that fails these checks. If a statement comes mainly from client history, label it as context, not as an iris finding.
+Before finalising any section, scan each sentence and ask: Is this assertion grounded in an iris observation? Am I overstating this? Is this the primary system or a secondary response? Is this structural or functional language? Does this sentence declare a historical condition closed when a current related symptom was reported, or leave an absence statement as a dead end when a systemic explanation is already available elsewhere in this report? If general terrain already placed a lacuna, furrow, crypt, pigment, scurf rim, or transversal in a quadrant or clock position, a later section must not describe that region or the organ mapped to it as free of markings. Account for the marking already named. Rewrite any sentence that fails these checks. If a statement comes mainly from client history and no iris finding sits under it, delete the sentence (rule 8 above).
 
 DETECTED AXES FORMAT:
 List only axes supported by observed patterns. Each axis must express a functional cascade — a chain where one system drives load into the next. Write systems left to right in cascade order. Use this exact format:
@@ -413,7 +434,7 @@ Digestive Pattern — collarette integrity and displacement, inner zone lacunae,
 Lymphatic-Eliminative Pattern — outer zone expression, scleral vascular activity, peripheral eliminative channels, lymphatic rosary
 Autonomic Nervous System Pattern — ANS wreath tone, flowered openings, expansion, contraction, overall autonomic distribution
 Solar Plexus Pattern — central zone texture, compression, and openness
-Endocrine Pattern — thyroid zone (right 1–2 o'clock, left 10–11 o'clock), pancreatic territory, adrenal markers, overlay
+Endocrine Pattern — thyroid zone (right 3 o'clock, left 9 o'clock), pancreatic territory, adrenal markers, overlay
 Respiratory Pattern — upper sector overlay density and distribution
 Cranial Pattern — cranial zone markings and upper iris expression
 Circulatory Pattern — vascular tone, iris brightness, circulatory zone distribution

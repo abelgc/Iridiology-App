@@ -7,6 +7,7 @@ import {
   TECHNICAL_REVIEW_SYSTEM_PROMPT,
   IRIDOLOGY_COLOUR_FIBRE_SCLERA_GUIDE,
   IRIDOLOGY_IRIS_TERRITORY_MAP,
+  IRIDOLOGY_ACUTE_CHRONIC_SYMPTOM_MAP,
   IRIDOLOGY_VITAMIN_MINERAL_HERB_MAP,
   IRIDOLOGY_LACUNAE_AND_SIGN_CATALOGUE,
   buildChatSystemPrompt,
@@ -48,6 +49,63 @@ describe('Claude Prompts', () => {
       expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('cervical nerve')
       expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('thoracic spinal cord')
       expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('lumbar spinal cord')
+    })
+
+    it("REGRESSION (zones not matching charts/Ellen Jensen.pdf, 2026-10-05): clock hours follow the Ellen Jensen chart, not the old invented table", () => {
+      // Heart: left iris 3 o'clock, not 6
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toMatch(/LEFT IRIS[\s\S]*3 o'clock: Heart/)
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).not.toMatch(/6 o'clock: Heart/)
+      // Kidneys at the bottom of both irises, not 9 / 3
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain("5:30 to 6:15 o'clock: Right kidney")
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain("6:45 to 6:15 o'clock: Left kidney")
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).not.toMatch(/9 o'clock: Right kidney/)
+      // Thyroid on the nasal side: right 3, left 9
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toMatch(/RIGHT IRIS[\s\S]*3 o'clock: Throat\. Thyroid/)
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toMatch(/LEFT IRIS[\s\S]*9 o'clock: Throat\. Thyroid/)
+      // Gallbladder sits with the liver at 8:30, not at 5
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).not.toMatch(/5 o'clock: Gallbladder/)
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('gallbladder and pancreas head at the collarette')
+      // Zone legend printed on the chart
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('Blood and lymph, humoral zone')
+      expect(IRIDOLOGY_IRIS_TERRITORY_MAP).toContain('Skin and orifices')
+    })
+
+    it('REGRESSION (2026-10-05): the acute/chronic catalogue quotes the same hours as the territory map', () => {
+      expect(IRIDOLOGY_ACUTE_CHRONIC_SYMPTOM_MAP).toContain("Heart, primary cardiac zone (left 3 o'clock")
+      expect(IRIDOLOGY_ACUTE_CHRONIC_SYMPTOM_MAP).not.toContain("left 6 o'clock")
+      expect(IRIDOLOGY_ACUTE_CHRONIC_SYMPTOM_MAP).toContain("Kidneys (both irises, 5:30 to 6:45 o'clock")
+      expect(IRIDOLOGY_ACUTE_CHRONIC_SYMPTOM_MAP).not.toContain("Kidneys (right 9 o'clock")
+      expect(IRIDOLOGY_ACUTE_CHRONIC_SYMPTOM_MAP).toContain("Thyroid (right 3 o'clock, left 9 o'clock")
+      expect(IRIDOLOGY_ACUTE_CHRONIC_SYMPTOM_MAP).toContain("Gallbladder (right 8:30 o'clock")
+    })
+  })
+
+  describe('REGRESSION (Heidrun Schwarzenberger report, 2026-10-05): iridological professionalism rules', () => {
+    const p = getStandardAnalysisSystemPrompt('en')
+
+    it('immune reading follows the gut, hepatic finding read as flow', () => {
+      expect(p).toContain('IMMUNE FOLLOWS THE GUT')
+      expect(p).toContain('Most immune tissue sits in the intestine')
+      expect(p).toContain('HEPATIC FLOW')
+      expect(p).toContain('Sluggish bile is stagnation')
+      expect(p).toContain('Never name SIBO')
+    })
+
+    it('history the iris does not corroborate is omitted, never narrated as context or as an absence', () => {
+      expect(p).not.toContain('label it as context')
+      expect(p).toContain('HISTORY WITHOUT AN IRIS MARKER IS OMITTED')
+      expect(p).toContain('never write that the iris does not corroborate it')
+    })
+
+    it('the report issues no laboratory, imaging, or specialist referrals; the practitioner decides those', () => {
+      expect(p).toContain('NO REFERRALS')
+      expect(p).toContain('thyroid panel')
+      expect(p).toContain('The practitioner decides')
+    })
+
+    it('forbids em-dashes and en-dashes in the generated text', () => {
+      expect(p).toContain('NO DASHES')
+      expect(p).toContain('Never use an em-dash')
     })
   })
 

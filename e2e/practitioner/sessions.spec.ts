@@ -9,8 +9,11 @@ import path from 'path'
  * provider (see e2e/client-flow.spec.ts's file header).
  */
 
-const RIGHT = path.join(__dirname, '..', 'fixtures', 'iris-right.jpg')
-const LEFT = path.join(__dirname, '..', 'fixtures', 'iris-left.jpg')
+// Real iris photos. The .jpg pair next to these is a flat colour square with no eye,
+// so the crop step correctly refuses to propose one. This test must use photos that
+// contain an eye, or it cannot tell a broken detector from a form that never submits.
+const RIGHT = path.join(__dirname, '..', 'fixtures', 'iris-right.heic')
+const LEFT = path.join(__dirname, '..', 'fixtures', 'iris-left.heic')
 
 async function createPatient(page: import('@playwright/test').Page): Promise<string> {
   const name = `E2E Session Patient ${Date.now()}`
@@ -41,6 +44,7 @@ test.describe('Session creation — language selector', () => {
   })
 
   test('REGRESSION (2026-09-21): submits the selected language to /api/analyze instead of always defaulting silently', async ({ page }) => {
+    test.setTimeout(60_000)
     const patientName = await createPatient(page)
 
     let capturedBody: Record<string, unknown> | null = null
@@ -59,9 +63,17 @@ test.describe('Session creation — language selector', () => {
     const langSelect = page.locator('select').filter({ has: page.locator('option:has-text("Español")') })
     await langSelect.selectOption('es')
 
-    const inputs = page.locator('input[type="file"]')
-    await inputs.nth(0).setInputFiles(RIGHT)
-    await inputs.nth(1).setInputFiles(LEFT)
+    const fileInput = page.locator('input[type="file"]')
+    await fileInput.first().setInputFiles(RIGHT)
+    await expect(page.getByText('No eye detected')).toHaveCount(0)
+    await page.getByRole('button', { name: 'Use crop' }).click()
+    await expect(page.getByRole('button', { name: 'Remove' })).toHaveCount(1)
+
+    // Confirming the right eye removes that file input. The one left is the left iris.
+    await fileInput.first().setInputFiles(LEFT)
+    await expect(page.getByText('No eye detected')).toHaveCount(0)
+    await page.getByRole('button', { name: 'Use crop' }).click()
+    await expect(page.getByRole('button', { name: 'Remove' })).toHaveCount(2)
 
     await page.click('button:has-text("Start Analysis")')
     await expect(page).toHaveURL(/\/practitioner\/sessions\/00000000-0000-4000-8000-000000000099/, { timeout: 10000 })

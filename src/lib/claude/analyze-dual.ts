@@ -9,6 +9,7 @@ import { buildUserPrompt } from './analyze'
 import { parseReportResponse } from './parse'
 import { guardAgainstSystemFixation, guardAgainstHistoryCallbackOveruse } from './rewrite-fixation'
 import { guardAgainstZoneDenial } from './rewrite-zone-denial'
+import { stripDashesFromReport } from './strip-dashes'
 import { recordReportMetrics } from './report-metrics'
 import type { ReportContent } from '@/types/report'
 import type { AnalysisError } from './analyze'
@@ -27,7 +28,9 @@ async function finalizeReport(
   if ('code' in result) return result
   const afterSystemGuard = await guardAgainstSystemFixation(provider, result)
   const afterHistoryGuard = await guardAgainstHistoryCallbackOveruse(provider, afterSystemGuard)
-  return guardAgainstZoneDenial(provider, afterHistoryGuard)
+  const afterZoneGuard = await guardAgainstZoneDenial(provider, afterHistoryGuard)
+  // Practitioner rule (2026-10-05): no em-dashes in any report. Deterministic, no model call.
+  return stripDashesFromReport(afterZoneGuard)
 }
 
 /**
