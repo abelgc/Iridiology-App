@@ -104,8 +104,17 @@ const HISTORY_CALLBACK_PATTERNS: RegExp[] = [
   // rewritten second-person client voice, but this detector runs directly on Stage 1
   // output too, which is the only guard /practitioner has.
   /\b(?:consistent with|correlat(?:es|ing|ion) with)\s+(?:the\s+)?(?:patient'?s?|her|his|their)\s+reported\b/i,
-  /\bgiven\s+(?:her|his|their|the\s+patient'?s?)\s+[\w-]+(?:\s+[\w-]+){0,3}\s+history\b/i,
-  /\b(?:her|his|their|the\s+patient'?s?)\s+(?:surgical|reported|documented)\s+history\s+of\b/i,
+  /\bgiven\s+(?:her|his|their|the|the\s+patient'?s?)\s+[\w-]+(?:\s+[\w-]+){0,3}\s+history\b/i,
+  /\b(?:her|his|their|the|the\s+patient'?s?)\s+(?:surgical|reported|documented)\s+history\s+of\b/i,
+  // Heidrun Schwarzenberger (2026-10-05): Stage 1 narrating general history as monitoring
+  // advice ("history should be factored into"), as a bare acknowledgement ("history ... is
+  // noted"), as a referral ("should be confirmed through ... testing"), or as an absence of
+  // corroboration ("not independently corroborated by", "absence of corroborating iris
+  // evidence"). None of these is an iris finding; all of them lean on the history.
+  /\bhistory\b[^.;]{0,40}?\b(?:should be (?:factored|confirmed|reconciled|monitored)|is noted|warrants|carries independent clinical weight)/i,
+  /\b(?:should be|warrants|supports)\s+(?:confirmed|reconciled|formal|its own|clinician)[^.;]{0,60}?\b(?:panel|testing|review|assessment|screening|follow-up)\b/i,
+  /\b(?:not\s+(?:independently\s+)?corroborated\s+by|absence of corroborating)\b/i,
+  /(?:^|[.;]\s+)the reported\s+[\w-]+(?:\s+[\w-]+){0,8}\s+(?:is|was|carries|should)\s+a?\b/i,
 ]
 
 export interface HistoryCallbackFlag {

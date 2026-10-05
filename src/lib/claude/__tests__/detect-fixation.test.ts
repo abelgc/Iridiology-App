@@ -180,6 +180,34 @@ describe('detectHistoryCallbackOveruse (REGRESSION: Bhargavi Dasi over-anchoring
     expect(flag?.count).toBe(4)
   })
 
+  it('REGRESSION (Heidrun Schwarzenberger report, 2026-10-05): catches Stage 1 narrating general history as monitoring advice, referral, or absence of corroboration', () => {
+    // Five sentences quoted from the real report (reports.id 6f84ed2b-5aea-4379-8c29-a5f4360f14d0).
+    // The guard returned 0 hits on all five when run against the live patterns on 2026-10-05.
+    const report = baseReport({
+      section_2_emotional_field:
+        'The reported early loss of her father at age 14 is a formative period for autonomic patterning, and present physiological carryover is corroborated here by the collarette tone itself rather than by history alone.',
+      section_4_immune_lymphatic:
+        'Reported antibiotic use and prior COVID infection history should be factored into mucosal and immune-reserve monitoring going forward, since repeated immune challenge compounds a constitutionally reduced elimination throughput even without a corresponding iris marker. The sinus surgery history in 2003 and 2004 is noted, and the upper cranial arc shows no clear residual marking; this is stated as an absence of corroborating iris evidence rather than a denial of the surgical history itself.',
+      section_5_endocrine_hormonal:
+        'What is visible does not show an open lacuna distinct enough to add new iris-based information beyond the surgical history of thyroid removal in 2017, which is already known. Thyroid hormone replacement adequacy following thyroidectomy should be confirmed through clinician-directed thyroid panel testing rather than iris inspection.',
+      section_6_circulatory_cardiorespiratory:
+        'Given the reported paternal family history of heart attack and heart surgery, this finding in the adjacent territory warrants attention as a zone to monitor over time and supports formal cardiovascular risk assessment including blood pressure and lipid profile.',
+      section_9_renal_urinary:
+        'The history of ovarian or cyst removal in 2021 is not independently corroborated by a residual iris marker in this territory; it is therefore not carried forward as an active iris finding.',
+    })
+
+    const flag = detectHistoryCallbackOveruse(report)
+    expect(flag).not.toBeNull()
+    expect(flag?.count).toBe(5)
+    expect(flag?.sections).toEqual([
+      'section_2_emotional_field',
+      'section_4_immune_lymphatic',
+      'section_5_endocrine_hormonal',
+      'section_6_circulatory_cardiorespiratory',
+      'section_9_renal_urinary',
+    ])
+  })
+
   it('REGRESSION (register gap, 2026-08-26): does not flag a contradiction or negation as a history callback', () => {
     // Real Stage 1 phrasing that mentions patient history but does NOT use it as the
     // section's explanation — these must stay unflagged, or the guard becomes noise.

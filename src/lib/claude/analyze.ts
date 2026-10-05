@@ -72,7 +72,7 @@ export function buildUserPrompt(
 - Name: ${request.patientData.full_name}
 - Age: ${age}
 - Gender: ${request.patientData.gender || 'Not specified'}
-- Clinical history: ${request.patientData.general_history || 'Not specified'}
+- Clinical history (self-reported general history: a guide for where to look in the iris, never a source of findings on its own; a condition with no matching iris finding is left out of the report entirely, per HISTORY WITHOUT AN IRIS MARKER IS OMITTED): ${request.patientData.general_history || 'Not specified'}
 - Current symptoms (self-reported — a hypothesis to check against the iris per CLINICAL HISTORY INTEGRATION below, not a finding to confirm; state plainly if the iris shows no support for it): ${request.patientData.symptoms || 'Not specified'}
 - Practitioner clinical hypothesis (from a certified iridologist, carrying real clinical weight — ground it in the specific iris evidence you observe, do not restate or echo these words verbatim, and do not flatly contradict it; where the iris only partially aligns, describe what you see and nuance rather than deny): ${request.patientData.practitioner_notes || 'None'}
 

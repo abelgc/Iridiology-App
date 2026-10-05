@@ -3,6 +3,7 @@ import { createHash } from 'crypto'
 import { getAnthropicApiKey } from '@/lib/ai/get-provider'
 import { isNonRetryableAIError } from '@/lib/ai/errors'
 import { sanitizeJsonControlCharacters } from '@/lib/claude/json-repair'
+import { stripDashesFromReport } from '@/lib/claude/strip-dashes'
 import type { ReportContent, ReportSectionKey } from '@/types/report'
 
 const MODEL = 'claude-sonnet-5'
@@ -76,7 +77,10 @@ function stripJsonFence(raw: string): string {
     .trim()
 }
 
-type SystemVerdict = { verdict: 'needs-action' | 'fine'; clue: string }
+// `findings` (2026-10-05): one plain-language conclusion per distinct iris finding the report
+// states for that system, including explicit absences ("no lymphatic rosary"). The single
+// `clue` used to be the only carrier, and secondary findings never survived the Planner.
+type SystemVerdict = { verdict: 'needs-action' | 'fine'; clue: string; findings?: string[] }
 
 const BRIEF_SYSTEM_KEYS = [
   'section_2_emotional_field',
@@ -106,6 +110,10 @@ type ClientReportBrief = {
   systemVerdicts: Record<BriefSystemKey, SystemVerdict>
   crossSystemLinks: string[]
   knownDiagnoses: KnownDiagnosis[]
+  // The practitioner report's own section 13, one entry per strength. Without this field
+  // Writer C rebuilt section 13 from "fine" verdicts alone and lost four of five strengths
+  // on the Heidrun Schwarzenberger handout (2026-10-05).
+  strengths: string[]
   safety: { flags: string[]; constraint: string | null }
 }
 
@@ -151,6 +159,9 @@ function parseBrief(raw: string, clientFirstName: string): ClientReportBrief {
             }),
           )
       : [],
+    strengths: Array.isArray(parsed.strengths)
+      ? parsed.strengths.filter((s: unknown): s is string => typeof s === 'string' && s.trim().length > 0)
+      : [],
     safety: {
       flags: Array.isArray(parsed.safety?.flags) ? parsed.safety.flags : [],
       constraint: typeof parsed.safety?.constraint === 'string' ? parsed.safety.constraint : null,
@@ -167,24 +178,27 @@ Return ONLY a JSON object, no commentary, no markdown fences, with exactly these
   "mainDriver": string — the system or pattern the report's own iris evidence most strongly and consistently supports as dominant. Base this on iris-grounded findings, not on which condition the patient happened to mention — a patient-reported diagnosis is not automatically the driver unless the report's own findings independently point there too,
   "symptomFindingMap": string[] — each reported symptom tied to the one finding that explains it, one short string per pair, e.g. "fatigue -> adrenal strain",
   "systemVerdicts": {
-    "section_2_emotional_field": { "verdict": "needs-action" | "fine", "clue": string },
-    "section_3_cognitive_nervous": { "verdict": "needs-action" | "fine", "clue": string },
-    "section_4_immune_lymphatic": { "verdict": "needs-action" | "fine", "clue": string },
-    "section_5_endocrine_hormonal": { "verdict": "needs-action" | "fine", "clue": string },
-    "section_6_circulatory_cardiorespiratory": { "verdict": "needs-action" | "fine", "clue": string },
-    "section_7_hepatic": { "verdict": "needs-action" | "fine", "clue": string },
-    "section_8_digestive_intestinal": { "verdict": "needs-action" | "fine", "clue": string },
-    "section_9_renal_urinary": { "verdict": "needs-action" | "fine", "clue": string },
-    "section_10_structural_integumentary": { "verdict": "needs-action" | "fine", "clue": string }
+    "section_2_emotional_field": { "verdict": "needs-action" | "fine", "clue": string, "findings": string[] },
+    "section_3_cognitive_nervous": { "verdict": "needs-action" | "fine", "clue": string, "findings": string[] },
+    "section_4_immune_lymphatic": { "verdict": "needs-action" | "fine", "clue": string, "findings": string[] },
+    "section_5_endocrine_hormonal": { "verdict": "needs-action" | "fine", "clue": string, "findings": string[] },
+    "section_6_circulatory_cardiorespiratory": { "verdict": "needs-action" | "fine", "clue": string, "findings": string[] },
+    "section_7_hepatic": { "verdict": "needs-action" | "fine", "clue": string, "findings": string[] },
+    "section_8_digestive_intestinal": { "verdict": "needs-action" | "fine", "clue": string, "findings": string[] },
+    "section_9_renal_urinary": { "verdict": "needs-action" | "fine", "clue": string, "findings": string[] },
+    "section_10_structural_integumentary": { "verdict": "needs-action" | "fine", "clue": string, "findings": string[] }
   },
   "crossSystemLinks": string[] — each cross-system connection stated ONCE, in plain internal language, e.g. "liver strain is compounding the digestive load",
-  "knownDiagnoses": { condition: string, assignedSection: string, severity: "soft" | "hard" }[] — conditions the client themself mentioned about their own history (for example "the patient reports a history of...", "the patient states they have...") — NEVER a condition the report presents as something this iris reading found or detected, and never treat the client's own wording as proof a doctor diagnosed it. Only include it if the report's own wording clearly frames it as something the client already said about themselves. For each one, assignedSection must be the SINGLE section key (one of the systemVerdicts keys above, or "section_1_general_terrain") where the report's own text most directly and specifically ties that condition to a finding — not every section that could plausibly relate to it. Each condition may only be assigned to one section; if the report ties it to several, pick the section with the strongest, most specific textual link and leave it out of the others. Empty array if none, or if you are unsure. severity must be "hard" for a named diagnosis with real medical stakes — doctor-confirmed, involves or led to surgery, a lab or hormone-based condition, or anything only a doctor can manage (example: "hyperparathyroidism", "diagnosed with diabetes"). severity must be "soft" for a historical, uncertain, or tendency-type self-report that is not a formal diagnosis with real medical stakes, even when it lines up with a real constitutional or functional weakness finding (example: "possible childhood asthma, unclear if still active", "occasional childhood eczema"). If genuinely unsure which it is, use "hard" — the more cautious option.
+  "strengths": string[] — every strength the report's own strengths section (section_13_strengths_of_the_body) states, one entry per strength, as a plain-language conclusion about the body (for example "dense, well-woven tissue structure", "even upper nervous regulation", "no cholesterol or sodium ring"). Carry every one; never merge, rank, or drop one. Empty array only if that section is genuinely empty,
+  "knownDiagnoses": { condition: string, assignedSection: string, severity: "soft" | "hard" }[] — conditions the client themself mentioned about their own history (for example "the patient reports a history of...", "the patient states they have...") — NEVER a condition the report presents as something this iris reading found or detected, and never treat the client's own wording as proof a doctor diagnosed it. Only include it if the report's own wording clearly frames it as something the client already said about themselves AND ties it to a finding in that section. If the report says the condition is not corroborated by the iris, has no residual marker, is not carried forward, or words to that effect, leave it out of knownDiagnoses entirely: the client handout then says nothing about it. For each one, assignedSection must be the SINGLE section key (one of the systemVerdicts keys above, or "section_1_general_terrain") where the report's own text most directly and specifically ties that condition to a finding — not every section that could plausibly relate to it. Each condition may only be assigned to one section; if the report ties it to several, pick the section with the strongest, most specific textual link and leave it out of the others. Empty array if none, or if you are unsure. severity must be "hard" for a named diagnosis with real medical stakes — doctor-confirmed, involves or led to surgery, a lab or hormone-based condition, or anything only a doctor can manage (example: "hyperparathyroidism", "diagnosed with diabetes"). severity must be "soft" for a historical, uncertain, or tendency-type self-report that is not a formal diagnosis with real medical stakes, even when it lines up with a real constitutional or functional weakness finding (example: "possible childhood asthma, unclear if still active", "occasional childhood eczema"). If genuinely unsure which it is, use "hard" — the more cautious option.
   "safety": {
     "flags": string[] — any of these you find real evidence for in the report: low body weight, low BMI, elderly and low weight, pregnancy, eating-disorder history, diabetes, any serious diagnosed condition. Empty array if none,
     "constraint": string | null — "gentle support only, no fasting or aggressive protocols" if flags is non-empty, otherwise null
   }
 }
 Base every field only on what the report actually supports — never invent a finding, a symptom, a diagnosis, or a link that is not there. If you are unsure whether a safety flag or a diagnosis applies, leave it out.
+
+Each systemVerdicts findings array holds one entry per distinct conclusion the report states for that system, in plain internal language: the main finding, each secondary finding (an absorption pattern, a reduced-uptake sign, a standalone marker), and each explicit absence the report states (for example "no lymphatic rosary", "no cholesterol ring"). Carry every one, in the report's own order; a stated absence is a finding too. Never add a conclusion the report does not state. The clue remains the one-line summary of the main finding.
 
 Each systemVerdicts clue must preserve any concrete body location, organ, or zone the source text ties to that system's finding — e.g. "pelvic and digestive area", "lower back and hips", "throat and thyroid region" — never compress a finding down to only the abstract pattern (e.g. "internalized tension") while dropping where in the body it actually shows up. If the source genuinely names no specific location for that system, leave the clue as the pattern alone — never invent one.
 
@@ -260,15 +274,24 @@ const SHARED_WRITER_RULES = `LANGUAGE IN EXAMPLES:
 Every worked example, connector phrase, and forbidden-word pair below is written in English to show MEANING only. When you are writing in a different language (per the Writer role line above), translate every one of them into that language's natural equivalent — never copy an English word or phrase (such as "fits with") verbatim into a non-English sentence. This applies to every example in these rules without exception.
 
 LAYER MODEL:
-The brief you receive is hidden Layer 1 reasoning (zones, clock positions, fibre, pigment, constitution, axes) — it never appears in your output. You write Layer 2: the client report. State CONCLUSIONS as facts about the client's body. Never write "the iris", "the zone", "fibre", "8 o'clock", or any colour or shape of the eye. Say "your liver", "your colon", "your nervous system". Every sentence you write is the LAST link of a hidden chain, never the chain itself.
+The brief you receive is hidden Layer 1 reasoning (zones, clock positions, fibre, pigment, constitution, axes) — it never appears in your output. You write Layer 2: the client report. State CONCLUSIONS as facts about the client's body. Never write "the iris", "the zone", "ciliary", "collarette", "wreath", "fibre", "lacuna", "pigment", "o'clock", "arc", or any colour or shape of the eye. Say "your liver", "your colon", "your nervous system". Every sentence you write is the LAST link of a hidden chain, never the chain itself.
 
 THE VALUE RULE:
-Every sentence must do ONE of: (a) say what is happening in their body, (b) say what they feel because of it, or (c) say what to do. If a sentence does none of these, cut it. Delete on sight: any description of the eye (colour, shape, tone, structure); mechanism and physiology; generic health lessons not about this person; anything already said elsewhere. One idea per sentence, everyday words, about 15 to 20 words per sentence. A system that needs action gets 2 to 4 sentences; a system that is fine gets one honest line.
-Worked example — delete: "Both irises present a biliary constitution — the base colour is a mixed yellow-green-brown tone across the full stroma." Keep instead: "Your body naturally leans toward a liver-and-lymph type, so those systems work hardest and respond best to support."
+Every sentence must do ONE of: (a) say what is happening in a named organ, gland, or system of their body, or (b) say what they feel because of it, only when the brief itself states that sensation or symptom. If a sentence does neither, cut it. Delete on sight: any description of the eye (colour, shape, tone, structure); mechanism and physiology; generic health lessons not about this person; any instruction, remedy, or lifestyle suggestion (see NO ADVICE); anything already said elsewhere. One idea per sentence, about 15 to 20 words per sentence. A system that needs action gets 2 to 4 sentences; a system that is fine gets one honest line. Carry every entry of that system's findings array into prose, including the stated absences, each in its own sentence or clause; never collapse several findings into one.
+Worked example, delete: "Both irises present a biliary constitution, the base colour is a mixed yellow-green-brown tone across the full stroma." Keep instead: "Your body naturally leans toward a liver-and-lymph type, so those systems work hardest."
+
+NO ADVICE:
+The handout carries no advice. The practitioner gives personalised advice in person, in the consultation; this document reports what the reading found and nothing more. Never write what to eat, drink, avoid, breathe, brush, move, rest, warm, or practise. Never write a remedy, a routine, a habit, or a product. Never write "support", "helps", "responds well to", or "worth keeping in view" as a way to smuggle a suggestion in. If the brief does not state a recommendation (the one exception is the chakra and emotion named for section_2_emotional_field, which is a paid detail), there is none to write. A section that needs action still ends on its finding, not on a suggestion.
+
+REGISTER:
+Professional plain language, between a clinical report and a magazine. Keep every gland, axis, organ, and system name the brief uses (hypothalamic-pituitary-pineal regulation, autonomic supply to the gut and pelvis, bile flow, lymphatic drainage, adrenal reserve); a client can hear a gland name. Drop every iris word (see LAYER MODEL). No metaphors, no similes, no "almost like", no "simply fine", no "the all-clear", no invented sensations the brief does not state, no filler reassurance. Where the brief is silent, the handout is silent: silence is better than a flourish. Example of the register wanted: "The upper regulation of your nervous system, the hypothalamic-pituitary-pineal axis, holds an even tone. The strain sits lower, in the autonomic supply to your gut and pelvis, which has been under sustained demand."
+
+NO DASHES:
+Never use an em-dash or an en-dash anywhere in your output. Write a comma, a full stop, or the word "to" for a range instead. The examples in these rules show meaning only; do not copy their punctuation.
 
 VOICE:
-Direct, categorical, priority-first — confident about the PROBLEM, optimistic about RECOVERY. Talk TO the person ("your liver is running slow"), never about a chart ("the liver shows reduced efficiency"). Open every section with the main finding as a short confident verdict, then what it connects to, then why it matters or its priority. No alarm words, no capitals, no catastrophe.
-Dial — land in the MIDDLE. Too soft: "Your kidneys and adrenals show room to improve filtration and hormone production, a balancing pattern that responds well to support." Too hard: "Your adrenals are weak and toxic — reduce all stress and take adaptogens." Target: "Your stress glands are worn down from running on high too long, and that's behind your fatigue and poor sleep — calm, steady support turns this around."
+Direct, categorical, priority-first, confident about the PROBLEM, optimistic about RECOVERY. Talk TO the person ("your liver is running slow"), never about a chart ("the liver shows reduced efficiency"). Open every section with the main finding as a short confident verdict, then what it connects to, then why it matters or its priority. No alarm words, no capitals, no catastrophe.
+Dial, land in the MIDDLE. Too soft: "Your kidneys and adrenals show room to improve filtration and hormone production, a balancing pattern that responds well to support." Too hard: "Your adrenals are weak and toxic, reduce all stress and take adaptogens." Target: "Your adrenal glands are worn down from running on high too long, and that sits behind your fatigue and poor sleep."
 
 NO GENERIC LABELS:
 Never open or describe a system with generic filler like "this system needs attention", "requires attention", or "needs some care" — the client is already giving it attention by reading this report. Skip straight to the specific finding: name what is actually happening in that system, not that it deserves notice.
@@ -293,11 +316,11 @@ SAFETY GATE:
 If brief.safety.flags is non-empty, do not suggest fasting, aggressive cleanses, parasite protocols, or protein restriction in any section you write. Use gentle, moderate language for any lifestyle direction.
 
 NEVER ADVISE PORTION SIZE OR MEAL FREQUENCY (always, not only when safety flags are set):
-Never tell the client how much or how often to eat. Forbidden in every section: "small frequent meals", "eat little and often", "smaller portions", "five or six small meals a day", "reduce portion size", "eat lighter amounts more often", and any rewording that lands in the same place. This leaks most often into the digestive and pancreatic sections and into the conclusion's order of support — it is out of bounds in all of them. Take the direction of the fix from what the brief actually says about that system instead; if the only thing you can reach for is a portion or frequency instruction, write nothing about eating at all.
+Never tell the client how much or how often to eat. Forbidden in every section: "small frequent meals", "eat little and often", "smaller portions", "five or six small meals a day", "reduce portion size", "eat lighter amounts more often", and any rewording that lands in the same place. This leaks most often into the digestive and pancreatic sections and into the conclusion's order of priorities — it is out of bounds in all of them. Write what the brief actually says about that system instead; if the only thing you can reach for is a portion or frequency instruction, write nothing about eating at all.
 
 SELF-CHECK (run silently on your own output before returning):
 1. Any sentence describing the eye (colour, shape, structure)? Delete the description, keep only the meaning.
-2. Does every sentence pass the value rule (a/b/c)? Cut anything that does not.
+2. Does every sentence pass the value rule (a/b)? Cut anything that does not. Any advice, remedy, routine, or lifestyle suggestion anywhere? Delete it (NO ADVICE). Any em-dash or en-dash? Replace it (NO DASHES). Any gland or system name from the brief replaced by a vaguer phrase? Restore the name (REGISTER). Any entry of a findings array left out? Add it.
 3. Any disease, lab level, organ damage, or parasite asserted instead of redirected? Fix it.
 4. Any "proves/explains/confirms"-strength language, in any language? Soften it to a plausible contributing-factor phrasing in the language you are writing.
 5. If you wrote section_13_strengths_of_the_body, is it free of "healthy/fine/undamaged/disease-free"?
@@ -318,18 +341,18 @@ function sectionInstructions(key: ReportSectionKey, lang: string): string {
     case 'section_11_detected_axes':
       return "section_11_detected_axes (\"Detected Patterns\"): write one \"-\" bullet per entry in brief.crossSystemLinks, in plain words — aim for 5 to 8 when the case supports that many, but never pad beyond what brief.crossSystemLinks actually contains. Not a repeat of the other sections' titles or content. If brief.crossSystemLinks is empty, write one honest line saying no notable cross-system pattern stood out."
     case 'section_12_conclusion':
-      return `section_12_conclusion: tell the recovery story and the order of priorities — the main priorities and a clear order of support — using brief.dominantPattern, brief.mainDriver, and brief.systemVerdicts. Introduce no new findings, do not repeat the other sections. If brief.safety.flags is non-empty, end this section with exactly this line, in ${languageName(lang)}: "${safetyLine(lang)}"`
+      return `section_12_conclusion: tell the recovery picture and the order of priorities, which systems carry the load and in what order they matter, as a finding, not as advice, using brief.dominantPattern, brief.mainDriver, and brief.systemVerdicts. Introduce no new findings, do not repeat the other sections, do not add a suggestion. If brief.safety.flags is non-empty, end this section with exactly this line, in ${languageName(lang)}: "${safetyLine(lang)}"`
     case 'section_13_strengths_of_the_body':
-      return 'section_13_strengths_of_the_body: name what\'s holding up well, drawn from any brief.systemVerdicts entries marked "fine" — reserve, adaptability, capacity to respond. Never write "healthy", "fine", "undamaged", or "disease-free" — say what you\'d expect from a body with real reserve instead, e.g. "your lungs show few patterns and good reserve". Motivating and true.'
+      return 'section_13_strengths_of_the_body: carry every entry of brief.strengths into prose, one per sentence, in the same order, keeping each organ, gland, or system name the brief uses; add nothing, drop nothing. If brief.strengths is empty, fall back to the brief.systemVerdicts entries marked "fine". Never write "healthy", "fine", "undamaged", or "disease-free"; say what you\'d expect from a body with real reserve instead, e.g. "your lungs show few patterns and good reserve". Motivating and true.'
     case 'section_2_emotional_field':
-      return 'section_2_emotional_field: use brief.systemVerdicts["section_2_emotional_field"] — a short plain verdict, then what it causes for the client, then the direction of the fix. Cover the system even when its verdict is "fine" (one honest line). If the clue names a specific chakra and/or emotion to work with, state both explicitly by name as a clear, personal recommendation — this is a paid detail the client is specifically promised, never fold it anonymously into generic language. If brief.knownDiagnoses is non-empty, reference it only as history already under a doctor\'s care per the KNOWN DIAGNOSES rule below — never as something this reading found.'
+      return 'section_2_emotional_field: use brief.systemVerdicts["section_2_emotional_field"], a short plain verdict, then every entry of its findings array, then what it causes for the client only if the brief states it. Cover the system even when its verdict is "fine" (one honest line). If the clue names a specific chakra and/or emotion to work with, state both explicitly by name as a clear, personal recommendation; this is a paid detail the client is specifically promised and the one recommendation this handout carries, never fold it anonymously into generic language. If brief.knownDiagnoses is non-empty for this section, follow the KNOWN DIAGNOSES rule below; never present it as something this reading found and never add a doctor sentence.'
     default:
-      return `${key}: use brief.systemVerdicts["${key}"] — a short plain verdict, then what it causes for the client, then the direction of the fix. Cover the system even when its verdict is "fine" (one honest line). If brief.knownDiagnoses is non-empty, reference it only as history already under a doctor's care per the KNOWN DIAGNOSES rule below — never as something this reading found.`
+      return `${key}: use brief.systemVerdicts["${key}"], a short plain verdict, then every entry of its findings array including stated absences, then what it causes for the client only if the brief states it. No advice. Cover the system even when its verdict is "fine" (one honest line). If brief.knownDiagnoses is non-empty for this section, follow the KNOWN DIAGNOSES rule below; never present it as something this reading found and never add a doctor sentence.`
   }
 }
 
 function buildWriterPrompt(group: WriterGroup, lang: string): string {
-  const roleLine = `You are Writer ${group.role}. Write in ${languageName(lang)}. You are writing part of a client-facing iridology report for someone with zero health knowledge — think of a gardener reading it once and acting on it. Never mention the iris, its colour, shape, or structure. You write exactly these sections, using the shared BRIEF you are given as your only source: ${group.keys.join(', ')}.`
+  const roleLine = `You are Writer ${group.role}. Write in ${languageName(lang)}. You are writing part of a client-facing iridology handout for an adult who can hear the name of a gland or a system but must never hear iris anatomy (see REGISTER below). The handout reports findings; it gives no advice (see NO ADVICE below). Never mention the iris, its colour, shape, or structure. You write exactly these sections, using the shared BRIEF you are given as your only source: ${group.keys.join(', ')}.`
   const perSection = group.keys.map((key) => sectionInstructions(key, lang)).join('\n')
   return `${roleLine}\n\n${perSection}\n\n${SHARED_WRITER_RULES}`
 }
@@ -419,10 +442,11 @@ export async function rewriteReportForClient(
     WRITER_GROUPS.map((group) => runWriter(client, brief, group, lang))
   )
 
-  return {
+  // Practitioner rule (2026-10-05): no em-dashes in any report. Deterministic, no model call.
+  return stripDashesFromReport({
     ...a,
     ...b,
     ...c,
     section_14_recommendations: report.section_14_recommendations,
-  } as ReportContent
+  } as ReportContent)
 }
