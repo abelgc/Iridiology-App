@@ -12,7 +12,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
           Natural Wellness · Real Insight · Caring Guidance
         </div>
         <header style={{ background: '#f4ead8', borderBottom: '1px solid #d8c9ad', padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50 }}>
-          <Link href="/client" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
             <Image
               src="/logo-solutions.png"
               alt="Narasimha Solutions"

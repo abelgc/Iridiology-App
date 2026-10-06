@@ -134,6 +134,14 @@ describe('proxy() auth boundary', () => {
     expect(res.status).not.toBe(307)
   })
 
+  it('REGRESSION: public /dosha-quiz is not redirected to /login', async () => {
+    currentUser = null
+    const res = await proxy(req('/dosha-quiz'))
+    expect(res.status).not.toBe(307)
+    expect(res.headers.get('location') ?? '').not.toContain('/login')
+    expect(res.headers.get('x-middleware-rewrite')).toContain('/client/dosha-quiz')
+  })
+
   it('never redirects an authenticated user away from /login (sends them to /practitioner instead)', async () => {
     currentUser = { id: 'practitioner-1' }
     const res = await proxy(req('/login'))

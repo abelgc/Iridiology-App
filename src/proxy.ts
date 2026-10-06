@@ -11,6 +11,12 @@ export async function proxy(request: NextRequest) {
     return NextResponse.rewrite(new URL('/client', request.url))
   }
 
+  // Free public gift quiz. The browser keeps /dosha-quiz; the page lives
+  // under /client so it inherits that layout and the language toggle.
+  if (pathname === '/dosha-quiz') {
+    return NextResponse.rewrite(new URL('/client/dosha-quiz', request.url))
+  }
+
   // Bypass authentication for client routes
   if (pathname.startsWith('/client') || pathname.startsWith('/api/client')) {
     return NextResponse.next({ request })
