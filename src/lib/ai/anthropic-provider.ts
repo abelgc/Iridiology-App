@@ -32,6 +32,9 @@ export class AnthropicProvider implements AIProvider {
       model: modelToUse,
       max_tokens: request.maxTokens,
       thinking,
+      ...(request.outputSchema && {
+        output_config: { format: { type: 'json_schema' as const, schema: request.outputSchema } },
+      }),
       // 5-minute ephemeral cache: the same static system prompt is re-sent on
       // every retry (max_tokens truncation, invalid-JSON, timeout-catch) and
       // on both legs of a dual-model analysis. Caching it means only the

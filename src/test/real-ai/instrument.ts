@@ -27,6 +27,7 @@ export interface RecordedCall {
   ms: number
   text: string
   error: string | null
+  schemaConstrained: boolean
 }
 
 export const OUTPUT_BUDGET_RATIO = 0.75
@@ -73,8 +74,11 @@ function labelFor(stage: string, provider: 'anthropic' | 'openai', system: strin
   return `${stage}-other(${system.slice(0, 40).replace(/\s+/g, ' ')})`
 }
 
-function push(call: Omit<RecordedCall, 'lang' | 'tier' | 'stage'>, ctx: CallContext | undefined) {
-  calls.push({ lang: ctx?.lang ?? '?', tier: ctx?.tier ?? '?', stage: ctx?.stage ?? '?', ...call })
+function push(call: Omit<RecordedCall, 'lang' | 'tier' | 'stage' | 'schemaConstrained'>, ctx: CallContext | undefined, params: Record<string, unknown>) {
+  const outputConfig = params.output_config as { format?: { type?: string } } | undefined
+  const responseFormat = params.response_format as { type?: string } | undefined
+  const schemaConstrained = outputConfig?.format?.type === 'json_schema' || responseFormat?.type === 'json_schema'
+  calls.push({ lang: ctx?.lang ?? '?', tier: ctx?.tier ?? '?', stage: ctx?.stage ?? '?', ...call, schemaConstrained })
 }
 
 let installed = false
@@ -113,6 +117,7 @@ export function installModelCallRecorder(): void {
             error: null,
           },
           ctx,
+          params,
         ),
       (error: unknown) =>
         push(
@@ -129,6 +134,7 @@ export function installModelCallRecorder(): void {
             error: error instanceof Error ? error.message : String(error),
           },
           ctx,
+          params,
         ),
     )
     return result
@@ -161,6 +167,7 @@ export function installModelCallRecorder(): void {
             error: null,
           },
           ctx,
+          params,
         ),
       (error: unknown) =>
         push(
@@ -177,6 +184,7 @@ export function installModelCallRecorder(): void {
             error: error instanceof Error ? error.message : String(error),
           },
           ctx,
+          params,
         ),
     )
     return stream
@@ -215,6 +223,7 @@ export function installModelCallRecorder(): void {
           error: error instanceof Error ? error.message : String(error),
         },
         ctx,
+        params,
       )
 
     return pending.then(
@@ -248,6 +257,7 @@ export function installModelCallRecorder(): void {
               error: null,
             },
             ctx,
+            params,
           )
         },
       }),

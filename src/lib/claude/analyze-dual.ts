@@ -11,6 +11,7 @@ import { guardAgainstSystemFixation, guardAgainstHistoryCallbackOveruse } from '
 import { guardAgainstZoneDenial } from './rewrite-zone-denial'
 import { stripDashesFromReport } from './strip-dashes'
 import { recordReportMetrics } from './report-metrics'
+import { reportOutputJsonSchema } from '@/lib/validators/report'
 import type { ReportContent } from '@/types/report'
 import type { AnalysisError } from './analyze'
 import type { AnalysisRequest } from '@/types/claude'
@@ -115,7 +116,11 @@ export async function analyzeIrisDual(
   const dualStartedAt = Date.now()
 
   const [claudeResult, openaiResult] = await Promise.allSettled([
-    completeWithTruncationGuard(anthropic, { systemPrompt, userText: userPrompt, images, maxTokens: 16000 }, 24000),
+    completeWithTruncationGuard(
+      anthropic,
+      { systemPrompt, userText: userPrompt, images, maxTokens: 16000, outputSchema: reportOutputJsonSchema },
+      24000,
+    ),
     completeWithTruncationGuard(openai, { systemPrompt, userText: userPrompt, images, maxTokens: 8192 }, 12288),
   ])
 
@@ -197,6 +202,7 @@ LANGUAGE DIRECTIVE: You MUST write the ENTIRE response in ${langLabel}, includin
         userText: synthesisPrompt,
         images: [],
         maxTokens: 16000,
+        outputSchema: reportOutputJsonSchema,
       },
       24000,
     )

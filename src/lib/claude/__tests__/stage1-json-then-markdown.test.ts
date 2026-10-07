@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 
 // 2026-10-05, stage 1 in production: the synthesis call AND the Claude-only fallback both
 // returned a valid JSON object for the first sections, closed it, and wrote the remaining
@@ -9,14 +9,19 @@ import { describe, it, expect, vi } from 'vitest'
 // it, and the client gets "Analysis failed: Unexpected non-whitespace character after JSON...".
 //
 // Only the model replies are canned; analyzeIrisDual, parseReportResponse, json-repair and the
-// schema all run for real.
+// schema all run for real. Where a test needs the request that reaches Anthropic, the real
+// AnthropicProvider runs and only the SDK's network call is replaced.
 
 vi.mock('@/lib/claude/report-metrics', () => ({ recordReportMetrics: async () => {} }))
 
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
+import Anthropic from '@anthropic-ai/sdk'
 import { analyzeIrisDual } from '../analyze-dual'
 import { parseReportResponse } from '../parse'
+import { AnthropicProvider } from '@/lib/ai/anthropic-provider'
+import { TIER_MODELS } from '@/lib/ai/get-provider'
+import { REPORT_SECTION_KEYS } from '@/types/report'
 const JSON_SECTIONS: Record<string, string> = {
   section_1_general_terrain:
     'Constitución linfático-biliar con densidad de fibra media. La carga principal se concentra en el eje hepato-digestivo.',
@@ -72,6 +77,12 @@ const REAL_RESTART_REPLY = readFileSync(
   path.join(__dirname, 'fixtures', 'stage1-claude-leg-restart-en-2026-10-07.txt'),
   'utf8',
 )
+// Same day, de, 9281 output tokens of 16000, end_turn: 1-section JSON, "Entschuldigung, ich muss
+// den Bericht vollständig und korrekt im geforderten JSON...", then the complete report.
+const REAL_RESTART_REPLY_DE = readFileSync(
+  path.join(__dirname, 'fixtures', 'stage1-claude-leg-restart-de-2026-10-07.txt'),
+  'utf8',
+)
 
 function completeReport(): string {
   const keys = [
@@ -109,7 +120,7 @@ describe('stage 1: a model reply with JSON for some sections and markdown for th
     expect('code' in result && result.message).toMatch(/^Unexpected non-whitespace character after JSON at position \d+/)
   })
 
-  it('REPRODUCES the outage: synthesis and the Claude-only fallback both reply in that shape, the client gets "Analysis failed"', async () => {
+  it('never serves the 7 salvaged sections: when every Claude reply has that shape the client gets "Analysis failed"', async () => {
     const providers = {
       anthropic: { complete: async () => ({ text: JSON_THEN_MARKDOWN, stopReason: 'end_turn' }) },
       openai: { complete: async () => ({ text: completeReport(), stopReason: 'end_turn' }) },
@@ -119,36 +130,92 @@ describe('stage 1: a model reply with JSON for some sections and markdown for th
     expect('code' in result && result.message).toMatch(/Unexpected non-whitespace character after JSON at position \d+/)
   })
 
-  it('REAL capture 2026-10-07: a Claude-leg reply that restarts after a 1-section JSON is rejected, though a complete report follows', () => {
-    const result = parseReportResponse(REAL_RESTART_REPLY)
-    expect('code' in result && result.message).toMatch(/^Unexpected non-whitespace character after JSON at position \d+/)
+  it.each([
+    ['en', REAL_RESTART_REPLY, 'Both irides show a greenish-hazel appearance'],
+    ['de', REAL_RESTART_REPLY_DE, ''],
+  ])('REAL capture 2026-10-07 (%s): a Claude-leg reply that restarts after a 1-section JSON parses into the complete report that follows', (_lang, reply, secondVersionStart) => {
+    const result = parseReportResponse(reply)
+    expect(result, JSON.stringify(result).slice(0, 300)).not.toHaveProperty('code')
+    if ('code' in result) return
+    for (const key of REPORT_SECTION_KEYS) expect(result[key], key).toMatch(/\S/)
+    if (secondVersionStart) expect(result.section_1_general_terrain.startsWith(secondVersionStart)).toBe(true)
   })
 
-  it('REAL capture 2026-10-07: had the synthesis slipped the same way, the client would have got "Analysis failed"', async () => {
+  it('REAL capture 2026-10-07: when the synthesis and the Claude leg both restart that way, the client still gets the complete report', async () => {
     const providers = {
       anthropic: { complete: async () => ({ text: REAL_RESTART_REPLY, stopReason: 'end_turn' }) },
       openai: { complete: async () => ({ text: completeReport(), stopReason: 'end_turn' }) },
     }
     const result = await analyzeIrisDual(request, 'en', { providers: providers as never, forceLanguage: true })
-    expect(result).toMatchObject({ code: 'analysis_failed' })
+    expect(result, JSON.stringify(result).slice(0, 300)).not.toHaveProperty('code')
+    if ('code' in result) return
+    expect(result.section_14_recommendations).toContain('**Liver**')
+    expect(result.section_12_conclusion).toMatch(/^This case centres on a functional, not structural/)
+  })
+})
+
+describe('stage 1: the Claude leg and the synthesis are constrained to the report schema at the API', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
-  // Expected to FAIL until production code changes (this branch does not touch it). Any of a
-  // retry of the synthesis, a fall back to the complete GPT leg, or recovering the markdown
-  // sections makes it pass: the Claude leg and the first synthesis reply are broken, the GPT
-  // leg is a complete valid report, and any later Claude call returns a complete report.
-  it.fails('GAP: the client still gets a complete 14-section report when the GPT leg is complete or a retry would succeed', async () => {
-    let anthropicCalls = 0
+  const fourteenSections = () => JSON.stringify(Object.fromEntries(REPORT_SECTION_KEYS.map((k) => [k, `Hallazgo para ${k}.`])))
+
+  interface SentToAnthropic {
+    hasImages: boolean
+    system: string
+    format: { type?: string; schema?: { type?: string; properties?: Record<string, { type?: string }>; required?: string[]; additionalProperties?: unknown } } | undefined
+  }
+
+  async function requestsSentToAnthropic(model: string): Promise<SentToAnthropic[]> {
+    const sent: SentToAnthropic[] = []
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    vi.spyOn(Anthropic.Messages.prototype, 'stream').mockImplementation(((params: Anthropic.MessageStreamParams) => {
+      const content = params.messages[0].content
+      sent.push({
+        hasImages: Array.isArray(content) && content.some((part) => part.type === 'image'),
+        system: Array.isArray(params.system) ? params.system.map((b) => b.text).join('') : String(params.system ?? ''),
+        format: (params as { output_config?: { format?: SentToAnthropic['format'] } }).output_config?.format ?? undefined,
+      })
+      return {
+        finalMessage: async () => ({
+          content: [{ type: 'text', text: fourteenSections() }],
+          stop_reason: 'end_turn',
+          usage: { input_tokens: 1, output_tokens: 1 },
+        }),
+      }
+    }) as never)
     const providers = {
-      anthropic: {
-        complete: async () => {
-          anthropicCalls++
-          return { text: anthropicCalls <= 2 ? JSON_THEN_MARKDOWN : completeReport(), stopReason: 'end_turn' }
-        },
-      },
+      anthropic: new AnthropicProvider('offline-test-key', model),
       openai: { complete: async () => ({ text: completeReport(), stopReason: 'end_turn' }) },
     }
     const result = await analyzeIrisDual(request, 'es', { providers: providers as never, forceLanguage: true })
-    expect(result).not.toHaveProperty('code')
+    expect(result, JSON.stringify(result).slice(0, 300)).not.toHaveProperty('code')
+    return sent
+  }
+
+  // The 2026-10-07 production failure (token 191e1f53, basic tier) came from Haiku; the 2026-10-07
+  // real-AI restarts came from Sonnet. Free text lets either model close the object early and
+  // keep writing; a json_schema output format makes the API decode only a complete object.
+  it.each([
+    ['basic_1990', TIER_MODELS.basic_1990.anthropic],
+    ['premium_2990', TIER_MODELS.premium_2990.anthropic],
+  ])('%s (%s): Claude leg and synthesis request output_config.format json_schema requiring all 14 sections', async (_tier, model) => {
+    const sent = await requestsSentToAnthropic(model)
+    const calls = {
+      'claude-leg': sent.find((s) => s.hasImages),
+      synthesis: sent.find((s) => s.system.includes('definitive iris analysis report')),
+    }
+    for (const [label, call] of Object.entries(calls)) {
+      expect(call, `${label} request not sent`).toBeDefined()
+      expect(call!.format, `${label} (${model}) asks Anthropic for free text, not the report schema`).toMatchObject({
+        type: 'json_schema',
+        schema: { type: 'object', additionalProperties: false },
+      })
+      const schema = call!.format!.schema!
+      expect([...(schema.required ?? [])].sort(), `${label} required keys`).toEqual([...REPORT_SECTION_KEYS].sort())
+      expect(Object.keys(schema.properties ?? {}).sort(), `${label} properties`).toEqual([...REPORT_SECTION_KEYS].sort())
+      for (const key of REPORT_SECTION_KEYS) expect(schema.properties![key], `${label}.${key}`).toMatchObject({ type: 'string' })
+    }
   })
 })

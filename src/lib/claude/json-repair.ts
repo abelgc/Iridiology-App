@@ -62,6 +62,40 @@ export function describeJsonSyntaxError(text: string, error: SyntaxError): strin
  * against a schema — this function only recovers a candidate value, it never vouches for its
  * correctness.
  */
+/**
+ * Every complete, brace-balanced `{...}` block in `text` that starts at the beginning of a line,
+ * in order of appearance. Models that restart mid-reply ("Wait, let me produce the full complete
+ * JSON...") emit a short object, prose, then the full object, so the first object alone is the
+ * wrong one. Braces inside JSON strings are skipped. Returns raw substrings, never parsed or
+ * validated: callers MUST parse and schema-check each one.
+ */
+export function findJsonObjectCandidates(text: string): string[] {
+  const candidates: string[] = []
+  for (let start = text.indexOf('{'); start !== -1; start = text.indexOf('{', start + 1)) {
+    const lineStart = text.lastIndexOf('\n', start - 1) + 1
+    if (text.slice(lineStart, start).trim() !== '') continue
+    let depth = 0
+    let inString = false
+    let escaped = false
+    for (let i = start; i < text.length; i++) {
+      const ch = text[i]
+      if (inString) {
+        if (escaped) escaped = false
+        else if (ch === '\\') escaped = true
+        else if (ch === '"') inString = false
+      } else if (ch === '"') {
+        inString = true
+      } else if (ch === '{') {
+        depth++
+      } else if (ch === '}' && --depth === 0) {
+        candidates.push(text.slice(start, i + 1))
+        break
+      }
+    }
+  }
+  return candidates
+}
+
 export function recoverJsonBeforeTrailingGarbage(text: string, error: SyntaxError): unknown | undefined {
   const match = error.message.match(/Unexpected non-whitespace character after JSON at position (\d+)/)
   if (!match) return undefined
