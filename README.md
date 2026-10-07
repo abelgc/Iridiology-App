@@ -56,7 +56,7 @@ Open [http://localhost:3000](http://localhost:3000).
 ```bash
 npm run test          # Unit and integration tests (Vitest)
 npm run test:e2e      # End-to-end tests (Playwright)
-npm run test:real-ai  # Client pipeline with REAL Anthropic + OpenAI calls (paid, ~4 min, ~3-4 USD)
+npm run test:real-ai  # Client pipeline with REAL Anthropic + OpenAI calls (paid, ~4 min, ~2 USD)
 ```
 
 `npm run test:real-ai` runs stage 1 (`analyzeIrisDual`, the upload route's providers and
