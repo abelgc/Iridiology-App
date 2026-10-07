@@ -56,7 +56,24 @@ Open [http://localhost:3000](http://localhost:3000).
 ```bash
 npm run test          # Unit and integration tests (Vitest)
 npm run test:e2e      # End-to-end tests (Playwright)
+npm run test:real-ai  # Client pipeline with REAL Anthropic + OpenAI calls (paid, ~4 min, ~3-4 USD)
 ```
+
+`npm run test:real-ai` runs stage 1 (`analyzeIrisDual`, the upload route's providers and
+options) and stage 2 (Jyotish + `rewriteReportForClient`) for es, en and de on the committed
+iris photo `e2e/fixtures/face-eye-left.jpg`. Nothing is mocked except Supabase writes. It fails
+when any model call stops on `max_tokens` or uses more than 75% of it, when a stage-1 output
+does not parse into all sections, when a client report misses a section or drifts language, or
+when a stage uses more than 80% of its production time ceiling (270s / 200s rewrite). Keys come
+from the `settings` table of the Supabase project in `.env.local`, or `ANTHROPIC_API_KEY` /
+`OPENAI_API_KEY`. Options and details: header of `vitest.real-ai.config.ts`. Run it before
+shipping any change to a prompt or a `max_tokens`. Per-call outputs land in
+`test-results/real-ai/`.
+
+The offline counterpart, `src/lib/client/__tests__/token-budget-guard.test.ts`, runs in
+`npm test`: it fails when a call's `max_tokens` is below the real output size that suite
+measured (plus 25% headroom), or when the Planner / stage-1 output shape changes without being
+re-measured.
 
 ## Deployment (Railway)
 

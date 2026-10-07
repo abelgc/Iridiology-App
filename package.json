@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "vitest",
     "test:int": "vitest run -c vitest.integration.config.ts",
+    "test:real-ai": "vitest run -c vitest.real-ai.config.ts",
     "test:e2e": "playwright test"
   },
   "dependencies": {
