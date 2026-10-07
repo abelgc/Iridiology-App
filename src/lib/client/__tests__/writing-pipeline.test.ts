@@ -319,11 +319,13 @@ describe('rewriteReportForClient', () => {
     // JSON.parse. This mirrors the same stop_reason === 'max_tokens' retry analyze.ts already
     // does for Stage 1.
     let plannerCallCount = 0
+    let observedFirstMaxTokens: number | undefined
     let observedRetryMaxTokens: number | undefined
     createMock.mockImplementation((params: any) => {
       if (params.system.includes('You are the Planner')) {
         plannerCallCount++
         if (plannerCallCount === 1) {
+          observedFirstMaxTokens = params.max_tokens
           return Promise.resolve({
             stop_reason: 'max_tokens',
             content: [{ type: 'text', text: '{"dominantPattern": "hepatic overload", "mainDriver": "sluggish li' }],
@@ -341,7 +343,7 @@ describe('rewriteReportForClient', () => {
     const result = await rewriteReportForClient(mockReport, 'en', 'Jane')
     expect(Object.keys(result)).toHaveLength(14)
     expect(plannerCallCount).toBe(2)
-    expect(observedRetryMaxTokens).toBe(2400) // double the Planner's 1200 budget
+    expect(observedRetryMaxTokens).toBe(observedFirstMaxTokens! * 2)
   })
 
   it('throws a clear response_too_long error when the Planner is still truncated after the doubled retry', async () => {
@@ -356,6 +358,32 @@ describe('rewriteReportForClient', () => {
     })
 
     await expect(rewriteReportForClient(mockReport, 'en', 'Jane')).rejects.toThrow(/response_too_long/)
+  })
+
+  it('REGRESSION (2026-10-07 production incident, response_too_long): every call fits the output measured on real premium reports, with 50% headroom, on its first attempt', async () => {
+    // Largest output_tokens measured on the two premium reports that failed in production
+    // (real model, no cap): Planner 4102, Writer A 1561, Writer B 1314, Writer C 1172. The
+    // fake API below truncates exactly like the real one when max_tokens is below the need.
+    const needed: Record<string, number> = {
+      'the Planner': Math.ceil(4102 * 1.5),
+      'Writer A': Math.ceil(1561 * 1.5),
+      'Writer B': Math.ceil(1314 * 1.5),
+      'Writer C': Math.ceil(1172 * 1.5),
+    }
+    const truncated: string[] = []
+    createMock.mockImplementation(async (params: any) => {
+      const role = String(params.system).match(/You are (the Planner|Writer [ABC])/)![1]
+      if (params.max_tokens < needed[role]) {
+        truncated.push(`${role} at max_tokens ${params.max_tokens}`)
+        return { stop_reason: 'max_tokens', content: [{ type: 'text', text: '{"dominantPattern": "cut off mid' }] }
+      }
+      return { stop_reason: 'end_turn', ...(await defaultCreateImpl(params)) }
+    })
+
+    const result = await rewriteReportForClient(mockReport, 'es', 'Jane')
+
+    expect(Object.keys(result)).toHaveLength(14)
+    expect(truncated).toEqual([])
   })
 
   it('does not retry the planner when it fails with a non-retryable billing/auth error (400 invalid_request_error) — fails fast on the first attempt', async () => {

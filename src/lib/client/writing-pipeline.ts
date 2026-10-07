@@ -7,6 +7,10 @@ import { stripDashesFromReport } from '@/lib/claude/strip-dashes'
 import type { ReportContent, ReportSectionKey } from '@/types/report'
 
 const MODEL = 'claude-sonnet-5'
+// Measured on real premium reports (2026-10-07): Planner up to 4102 output tokens, Writer A
+// up to 1561. Both budgets keep roughly 2x headroom so the doubling retry stays a safety net.
+const PLANNER_MAX_TOKENS = 8000
+const WRITER_MAX_TOKENS = 3000
 
 function languageName(lang: string): string {
   if (lang === 'de') return 'German'
@@ -216,7 +220,7 @@ async function runPlanner(
   const systemPrompt = buildPlannerSystemPrompt(lang)
   const userContent = JSON.stringify(report)
   try {
-    const raw = await callClaude(client, systemPrompt, userContent, 1200)
+    const raw = await callClaude(client, systemPrompt, userContent, PLANNER_MAX_TOKENS)
     return parseBrief(raw, clientFirstName)
   } catch (error) {
     if (isNonRetryableAIError(error)) {
@@ -229,7 +233,7 @@ async function runPlanner(
     // error here would otherwise dump all 14 sections to raw practitioner text on the first
     // hiccup. Retrying once is cheap relative to the old ~52-call pipeline (worst case: 5 calls
     // instead of 4, only when the first Planner attempt fails).
-    const raw = await callClaude(client, systemPrompt, userContent, 1200)
+    const raw = await callClaude(client, systemPrompt, userContent, PLANNER_MAX_TOKENS)
     return parseBrief(raw, clientFirstName)
   }
 }
@@ -379,7 +383,7 @@ async function runWriter(
   const userContent = JSON.stringify(scopeBriefToGroup(brief, group))
 
   const attempt = async (): Promise<Partial<ReportContent>> => {
-    const raw = await callClaude(client, systemPrompt, userContent, 1600)
+    const raw = await callClaude(client, systemPrompt, userContent, WRITER_MAX_TOKENS)
     const parsed = JSON.parse(sanitizeJsonControlCharacters(stripJsonFence(raw)))
     const result: Partial<ReportContent> = {}
     for (const key of group.keys) {
