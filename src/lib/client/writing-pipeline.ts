@@ -37,12 +37,17 @@ async function callClaude(
   client: Anthropic,
   systemPrompt: string,
   userContent: string,
-  maxTokens: number
+  maxTokens: number,
+  outputSchema?: Record<string, unknown>
 ): Promise<string> {
+  const outputConfig = outputSchema
+    ? { output_config: { format: { type: 'json_schema' as const, schema: outputSchema } } }
+    : {}
   const response = await client.messages.create({
     model: MODEL,
     max_tokens: maxTokens,
     thinking: { type: 'disabled' },
+    ...outputConfig,
     system: systemPrompt,
     messages: [{ role: 'user', content: userContent }],
   })
@@ -56,6 +61,7 @@ async function callClaude(
       model: MODEL,
       max_tokens: maxTokens * 2,
       thinking: { type: 'disabled' },
+      ...outputConfig,
       system: systemPrompt,
       messages: [{ role: 'user', content: userContent }],
     })
@@ -381,9 +387,17 @@ async function runWriter(
 ): Promise<Partial<ReportContent>> {
   const systemPrompt = buildWriterPrompt(group, lang)
   const userContent = JSON.stringify(scopeBriefToGroup(brief, group))
+  // Free text let Writer A close its object, write "Espera, corregí el formato JSON..." and
+  // start over (real-AI run 2026-10-07); a schema makes the API decode exactly one object.
+  const outputSchema = {
+    type: 'object',
+    properties: Object.fromEntries(group.keys.map((key) => [key, { type: 'string' }])),
+    required: [...group.keys],
+    additionalProperties: false,
+  }
 
   const attempt = async (): Promise<Partial<ReportContent>> => {
-    const raw = await callClaude(client, systemPrompt, userContent, WRITER_MAX_TOKENS)
+    const raw = await callClaude(client, systemPrompt, userContent, WRITER_MAX_TOKENS, outputSchema)
     const parsed = JSON.parse(sanitizeJsonControlCharacters(stripJsonFence(raw)))
     const result: Partial<ReportContent> = {}
     for (const key of group.keys) {

@@ -238,6 +238,12 @@ if (!keysAvailable) {
             if (summary.rewriteMs !== null && summary.rewriteMs > REWRITE_CEILING_MS * MARGIN) {
               violations.push(`stage 2 rewrite took ${secs(summary.rewriteMs)}, over ${MARGIN * 100}% of its ${REWRITE_CEILING_MS / 1000}s ceiling`)
             }
+            await new Promise((r) => setTimeout(r, 50))
+            for (const call of recordedCalls({ lang, tier, stage: 'stage2' })) {
+              if (call.label.startsWith('writer-') && !call.schemaConstrained) {
+                violations.push(`stage2.${call.label} was sent without output_config.format json_schema`)
+              }
+            }
 
             if (clientReport) {
               const finished: ReportContent = clientReport
