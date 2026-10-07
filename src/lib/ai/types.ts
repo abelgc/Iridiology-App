@@ -4,6 +4,7 @@ export interface CompletionRequest {
   images: Array<{ data: string; mediaType: 'image/jpeg' | 'image/png' | 'image/webp' }>
   maxTokens: number
   modelId?: string
+  outputSchema?: Record<string, unknown>
 }
 
 export interface CompletionResponse {

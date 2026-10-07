@@ -14,6 +14,15 @@ export const reportContentSchema = z.object(
   ),
 ) as z.ZodType<Record<typeof REPORT_SECTION_KEYS[number], string>>
 
+// Anthropic structured outputs reject minLength, so non-empty sections are still enforced by
+// reportContentSchema after parsing.
+export const reportOutputJsonSchema = {
+  type: 'object',
+  properties: Object.fromEntries(REPORT_SECTION_KEYS.map((key) => [key, { type: 'string' }])),
+  required: [...REPORT_SECTION_KEYS],
+  additionalProperties: false,
+}
+
 export const reportContentUnionSchema = z.union([reportContentSchema, comparisonReportContentSchema])
 
 export const reportUpdateSchema = z.object({

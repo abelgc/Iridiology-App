@@ -1,11 +1,25 @@
 import { ReportContent } from '@/types/report'
 import { reportContentSchema } from '@/lib/validators/report'
-import { sanitizeJsonControlCharacters, describeJsonSyntaxError, recoverJsonBeforeTrailingGarbage } from './json-repair'
+import { sanitizeJsonControlCharacters, describeJsonSyntaxError, findJsonObjectCandidates } from './json-repair'
 import { z } from 'zod'
 
 export interface ParseError {
   code: 'parse_failed' | 'validation_failed' | 'invalid_json'
   message: string
+}
+
+// The last object wins: a model that restarts writes its corrected report after the abandoned one.
+function lastCompleteReport(text: string): ReportContent | undefined {
+  const candidates = findJsonObjectCandidates(text)
+  for (let i = candidates.length - 1; i >= 0; i--) {
+    try {
+      const validated = reportContentSchema.safeParse(JSON.parse(sanitizeJsonControlCharacters(candidates[i])))
+      if (validated.success) return validated.data
+    } catch {
+      continue
+    }
+  }
+  return undefined
 }
 
 export function parseReportResponse(responseText: string): ReportContent | ParseError {
@@ -31,11 +45,8 @@ export function parseReportResponse(responseText: string): ReportContent | Parse
     }
 
     if (error instanceof SyntaxError) {
-      const recovered = recoverJsonBeforeTrailingGarbage(sanitized, error)
-      if (recovered !== undefined) {
-        const revalidated = reportContentSchema.safeParse(recovered)
-        if (revalidated.success) return revalidated.data
-      }
+      const recovered = lastCompleteReport(cleaned)
+      if (recovered) return recovered
       return {
         code: 'invalid_json',
         message: describeJsonSyntaxError(sanitized, error),
