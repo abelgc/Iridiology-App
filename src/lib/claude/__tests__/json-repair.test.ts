@@ -1,4 +1,4 @@
-import { sanitizeJsonControlCharacters, describeJsonSyntaxError, recoverJsonBeforeTrailingGarbage } from '../json-repair'
+import { sanitizeJsonControlCharacters, describeJsonSyntaxError, recoverJsonBeforeTrailingGarbage, findJsonObjectCandidates } from '../json-repair'
 
 const NL = String.fromCharCode(10)
 const CR = String.fromCharCode(13)
@@ -125,5 +125,18 @@ describe('recoverJsonBeforeTrailingGarbage', () => {
     // this function never guesses — it only returns a value when the prefix genuinely parses.
     const fakeError = new SyntaxError('Unexpected non-whitespace character after JSON at position 3')
     expect(recoverJsonBeforeTrailingGarbage('{"a', fakeError)).toBeUndefined()
+  })
+})
+
+describe('findJsonObjectCandidates', () => {
+  it('ignores braces and escaped quotes inside string values and a brace inside prose', () => {
+    const first = '{\n  "a": "uses { and } and \\"quoted { text\\" inside"\n}'
+    const second = '{"b": "x}"}'
+    const text = '```json\n' + first + '\n```\n\nWait, let me fix {this} properly.\n\n```json\n' + second + '\n```'
+    expect(findJsonObjectCandidates(text)).toEqual([first, second])
+  })
+
+  it('returns nothing for an object that never closes', () => {
+    expect(findJsonObjectCandidates('{"a": "cut off')).toEqual([])
   })
 })

@@ -17,7 +17,8 @@ import path from 'path'
 // ANTHROPIC_API_KEY / OPENAI_API_KEY env vars. Without keys the suite FAILS on purpose.
 //
 // What fails the run: any call stopping on max_tokens/length or using more than 75% of its
-// max_tokens; stage 1 output failing reportContentSchema or the synthesis output not parsing;
+// max_tokens; stage 1 output failing reportContentSchema; the Claude leg or the synthesis sent
+// without the report json_schema, or replying with anything but one complete report;
 // a client report missing a section or in the wrong language; stage 1 or stage 2 using more
 // than 80% of its 270s ceiling, or the rewrite more than 80% of its 200s ceiling. The failure
 // prints a per-call table (call, model, tokens used / max_tokens, stop reason, seconds) and

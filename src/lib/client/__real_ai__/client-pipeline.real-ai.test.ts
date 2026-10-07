@@ -13,7 +13,7 @@ vi.mock('@/lib/supabase/server', async (importOriginal) => {
 })
 
 import { analyzeIrisDual } from '@/lib/claude/analyze-dual'
-import { parseReportResponse } from '@/lib/claude/parse'
+import { sanitizeJsonControlCharacters, describeJsonSyntaxError } from '@/lib/claude/json-repair'
 import { parseImageDataUrl } from '@/lib/claude/images'
 import { shouldEnhanceWithJyotish, enhanceEmotionalFieldWithJyotish } from '@/lib/claude/enhance-emotional-field'
 import { rewriteReportForClient, firstNameFrom } from '@/lib/client/writing-pipeline'
@@ -74,9 +74,22 @@ interface RunSummary {
   stage1Ms: number | null
   stage2Ms: number | null
   rewriteMs: number | null
+  directParse: Record<string, boolean>
   violations: string[]
 }
 const summaries: RunSummary[] = []
+
+function notOneCompleteReport(text: string): string | null {
+  const body = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/```$/, '').trim()
+  let value: unknown
+  try {
+    value = JSON.parse(sanitizeJsonControlCharacters(body))
+  } catch (error) {
+    return describeJsonSyntaxError(body, error as SyntaxError).slice(0, 300)
+  }
+  const valid = reportContentSchema.safeParse(value)
+  return valid.success ? null : `fails reportContentSchema: ${valid.error.message.slice(0, 300)}`
+}
 
 function secs(ms: number | null): string {
   return ms === null ? 'n/a' : `${(ms / 1000).toFixed(1)}s`
@@ -114,7 +127,7 @@ if (!keysAvailable) {
         it(`${lang}: stage 1 + stage 2 with real models stay inside token and time budgets`, async () => {
           const intake = INTAKE[lang] ?? INTAKE.en
           const violations: string[] = []
-          const summary: RunSummary = { tier, lang, stage1Ms: null, stage2Ms: null, rewriteMs: null, violations }
+          const summary: RunSummary = { tier, lang, stage1Ms: null, stage2Ms: null, rewriteMs: null, directParse: {}, violations }
 
           const right = await clientUploadDataUrl()
           const left = await clientUploadDataUrl()
@@ -164,16 +177,19 @@ if (!keysAvailable) {
             violations.push(`stage 1 took ${secs(summary.stage1Ms)}, over ${MARGIN * 100}% of its ${STAGE1_CEILING_MS / 1000}s ceiling`)
           }
 
-          // The synthesis output must parse on its own. If it does not, analyze-dual silently
-          // falls back to the Claude-only leg (the 2026-10-05 stage-1 outage started this way).
+          // The Claude leg and the synthesis must each be ONE complete report, with no recovery.
+          // A reply that only parses after picking an object out of surrounding prose is the
+          // 2026-10-07 failure shape (JSON, "Wait, let me...", JSON again), and the next slip of
+          // that kind may leave no complete object at all ("Analysis failed: Unexpected
+          // non-whitespace character after JSON", production token 191e1f53).
           await new Promise((r) => setTimeout(r, 50))
           for (const call of recordedCalls({ lang, tier, stage: 'stage1' })) {
             if (call.label !== 'synthesis' && call.label !== 'claude-leg') continue
+            if (!call.schemaConstrained) violations.push(`stage1.${call.label} was sent without output_config.format json_schema`)
             if (call.error || call.stopReason === 'max_tokens') continue
-            const parsed = parseReportResponse(call.text)
-            if ('code' in parsed) {
-              violations.push(`stage1.${call.label} output does not parse as a full report (${parsed.code}): ${parsed.message.slice(0, 300)}`)
-            }
+            const problem = notOneCompleteReport(call.text)
+            summary.directParse[call.label] = problem === null
+            if (problem) violations.push(`stage1.${call.label} output is not one complete report on its own: ${problem}`)
           }
 
           if (report) {
@@ -267,7 +283,10 @@ if (!keysAvailable) {
     }
     const usage = [...byModel.entries()].map(([m, u]) => `  ${m}: ${u.calls} calls, ${u.input} input tokens, ${u.output} output tokens`).join('\n')
     const runs = summaries
-      .map((s) => `  ${s.tier}/${s.lang}: stage 1 ${secs(s.stage1Ms)}, stage 2 ${secs(s.stage2Ms)} (rewrite ${secs(s.rewriteMs)}), ${s.violations.length} violation(s)`)
+      .map((s) => {
+        const direct = Object.entries(s.directParse).map(([label, ok]) => `${label} ${ok ? 'parsed' : 'NOT parsed'}`).join(', ') || 'no stage-1 replies'
+        return `  ${s.tier}/${s.lang}: stage 1 ${secs(s.stage1Ms)} (${direct}), stage 2 ${secs(s.stage2Ms)} (rewrite ${secs(s.rewriteMs)}), ${s.violations.length} violation(s)`
+      })
       .join('\n')
     console.log(`\n[real-ai] runs:\n${runs}\n[real-ai] token usage:\n${usage}\n[real-ai] swallowed DB writes: ${swallowedTableAccess.join(', ') || 'none'}\n`)
   })

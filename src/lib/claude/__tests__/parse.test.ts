@@ -122,4 +122,13 @@ describe('parseReportResponse', () => {
 
     expect('code' in result && result.code).toBe('invalid_json')
   })
+
+  it('keeps an earlier complete report when the model then writes a shorter, incomplete object', () => {
+    const text = reportJson() + '\n\nLet me shorten that.\n\n{\n  "section_1_general_terrain": "Short."\n}'
+
+    const result = parseReportResponse(text)
+
+    expect('code' in result).toBe(false)
+    if (!('code' in result)) expect(result.section_1_general_terrain).toBe('Content for section_1_general_terrain.')
+  })
 })
