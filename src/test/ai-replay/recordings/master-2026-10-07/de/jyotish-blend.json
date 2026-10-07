@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "role": "jyotish-blend",
+  "lang": "de",
+  "provider": "anthropic",
+  "model": "claude-sonnet-5",
+  "request": {
+    "maxTokens": 1000,
+    "structuredOutput": false
+  },
+  "response": {
+    "text": "Der autonome Nervenkranz zeigt beidseits eine wellige, unregelmäßige Kontur mit einer leichten Einziehung im oberen Bogen zwischen zehn und zwei Uhr, dem Areal, das die zerebrale und hypothalamisch-hypophysäre Regulation sowie die sensorischen Verarbeitungsschleifen abbildet. Diese Einengung spricht für eine anhaltende sympathische Grundspannung mit eingeschränkter Fähigkeit, in eine parasympathische Erholungsphase zurückzukehren, was sich mit den berichteten Schlafproblemen und dem chronischen Stressempfinden deckt. Die olivbraune bis gelbbraune Pigmentlast im hepatischen Areal rechts bei etwa acht Uhr, kombiniert mit der insgesamt angespannten Wreath-Kontur, legt nahe, dass ein Anteil der inneren Spannung nicht nach außen abgeführt, sondern funktionell gebunden wird. Klinisch passt dieses Muster zu einer Tendenz, Ärger oder Frustration eher zurückzuhalten als auszudrücken, wobei das innerlich Unausgesprochene sich als hepatische Stauung niederschlägt. Dieses Spannungsmuster zeigt sich zudem als eine geschwächte innere Durchsetzungskraft, bei der Handlungsimpulse eher gehemmt als über Selbstvertrauen in klare Entscheidungen umgesetzt werden. Es wird empfohlen, am Solarplexus-Chakra zu arbeiten sowie an der inneren Arbeit von Selbstvertrauen und persönliche Willenskraft. Dies ist keine psychologische Diagnose, sondern eine im Irisbefund begründete Beobachtung der Wechselwirkung zwischen autonomem Spannungsmuster und hepatischer Belastung.",
+    "stopReason": "end_turn",
+    "usage": {
+      "inputTokens": 1021,
+      "outputTokens": 673
+    }
+  },
+  "ms": 6011,
+  "source": {
+    "run": "test-results/real-ai/premium_2990-de-2026-10-07T15-05-27-682Z.json",
+    "capturedAt": "2026-10-07T15:05:27Z",
+    "commit": "4c3bd5c"
+  }
+}

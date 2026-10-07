@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "role": "jyotish-blend",
+  "lang": "es",
+  "provider": "anthropic",
+  "model": "claude-sonnet-5",
+  "request": {
+    "maxTokens": 1000,
+    "structuredOutput": false
+  },
+  "response": {
+    "text": "La corona autónoma muestra un contorno ondulado con tramos de contracción, particularmente en el arco inferior y nasal de ambos ojos, lo cual indica un sistema nervioso que mantiene la tensión internamente en lugar de descargarla con facilidad. Este patrón es consistente con el estrés crónico y el insomnio que la paciente refiere, ya que una corona con escasa capacidad de retorno a un tono relajado dificulta la transición hacia un estado parasimpático necesario para el descanso nocturno. La concentración de esta tensión en el arco inferior, que gobierna la inervación autónoma intestinal y pélvica, sugiere que la sobrecarga emocional se somatiza preferentemente en el sistema digestivo, un territorio estrechamente ligado a la capacidad de sostener la propia postura interna frente a la exigencia externa. Este patrón funcional sugiere una dificultad para sostener la autoafirmación desde un centro estable, lo que mantiene al organismo en estado de alerta digestiva. El tono pigmentario oliva amarillento alrededor de la zona pupilar, asociado funcionalmente con un flujo hepatobiliar más lento, se corresponde con tensión retenida más que expresada. Se recomienda trabajar el Plexo Solar y el trabajo interno de confianza y autoafirmación personal.",
+    "stopReason": "end_turn",
+    "usage": {
+      "inputTokens": 1021,
+      "outputTokens": 467
+    }
+  },
+  "ms": 5004,
+  "source": {
+    "run": "test-results/real-ai/premium_2990-es-2026-10-07T15-18-57-905Z.json",
+    "capturedAt": "2026-10-07T15:18:57Z",
+    "commit": "4c3bd5c"
+  }
+}

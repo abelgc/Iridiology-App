@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "role": "planner",
+  "lang": "es",
+  "provider": "anthropic",
+  "model": "claude-sonnet-5",
+  "request": {
+    "maxTokens": 1200,
+    "structuredOutput": false
+  },
+  "response": {
+    "text": "```json\n{\n  \"dominantPattern\": \"Sobrecarga hepatobiliar y digestiva combinada con disregulación autonómica que impide el descanso reparador\",\n  \"mainDriver\": \"Eje hepatobiliar-digestivo (filtración hepática lenta y motilidad intestinal reducida)\",\n  \"symptomFindingMap\": [\n    \"insomnio -> compresión de la corona autonómica en el arco inferior que impide el descenso parasimpático\",\n    \"estrés crónico -> tensión autonómica sostenida que no logra descargarse\",\n    \"hinchazón posprandial -> flujo biliar reducido y surco transversal en el colon ascendente derecho\",\n    \"estreñimiento -> motilidad intestinal reducida y desplazamiento de la corona autonómica en el cuadrante intestinal\",\n    \"fatiga excesiva -> demanda pancreática aumentada y absorción de nutrientes reducida en el anillo pupilar\"\n  ],\n  \"systemVerdicts\": {\n    \"section_2_emotional_field\": {\n      \"verdict\": \"needs-action\",\n      \"clue\": \"Tensión autonómica retenida en el arco inferior (4 a 8 horas), vinculada a la zona intestinal y pélvica; trabajar el Chakra del Plexo Solar y la autoconfianza y voluntad personal\",\n      \"findings\": [\n        \"corona autonómica ondulada y comprimida en el arco inferior\",\n        \"tensión nerviosa sostenida que no se descarga con facilidad, ligada a insomnio y estrés crónico\",\n        \"pigmentación hepática combinada con compresión autonómica sugiere tensión emocional asentada como estasis hepática funcional\",\n        \"zona vinculada al Chakra del Plexo Solar, autoconfianza y voluntad personal\"\n      ]\n    },\n    \"section_3_cognitive_nervous\": {\n      \"verdict\": \"needs-action\",\n      \"clue\": \"Disregulación autonómica funcional con dificultad para alcanzar descanso parasimpático completo\",\n      \"findings\": [\n        \"corona autonómica ondulada con compresión en arco inferior y leve apertura en arco superior (11 a 1 hora)\",\n        \"disregulación autonómica funcional coherente con insomnio y cansancio diurno\",\n        \"compresión del arco inferior restringe aporte nervioso y vascular a vísceras pélvicas e intestinales\",\n        \"no se observan signos estructurales de deterioro neurológico significativo\",\n        \"eje intestino-cerebro reforzado por carga intestinal, afectando la calidad del sueño\"\n      ]\n    },\n    \"section_4_immune_lymphatic\": {\n      \"verdict\": \"fine\",\n      \"clue\": \"Periferia sin rosa linfática marcada ni scurf rim denso\",\n      \"findings\": [\n        \"ausencia de rosa linfática marcada o scurf rim denso\",\n        \"ausencia de signos de alarma no equivale a fortaleza confirmada, lectura prudente\",\n        \"no hay signos agudos de infección activa ni ganglios inflamados\",\n        \"eje considerado actualmente estable\"\n      ]\n    },\n    \"section_5_endocrine_hormonal\": {\n      \"verdict\": \"needs-action\",\n      \"clue\": \"Demanda pancreática aumentada y presión adrenal sostenida en la collarette cercana a las 6 horas\",\n      \"findings\": [\n        \"no hay lagunas abiertas marcadas en territorio tiroideo ni pancreático\",\n        \"pigmentación amarillo-parduz",
+    "stopReason": "max_tokens",
+    "usage": {
+      "inputTokens": 8971,
+      "outputTokens": 1200
+    }
+  },
+  "ms": 10652,
+  "source": {
+    "run": "test-results/real-ai/premium_2990-es-2026-10-07T14-41-46-062Z.json",
+    "capturedAt": "2026-10-07T14:41:46Z",
+    "commit": "bd6f515",
+    "note": "Planner at max_tokens 1200: real reply cut off"
+  }
+}

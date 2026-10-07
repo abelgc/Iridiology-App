@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "role": "guard-fixation",
+  "lang": "es",
+  "provider": "anthropic",
+  "model": "claude-sonnet-5",
+  "request": {
+    "maxTokens": 4096,
+    "structuredOutput": false
+  },
+  "response": {
+    "text": "{\"section_10_structural_integumentary\":\"El borde periférico del iris no muestra anillo de escurrimiento (scurf rim) denso ni decoloración marcada, lo que no sustenta actualmente una vía de eliminación cutánea comprometida de forma significativa. La textura de fibra en la zona ciliar externa conserva organización razonable, sin signos de depleción tisular extendida. Dado que esta misma zona ciliar externa no presenta signos de debilitamiento estructural ni de reactividad local, la piel podría asumir un rol eliminativo compensatorio si en el futuro se desarrollara mayor tensión tisular en esta región, aunque no hay evidencia iridiana en este momento de que esto esté ocurriendo activamente ni se reportaron síntomas cutáneos; se trata de una observación preventiva más que de un hallazgo confirmado.\"}",
+    "stopReason": "end_turn",
+    "usage": {
+      "inputTokens": 610,
+      "outputTokens": 299
+    }
+  },
+  "ms": 3016,
+  "source": {
+    "run": "test-results/real-ai/premium_2990-es-2026-10-07T16-22-28-555Z.json",
+    "capturedAt": "2026-10-07T16:22:28Z",
+    "commit": "e01c27a"
+  }
+}

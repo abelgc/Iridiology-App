@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "role": "jyotish-chakra",
+  "lang": "es",
+  "provider": "anthropic",
+  "model": "claude-sonnet-5",
+  "request": {
+    "maxTokens": 500,
+    "structuredOutput": false
+  },
+  "response": {
+    "text": "```json\n{\n  \"chakra\": \"Plexo Solar\",\n  \"emotion\": \"confianza y autoafirmación personal\",\n  \"reasoning\": \"Con el Sol en Piscis y nacimiento matutino cercano al amanecer, el Sol débil por signo requiere fortalecer el fuego interior del plexo solar para consolidar la voluntad y la autoestima frente a la tendencia pisciana a la disolución emocional\"\n}\n```",
+    "stopReason": "end_turn",
+    "usage": {
+      "inputTokens": 557,
+      "outputTokens": 151
+    }
+  },
+  "ms": 2544,
+  "source": {
+    "run": "test-results/real-ai/premium_2990-es-2026-10-07T15-18-57-905Z.json",
+    "capturedAt": "2026-10-07T15:18:57Z",
+    "commit": "4c3bd5c"
+  }
+}

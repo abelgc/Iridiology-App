@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "role": "gpt-leg",
+  "lang": "en",
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "request": {
+    "maxTokens": 8192,
+    "structuredOutput": false
+  },
+  "response": {
+    "text": "{\n  \"section_1_general_terrain\": \"The two supplied photographs appear identical, so they do not provide separate right and left iris views. More importantly, iris colour, fibres, pigment, collarette shape, furrows, and lacunae cannot validly establish constitutional strength, organ burden, metabolic function, or recovery capacity. No clinical body terrain can therefore be derived from these images.\",\n  \"section_2_emotional_field\": \"The photographs cannot determine emotional holding patterns, stress adaptation, or the physiological effects of past experiences. The reported chronic stress may be clinically relevant to insomnia and digestive symptoms, but this relationship cannot be confirmed from iris appearance.\",\n  \"section_3_cognitive_nervous\": \"Autonomic regulation, cognitive load, sleep physiology, and nervous system reserve cannot be assessed reliably from iris structures. The reported insomnia and chronic stress require assessment through symptom history and validated clinical methods rather than iris interpretation.\",\n  \"section_4_immune_lymphatic\": \"No reliable conclusion about immune activity, lymphatic drainage, mucosal integrity, or internal antigenic load can be drawn from these photographs.\",\n  \"section_5_endocrine_hormonal\": \"The images cannot establish thyroid, adrenal, pancreatic, pituitary, or reproductive hormone function. The reported constant tiredness is nonspecific and cannot be attributed to an endocrine territory from iris appearance.\",\n  \"section_6_circulatory_cardiorespiratory\": \"Circulatory efficiency, blood oxygenation, cardiac regulation, and respiratory reserve cannot be determined from the iris images.\",\n  \"section_7_hepatic\": \"The photographs do not provide a valid measure of liver filtering efficiency, bile flow, gallbladder function, hormonal metabolism, or toxic burden. Iris pigment cannot substitute for clinical assessment of these functions.\",\n  \"section_8_digestive_intestinal\": \"The reported post-meal bloating and constipation indicate a genuine digestive complaint, but the images cannot identify gastric acid output, pancreatic enzyme activity, intestinal motility, fermentation, permeability, or microbial balance. These symptoms should not be assigned to a specific digestive mechanism on iris evidence.\",\n  \"section_9_renal_urinary\": \"Kidney filtration, urinary elimination, adrenal regulation, and reproductive function cannot be assessed from iris markings in these photographs.\",\n  \"section_10_structural_integumentary\": \"The images cannot establish connective tissue weakness, musculoskeletal burden, skin elimination capacity, or structural compromise elsewhere in the body.\",\n  \"section_11_detected_axes\": \"No clinically valid functional axis can be established from the supplied iris photographs.\",\n  \"section_12_conclusion\": \"No evidence based clinical conclusions about internal organs or systemic function can be derived from these images. The reported fatigue, post-meal bloating, constipation, insomnia, and chronic stress remain clinically meaningful, but their causes require validated history, examination, and appropriate testing rather than iris mapping.\",\n  \"section_13_strengths_of_the_body\": \"The photographs do not provide a valid basis for rating organ reserve or recovery capacity. No systemic strength should be inferred solely from visible iris colour or structure.\",\n  \"section_14_recommendations\": \"No catalogue-backed vitamin, mineral, or herbal recommendation applies because no clinically valid organ finding can be established from the iris photographs.\"\n}",
+    "stopReason": "end_turn",
+    "usage": {
+      "inputTokens": 19069,
+      "outputTokens": 1142
+    }
+  },
+  "ms": 25052,
+  "source": {
+    "run": "test-results/real-ai/premium_2990-en-2026-10-07T14-47-58-067Z.json",
+    "capturedAt": "2026-10-07T14:47:58Z",
+    "commit": "bd6f515",
+    "note": "scratch run: Planner 8000, Writers 6000; prompts identical to 4c3bd5c"
+  }
+}

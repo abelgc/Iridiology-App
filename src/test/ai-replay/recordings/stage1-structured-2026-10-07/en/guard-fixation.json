@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "role": "guard-fixation",
+  "lang": "en",
+  "provider": "anthropic",
+  "model": "claude-sonnet-5",
+  "request": {
+    "maxTokens": 4096,
+    "structuredOutput": false
+  },
+  "response": {
+    "text": "{\"section_4_immune_lymphatic\":\"The outer ciliary rim in both eyes shows a faint, diffuse lightening rather than a dense, well-defined scurf rim, suggesting peripheral lymphatic and skin elimination capacity is only mildly taxed rather than significantly congested at the surface. This diffuse quality itself is the primary finding here: rather than a sharply bordered rosary pattern that would indicate focal lymphatic congestion, the lightening is spread thinly across the rim, a pattern more consistent with a low-grade, generalized reduction in clearance tone than with a discrete site of blockage. This is a preclinical pattern, as the patient has not reported infection, swollen glands, or skin eruption; the finding is a subclinical tendency toward reduced lymphatic clearance efficiency rather than active immune compromise. Because the rim presents diffusely rather than in a defined band, continued monitoring is reasonable to see whether this pattern consolidates or resolves, warranting attention rather than immediate concern.\",\"section_7_hepatic\":\"The hepatic territory at seven thirty to eight thirty o'clock in the right iris shows the olive-hazel pigment overlay most densely concentrated in this zone, consistent with a central amber deposit sitting directly over the hepatic arc, a finding that supports a functional hepatic filtering load rather than a lymphatic base colour alone. This pigment pattern, sitting over a blue-grey lymphatic base rather than a true brown hematogena base, suggests an acquired burden on bile flow and filtering efficiency rather than an inherited glandular tendency. Reduced bile flow of this kind represents stagnation rather than simple filtration slowdown, and the density of the pigment specifically in this zone, exceeding that of surrounding tissue, is itself the clearest marker that the stagnation is active rather than historical. The pigment overlay is denser here than in surrounding zones, and this localized concentration supports an active, ongoing functional hepatic burden rather than a resolved or incidental finding. This hepatic pattern plausibly connects to the emotional field as well, since bile stagnation often correlates with held frustration or unexpressed boundary tension, a dynamic consistent with the density and persistence of the pigment deposit itself.\",\"section_8_digestive_intestinal\":\"The intestinal ring inside the collarette shows mild fibre thinning across the transverse arc at twelve o'clock in both eyes, and the wreath itself bows unevenly through the lower digestive arc rather than maintaining a consistent diameter, a pattern consistent with reduced motility regulation. This correlates directly with the patient's reported bloating after meals and constipation, as irregular autonomic tone to the bowel commonly manifests as sluggish transit and gas accumulation from incomplete or delayed processing. The absorption ring immediately around the pupillary margin shows a mild grey cast rather than a sharply dark ring, suggesting a modest reduction in nutrient absorption efficiency rather than a marked impairment. Given the uneven bowing of the wreath itself, irregular peristaltic rhythm is a plausible primary contributor to the fermentation pattern underlying the reported bloating, placing the motility irregularity as the central finding driving the digestive presentation rather than an isolated or secondary feature.\",\"section_10_structural_integumentary\":\"The outer ciliary rim shows a mild diffuse lightening rather than a dense scurf rim or lymphatic rosary pattern, suggesting skin elimination capacity is functioning adequately with only a mild reduction in peripheral clearance efficiency. No transversal markings or radial furrows reaching the outer connective tissue zones are evident to suggest a distinct structural or musculoskeletal finding in this image set. This system currently presents as stable: the mild rim lightening is the only feature noted in this territory, and in the absence of any accompanying furrow, lesion, or structural marking, there is no basis in this section's own findings for anticipating increased demand on skin or connective tissue at this time.\"}",
+    "stopReason": "end_turn",
+    "usage": {
+      "inputTokens": 1789,
+      "outputTokens": 1350
+    }
+  },
+  "ms": 11598,
+  "source": {
+    "run": "test-results/real-ai/premium_2990-en-2026-10-07T16-21-43-646Z.json",
+    "capturedAt": "2026-10-07T16:21:43Z",
+    "commit": "e01c27a"
+  }
+}

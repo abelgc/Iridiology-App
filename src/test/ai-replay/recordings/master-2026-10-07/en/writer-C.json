@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "role": "writer-C",
+  "lang": "en",
+  "provider": "anthropic",
+  "model": "claude-sonnet-5",
+  "request": {
+    "maxTokens": 6000,
+    "structuredOutput": false
+  },
+  "response": {
+    "text": "```json\n{\n  \"section_11_detected_axes\": \"- Sluggish bile movement from your liver is feeding directly into the bloating and constipation showing up in your digestion.\\n- The uneven, lower-pulled pattern in your nervous system's regulation is tied both to your difficulty settling into restorative sleep and to reduced repair capacity in your gut and pelvic area.\\n- Your adrenal glands sit inside that same lower nervous-system territory, so the sustained sympathetic bias there is plausibly behind your fatigue.\\n- Your immune and lymphatic reserve looks stretched, but this reads as a consequence of the load coming from your intestines and liver rather than a separate issue of its own.\\n- Tension that has not found an outward release is settling into the liver-and-digestive axis instead of being discharged elsewhere in the body.\",\n  \"section_12_conclusion\": \"The main pattern here is a loop running between your liver, your digestion, and your nervous system, where sluggish bile flow, slowed digestive movement, and a low-grade sympathetic bias keep feeding one another. Pigment loading in your hepatobiliary territory is the main driver, pushing strain downstream into your digestive and autonomic function. Your liver and digestive system carry the heaviest load and are named as the primary priorities, with your adrenal and broader nervous-system regulation close behind as the sustained demand running underneath them. Your immune and lymphatic reserve, your emotional-autonomic pattern, and your endocrine reflexes are all affected as a result of this same loop rather than as separate starting points. Your heart and lungs, kidneys, and structural and skin-related findings sit outside this priority order and currently show stability.\",\n  \"section_13_strengths_of_the_body\": \"Your heart and lungs show compact, well-preserved tissue density with no deposits or ring patterns, pointing to real reserve in your cardiovascular and respiratory function. The central regulation of your nervous system at the cranial level is well preserved, suggesting good underlying structural integrity there. Across the body as a whole, your constitutional fibre pattern shows some looseness but nothing markedly frayed or cavitated, placing your inherited constitution in a moderate rather than a severely taxed range. Your skin and surface lymphatic tissue show no significant signs of elimination pressure, suggesting those systems have not been pulled into compensating for the load sitting elsewhere.\"\n}\n```",
+    "stopReason": "end_turn",
+    "usage": {
+      "inputTokens": 7625,
+      "outputTokens": 805
+    }
+  },
+  "ms": 9983,
+  "source": {
+    "run": "test-results/real-ai/premium_2990-en-2026-10-07T14-47-58-067Z.json",
+    "capturedAt": "2026-10-07T14:47:58Z",
+    "commit": "bd6f515",
+    "note": "scratch run: Planner 8000, Writers 6000; prompts identical to 4c3bd5c"
+  }
+}

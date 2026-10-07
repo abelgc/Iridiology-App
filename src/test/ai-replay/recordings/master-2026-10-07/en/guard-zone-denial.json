@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "role": "guard-zone-denial",
+  "lang": "en",
+  "provider": "anthropic",
+  "model": "claude-sonnet-5",
+  "request": {
+    "maxTokens": 4096,
+    "structuredOutput": false
+  },
+  "response": {
+    "text": "{\"section_13_strengths_of_the_body\":\"Cardiovascular and respiratory collarette zones in both irides show preserved, compact fibre density without lacunae, pigment deposit, or peripheral lipid rings, indicating strong structural reserve in these systems and a low likelihood of current circulatory or pulmonary compromise. The cranial zone at twelve o'clock in both eyes is similarly well preserved, without lacunae or marked pigment, suggesting good central nervous system structural integrity beneath the autonomic dysregulation discussed elsewhere, which is encouraging because a structurally sound nervous system has strong capacity to re-regulate once sympathetic load eases. Overall fibre density across both irides, while showing some separation, is not markedly frayed or cavitated, placing this constitution in a moderate rather than severe hereditary weakness range, which supports a good overall response to consistent support, though this general resilience is offset in the hepatic and upper gastrointestinal territory, where pigment density is heaviest in the collarette-adjacent ring and along the inner ciliary zone at approximately 7 to 9 o'clock in the right iris and 7 to 8 o'clock in the left, marking this as the zone of greatest constitutional load and the area least able to draw on the reserve seen elsewhere. The absence of any scurf rim or significant lymphatic rosary spotting at the periphery further suggests that eliminative pressure has not yet progressed to the skin or superficial lymphatics, leaving those pathways with real reserve to assist the hepatic and digestive system as it recovers, even as that same pigment-laden digestive zone, consistent with the Mixta or Biliar constitutional tendency noted on general terrain, continues to carry the inherited leaning toward hepatic and pancreatic under-function, constipation, and acid-base imbalance that distinguishes it from the more lymphatic peripheral tone surrounding it.\"}",
+    "stopReason": "end_turn",
+    "usage": {
+      "inputTokens": 906,
+      "outputTokens": 641
+    }
+  },
+  "ms": 5470,
+  "source": {
+    "run": "test-results/real-ai/premium_2990-en-2026-10-07T14-47-58-067Z.json",
+    "capturedAt": "2026-10-07T14:47:58Z",
+    "commit": "bd6f515",
+    "note": "scratch run: Planner 8000, Writers 6000; prompts identical to 4c3bd5c"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "role": "gpt-leg",
+  "lang": "es",
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "request": {
+    "maxTokens": 8192,
+    "structuredOutput": false
+  },
+  "response": {
+    "text": "{\n  \"section_1_general_terrain\": \"Las dos imágenes proporcionadas parecen corresponder a la misma captura, por lo que no permiten comparar ambos iris. El tono azul verdoso y la pigmentación central observables describen únicamente la apariencia del iris y no constituyen indicadores validados de función digestiva, hormonal, hepática, renal, inmunitaria o nerviosa. No es posible establecer constitución, carga sistémica ni capacidad de recuperación corporal a partir de esta imagen.\",\n  \"section_2_emotional_field\": \"La dificultad para dormir y el estrés crónico son datos comunicados por la paciente, pero su presencia, intensidad y mecanismo no pueden determinarse mediante patrones del iris. La imagen no ofrece evidencia clínicamente válida para atribuir estos síntomas a un perfil emocional o autonómico concreto.\",\n  \"section_3_cognitive_nervous\": \"El iris no permite medir activación simpática, recuperación parasimpática, circulación cerebral ni reserva neurológica. El insomnio y el estrés requieren valoración basada en la historia clínica, el patrón de sueño, los hábitos y la exploración correspondiente, sin adjudicarles un mecanismo a partir de la morfología iridiana.\",\n  \"section_4_immune_lymphatic\": \"No pueden inferirse actividad inmunitaria, congestión linfática, carga antigénica ni integridad de las mucosas mediante esta fotografía. No existen datos clínicos aportados que permitan caracterizar síntomas inmunitarios o linfáticos.\",\n  \"section_5_endocrine_hormonal\": \"El cansancio constante es un síntoma inespecífico y la imagen del iris no permite establecer alteraciones tiroideas, suprarrenales, pancreáticas ni de otra regulación hormonal. No hay fundamento visual válido para clasificar este síntoma como endocrino o metabólico.\",\n  \"section_6_circulatory_cardiorespiratory\": \"La fotografía no permite valorar circulación sistémica, oxigenación, función cardiaca ni capacidad respiratoria. Tampoco se comunicaron síntomas cardiorrespiratorios que puedan contextualizarse clínicamente en esta sesión.\",\n  \"section_7_hepatic\": \"El color y la pigmentación visibles del iris no permiten valorar filtración hepática, flujo biliar, metabolismo de grasas ni presión sobre las vías de eliminación. Por tanto, no se identifica una carga hepatobiliar a partir de estas imágenes.\",\n  \"section_8_digestive_intestinal\": \"La hinchazón después de comer y el estreñimiento están presentes según la historia aportada, pero la imagen no puede demostrar baja acidez gástrica, insuficiencia enzimática, fermentación, alteración de la motilidad ni permeabilidad intestinal. Estos síntomas deben interpretarse mediante su relación con las comidas, frecuencia y consistencia de las deposiciones, tolerancias alimentarias y evolución clínica.\",\n  \"section_9_renal_urinary\": \"No es posible estimar filtración renal, compensación eliminativa, función urinaria ni regulación reproductiva a partir del iris. No se aportaron síntomas urinarios o reproductivos que permitan una correlación clínica independiente.\",\n  \"section_10_structural_integumentary\": \"La estructura del iris no permite determinar integridad del tejido conectivo, carga musculoesquelética ni capacidad eliminativa de la piel. No se comunicaron síntomas cutáneos o estructurales para esta evaluación.\",\n  \"section_11_detected_axes\": \"No pueden establecerse ejes funcionales sistémicos válidos mediante las imágenes proporcionadas.\",\n  \"section_12_conclusion\": \"Los hallazgos visuales del iris no ofrecen una base científicamente válida para identificar cargas orgánicas, diferenciar alteraciones funcionales de estructurales ni fijar prioridades terapéuticas. Los problemas clínicos relevantes son el cansancio persistente, la hinchazón posprandial, el estreñimiento, el insomnio y el estrés crónico, pero su relación causal debe determinarse mediante evaluación clínica directa y no mediante iridología.\",\n  \"section_13_strengths_of_the_body\": \"No es posible identificar reservas orgánicas o sistemas especialmente fuertes mediante esta imagen. La información disponible tampoco demuestra deterioro estructural sistémico. Cualquier valoración de capacidad de recuperación debe basarse en el estado funcional, la evolución de los síntomas y la respuesta clínica.\",\n  \"section_14_recommendations\": \"No corresponde ninguna recomendación de vitaminas, minerales o hierbas respaldada por el catálogo en esta sesión, porque no puede establecerse un hallazgo orgánico válido a partir de las imágenes.\"\n}",
+    "stopReason": "end_turn",
+    "usage": {
+      "inputTokens": 19225,
+      "outputTokens": 1465
+    }
+  },
+  "ms": 21307,
+  "source": {
+    "run": "test-results/real-ai/premium_2990-es-2026-10-07T16-22-28-555Z.json",
+    "capturedAt": "2026-10-07T16:22:28Z",
+    "commit": "e01c27a"
+  }
+}

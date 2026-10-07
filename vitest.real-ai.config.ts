@@ -13,6 +13,14 @@ import path from 'path'
 //   REAL_AI_SETTINGS_FROM_DB=0                keys from ANTHROPIC_API_KEY / OPENAI_API_KEY only
 //   REAL_AI_ALLOW_SKIP=1                      pass (skip) when no keys exist instead of failing
 //
+// Spending guard (src/test/real-ai/setup.ts): nothing runs without REAL_AI_CONFIRM_SPEND=yes;
+// without it the run stops at once and prints the estimated cost (REAL_AI_ALLOW_SKIP=1 skips).
+//   REAL_AI_ANTHROPIC_API_KEY + REAL_AI_OPENAI_API_KEY   a dedicated low-limit key pair, used
+//                                             instead of the production keys (recommended)
+//   AI_REPLAY_RECORD=<set>                    also write the replies as replay recordings to
+//                                             src/test/ai-replay/recordings/<set>/ (needs the
+//                                             dedicated keys above)
+//
 // Keys: the `settings` table of the Supabase project in .env.local (as production), else the
 // ANTHROPIC_API_KEY / OPENAI_API_KEY env vars. Without keys the suite FAILS on purpose.
 //

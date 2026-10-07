@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "role": "writer-B",
+  "lang": "de",
+  "provider": "anthropic",
+  "model": "claude-sonnet-5",
+  "request": {
+    "maxTokens": 3000,
+    "structuredOutput": false
+  },
+  "response": {
+    "text": "```json\n{\n  \"section_6_circulatory_cardiorespiratory\": \"Ihr Herz-Kreislauf-System und Ihre Atemwege zeigen sich insgesamt unauffällig. Es findet sich kein hinweisgebendes Zeichen im Bereich Ihres Herzens. Am äußeren Rand zeigt sich eine feine Aufhellung, die zu einer leicht verringerten Durchblutung der Körperperipherie passt, im Zusammenhang mit Ihrer allgemeinen Grundanspannung. Ihre Lungen zeigen eine regelrechte Gewebedichte ohne Hinweis auf Belastung der Atemfunktion. Insgesamt steht bei Ihnen kein eigenständiger Befund an Herz oder Atmung im Vordergrund, die leichte Kreislauftendenz hängt eher mit Ihrer autonomen Grundspannung zusammen.\",\n\n  \"section_7_hepatic\": \"Ihre Leber und Ihr Gallensystem arbeiten derzeit unter spürbarer Belastung. Im Bereich Ihrer Leber zeigt sich eine braungelbliche Verfärbung über einem grau-blauen Grundton, was auf eine funktionelle Mehrbelastung dieses Organs hinweist. Auch im Bereich um die Pupille findet sich eine verstärkte gelbbraune Ablagerung. Das Gewebe wirkt dabei leicht verdichtet, jedoch ohne tiefere strukturelle Auflösung. Dieses Bild spricht für eine funktionelle Belastung von Leber und Gallenfluss mit verringerter Filtrationsleistung und einer verlangsamten Gallenflussrate. Die verminderte Gallenaktivität kann an Ihrer erhöhten Neigung zu Gärung und Blähungen nach dem Essen mitbeteiligt sein. An einem weiteren Reflexpunkt, der auf Ihre Leber verweist, zeigt sich ein vergleichbar mildes Muster. Der erhöhte Energieaufwand für die Entgiftung durch Ihre Leber steht im Zusammenhang mit Ihrer chronischen Müdigkeit. Ihre Leber arbeitet hier kompensierend, es liegt keine strukturelle Verschlechterung vor.\",\n\n  \"section_8_digestive_intestinal\": \"Ihr Verdauungssystem zeigt eine aktive, aber funktionelle Belastung. Im Bereich Ihres Darms finden sich mehrere kleine, dunkle Vertiefungen beidseits, die auf eine konstitutionelle Neigung zu Reizzuständen der Verdauungsschleimhaut und eine erhöhte Durchlässigkeit hinweisen. Die Kontur im unteren Darmbereich wölbt sich nach außen, was zu einer herabgesetzten muskulären Tonisierung und einer verlangsamten Transitzeit passt, dazu passt Ihre Neigung zu Verstopfung. Im Bereich Ihres Magens zeigt sich ein blasser, diffuser Ring mit einer zentralen gelbbraunen Pigmentbeimengung, was eher auf eine verminderte als auf eine übermäßige Magensäureaktivität hinweist. Diese verminderte Magen- und Gallensäureaktivität schwächt gemeinsam die Verdauungseffizienz und steht im Zusammenhang mit Ihren Blähungen nach dem Essen. Es handelt sich insgesamt um eine aktive, aber funktionelle Belastung Ihres Verdauungssystems.\",\n\n  \"section_9_renal_urinary\": \"Ihre Nieren und Ihr Harnsystem zeigen sich stabil. Das Gewebe in der Nierenregion ist weitgehend regelrecht aufgebaut, ohne tiefere Vertiefungen, was für eine im Wesentlichen erhaltene Filtrationsreserve Ihrer Nieren spricht. Ihre Nieren tragen derzeit die zusätzliche Ausscheidungslast, die von Ihrer Leber ausgeht, ausreichend mit, ohne eigene strukturelle Zeichen von Belastung. Es liegen keine berichteten Symptome im Harnbereich vor, und es zeigt sich kein eigenständiger Befund. Auch die reproduktive Zone zeigt kein auffälliges Muster.\",\n\n  \"section_10_structural_integumentary\": \"Ihr Bindegewebe und Ihre Haut zeigen sich im Wesentlichen unauffällig. Am äußeren Rand findet sich eine leicht unregelmäßige, stellenweise verdichtete Struktur, jedoch ohne einen ausgeprägten dunklen Randsaum. Vereinzelte helle Punkte am äußeren Rand weisen auf eine milde periphere Stauung im lymphatischen System hin, eher als auf eine strukturelle Belastung der Haut. Ihr Bindegewebe zeigt eine mittlere Dichte mit leichten wellenförmigen Einschlüssen, was einer moderaten konstitutionellen Bindegewebsschwäche entspricht, ohne dass hier aktuell ein eigenständiger Befund vorliegt.\"\n}\n```",
+    "stopReason": "end_turn",
+    "usage": {
+      "inputTokens": 8808,
+      "outputTokens": 1850
+    }
+  },
+  "ms": 18254,
+  "source": {
+    "run": "test-results/real-ai/premium_2990-de-2026-10-07T15-05-27-682Z.json",
+    "capturedAt": "2026-10-07T15:05:27Z",
+    "commit": "4c3bd5c"
+  }
+}

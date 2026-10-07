@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "role": "writer-A",
+  "lang": "es",
+  "provider": "anthropic",
+  "model": "claude-sonnet-5",
+  "request": {
+    "maxTokens": 3000,
+    "structuredOutput": false
+  },
+  "response": {
+    "text": "```json\n{\n  \"section_1_general_terrain\": \"Ana, lo primero que conviene decir con claridad es cuál es el patrón de fondo que organiza todo lo demás. Tu cuerpo muestra una carga hepatobiliar funcional combinada con una disregulación autonómica que comprime el arco digestivo. El motor principal de este cuadro es el eje que conecta tu hígado, tu sistema nervioso autónomo y tu digestión. No se trata de sistemas separados fallando por su cuenta, sino de un mismo circuito bajo tensión sostenida que se expresa en varios frentes a la vez. La noticia de fondo es que esto se lee como un patrón funcional y compensatorio, no como un daño estructural instalado.\",\n\n  \"section_2_emotional_field\": \"Este campo necesita atención activa. Se observa una sobreactivación simpática sostenida que dificulta sostener tu propia iniciativa y voluntad personal. Tu sistema de regulación interna muestra un patrón ondulado e irregular que se acerca más de lo esperable hacia el centro, coherente con esa sobreactivación simpática. Hay también una compactación en la zona superior que indica que la carga tiende a contenerse internamente en lugar de descargarse hacia afuera. Ese patrón de contención se asocia con dificultad para afirmar impulsos desde un centro interno estable. La recomendación concreta que te corresponde aquí es trabajar el chakra del plexo solar y la autoconfianza y voluntad personal.\n\n  \"section_3_cognitive_nervous\": \"Este sistema necesita atención. Tu densidad nerviosa superior se mantiene compacta, sin señales de depleción marcada en esa zona. Sin embargo, la regulación autonómica muestra un trazado irregular, desplazado hacia el centro en el lado nasal, con una leve compresión adicional en la zona temporal superior. Este patrón es compatible con el cansancio y las dificultades para dormir que describes, de carácter funcional y compensatorio más que estructural. No se observan anillos de contracción profundos ni múltiples, lo que descarta una sobrecarga crónica instalada. El mismo circuito autonómico que regula tu descanso gobierna también la inervación de tu intestino, por lo que ambos frentes están unidos en origen.\",\n\n  \"section_4_immune_lymphatic\": \"Este sistema necesita atención, aunque de forma moderada. No se observa congestión linfática evidente en la periferia de tu cuerpo. Tampoco hay opacidades densas que sugieran acumulación sostenida. La irregularidad en tu regulación digestiva y la compresión del arco nasal digestivo imponen, sin embargo, una demanda de vigilancia inmunológica sostenida sobre la mucosa intestinal. Tu reserva inmunitaria se interpreta como funcional pero trabajando bajo presión. No hay signos de activación inflamatoria aguda en este momento.\",\n\n  \"section_5_endocrine_hormonal\": \"Este sistema necesita atención. No se observan marcas profundas ni signos estructurales claros en el territorio de tu tiroides. El área correspondiente a tus glándulas suprarrenales no queda completamente visible, por lo que la lectura ahí es parcial. Sí se observa una irregularidad y compresión en el anillo de regulación nerviosa, coherente con una demanda adaptativa sostenida sobre tu eje adrenal. Tu cansancio funcional parece vincularse más con una regulación autonómica ineficiente que con un agotamiento glandular estructural. El contorno de tu páncreas, en el lado derecho, muestra una irregularidad leve que conviene seguir observando con el tiempo.\"\n}\n```",
+    "stopReason": "end_turn",
+    "usage": {
+      "inputTokens": 7917,
+      "outputTokens": 1280
+    }
+  },
+  "ms": 12960,
+  "source": {
+    "run": "test-results/real-ai/premium_2990-es-2026-10-07T16-22-28-555Z.json",
+    "capturedAt": "2026-10-07T16:22:28Z",
+    "commit": "e01c27a",
+    "note": "Writer A retry, invalid JSON again"
+  }
+}

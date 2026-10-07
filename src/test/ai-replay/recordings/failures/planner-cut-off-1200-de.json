@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "role": "planner",
+  "lang": "de",
+  "provider": "anthropic",
+  "model": "claude-sonnet-5",
+  "request": {
+    "maxTokens": 1200,
+    "structuredOutput": false
+  },
+  "response": {
+    "text": "```json\n{\n  \"dominantPattern\": \"Funktionelle, kompensierte hepato-digestive Belastung mit autonomer Dysregulation\",\n  \"mainDriver\": \"Hepatobiliäre Stauung mit sekundärer Belastung von Darm und autonomem Nervensystem\",\n  \"symptomFindingMap\": [\n    \"chronische Müdigkeit -> hepatische Stauung kombiniert mit autonomer Dysregulation und Schlafdefizit\",\n    \"Ein- und Durchschlafprobleme -> girlandenartige Wreath-Ausweitung im unteren Autonomiering mit reduzierter parasympathischer Erholungsreserve\",\n    \"Blähungen nach dem Essen -> verlangsamter Gallenfluss aus der hepatischen Zone mit unvollständiger Fettverdauung und Gärung im Dünndarm\",\n    \"Verstopfung -> abgeschwächte, ballonierte Darmwandspannung im unteren Wreath-Bogen\",\n    \"chronisches Stresserleben -> sympathisch betonte, girlandenartig verformte Autonomiering-Kontur\"\n  ],\n  \"systemVerdicts\": {\n    \"section_2_emotional_field\": {\n      \"verdict\": \"needs-action\",\n      \"clue\": \"sympathisch gehaltene Anspannung, verknüpft mit hepatischer Stauung rechts bei 7-8 Uhr; Arbeit am Herzchakra und an Selbstmitgefühl empfohlen\",\n      \"findings\": [\n        \"unregelmässiger, girlandenartig nach aussen gewölbter Autonomiering als Zeichen sympathisch betonter Grundspannung\",\n        \"erschwerte Rückkehr zur parasympathischen Ruhelage\",\n        \"olivbraune Pigmentauflagerung im hepatischen Areal rechts bei 7-8 Uhr als Ausdruck gehaltener, nicht ausgedrückter Anspannung\",\n        \"erschwerter Zugang zu Selbstzuwendung und weicher innerer Resonanz\",\n        \"Tendenz, emotionale Erschöpfung vor sich selbst zu verbergen\"\n      ]\n    },\n    \"section_3_cognitive_nervous\": {\n      \"verdict\": \"needs-action\",\n      \"clue\": \"funktionelle, nicht strukturelle Belastung der zentralen Regulation über die kranio-pituitäre Achse und reduzierte parasympathische Erholung über die intestinal-pelvine Achse\",\n      \"findings\": [\n        \"leichte Unregelmässigkeit im oberen Autonomiering-Bogen ohne tiefe Kerben\",\n        \"girlandenartige Ausweitung im unteren Bogen korreliert mit reduzierter parasympathischer Erholungsreserve\",\n        \"moderate Faserauflockerung spricht für nervöse Übererregbarkeit ohne strukturelle Verschlechterung\",\n        \"wechselseitige Verstärkung von Darm-Hirn-Achse, autonomer Dysregulation und Schlafstörung\"\n      ]\n    },\n    \"section_4_immune_lymphatic\": {\n      \"verdict\": \"needs-action\",\n      \"clue\": \"keine periphere lymphatische Auffälligkeit, aber Immunlage folgt der intestinalen und autonomen Belastung\",\n      \"findings\": [\n        \"keine auffällige lymphatische Rosenkranzbildung in der äusseren Ziliarzone\",\n        \"keine verd",
+    "stopReason": "max_tokens",
+    "usage": {
+      "inputTokens": 8473,
+      "outputTokens": 1200
+    }
+  },
+  "ms": 10255,
+  "source": {
+    "run": "test-results/real-ai/premium_2990-de-2026-10-07T14-41-36-459Z.json",
+    "capturedAt": "2026-10-07T14:41:36Z",
+    "commit": "bd6f515",
+    "note": "Planner at max_tokens 1200: real reply cut off"
+  }
+}

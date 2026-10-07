@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "role": "jyotish-chakra",
+  "lang": "de",
+  "provider": "anthropic",
+  "model": "claude-sonnet-5",
+  "request": {
+    "maxTokens": 500,
+    "structuredOutput": false
+  },
+  "response": {
+    "text": "```json\n{\n  \"chakra\": \"Solar Plexus Chakra\",\n  \"emotion\": \"Selbstvertrauen und persönliche Willenskraft\",\n  \"reasoning\": \"Eine Geburt im späten Wassermann/frühen Fische-Übergang mit Morgenaszendent deutet auf eine Spannung zwischen idealistischem Rückzug und der Notwendigkeit hin, die eigene Willenskraft und Identität aktiv im Außen zu verankern, weshalb das Solarplexus-Chakra als energetisches Zentrum für Selbstbehauptung gestärkt werden sollte.\"\n}\n```",
+    "stopReason": "end_turn",
+    "usage": {
+      "inputTokens": 554,
+      "outputTokens": 218
+    }
+  },
+  "ms": 3348,
+  "source": {
+    "run": "test-results/real-ai/premium_2990-de-2026-10-07T15-05-27-682Z.json",
+    "capturedAt": "2026-10-07T15:05:27Z",
+    "commit": "4c3bd5c"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "stage1-structured-2026-10-07",
+  "description": "Stage 1 re-recorded on fix/stage1-json-integrity (e01c27a): the Claude leg and the synthesis send output_config.format json_schema. Same models, intake and iris as master-2026-10-07, 2026-10-07 16:21-16:22. Only stage-1 roles; stage 2 is inherited from master-2026-10-07 (its prompts did not change).",
+  "inherits": "master-2026-10-07",
+  "commit": "e01c27a"
+}

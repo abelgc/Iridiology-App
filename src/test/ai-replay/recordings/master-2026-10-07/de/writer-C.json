@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "role": "writer-C",
+  "lang": "de",
+  "provider": "anthropic",
+  "model": "claude-sonnet-5",
+  "request": {
+    "maxTokens": 3000,
+    "structuredOutput": false
+  },
+  "response": {
+    "text": "```json\n{\n  \"section_11_detected_axes\": \"- Die innere Grundspannung in deinem autonomen Nervensystem steht in direkter Wechselwirkung mit der Pigment- und Spannungslast im Bereich deiner Leber.\\n- Ein verlangsamter Gallenfluss deiner Leber begünstigt Gärungsprozesse im Dünndarm und verstärkt dadurch deine Verdauungsbeschwerden.\\n- Die verminderte nervale Versorgung deines Darms verstärkt wiederum die Reizverarbeitung in deinem Kopfbereich und trägt zu deiner nächtlichen Unruhe bei.\\n- Die funktionelle Belastung deiner Leber erhöht die Ausscheidungsarbeit, die zusätzlich von deinen Nieren mitgetragen wird.\\n- Die Reizmuster in deinem Darm zusammen mit der unregelmäßigen Spannung dort beanspruchen zusätzlich deine lymphatische und immunologische Reserve.\\n- Die anhaltende Grundspannung deines sympathischen Nervensystems beansprucht zusätzlich deine Nebennierenachse.\",\n\n  \"section_12_conclusion\": \"Im Zentrum des Befunds steht eine chronische funktionelle Überlastung der Leber-Galle-Achse, gekoppelt mit einer autonomen Übererregung, die Verdauung, Schlaf und Energie gleichermaßen betrifft. Den größten Anteil an dieser Last trägt deine Leber, deren Filtrations- und Gallenflusseffizienz spürbar reduziert ist und die damit den Ausgangspunkt der übrigen Muster bildet. Direkt daran gekoppelt steht dein autonomes Nervensystem, das zwischen anhaltender Grundspannung und eingeschränkter Erholungsfähigkeit schwankt und so Schlaf und innere Ruhe mitbestimmt. Darauf folgt dein Verdauungssystem, das durch verminderte Magen- und Gallensäureaktivität sowie eine herabgesetzte Tonisierung im Darmbereich zusätzlich beansprucht wird. Deine Nebennieren und dein Pankreas tragen eine sekundäre, funktionelle Mitbelastung dieser Stressachse, ohne dass sich dabei ein eigenständiges strukturelles Bild zeigt. Deine Nieren, dein Herz-Kreislauf-System und deine Lungen stehen am Ende dieser Reihenfolge, da sie die zusätzliche Last derzeit gut kompensieren. Das Gesamtbild ist durchgehend funktioneller Natur, ohne Hinweis auf strukturellen Gewebeabbau, was eine solide Grundlage für Regulation und Erholung darstellt.\",\n\n  \"section_13_strengths_of_the_body\": \"Deine Gewebearchitektur zeigt eine kompakte Struktur ohne tiefe Einbrüche, was auf eine solide konstitutionelle Reserve hindeutet. Deine Nieren zeigen eine regelrechte Textur mit guter Filtrationsreserve, sodass sie zusätzliche Ausscheidungsarbeit gut mittragen können. Deine Lungen und dein Herz zeigen unauffällige Zonen, ein Zeichen für eine stabile kardiorespiratorische Grundfunktion. Deine Schilddrüsenregion zeigt sich unauffällig, was für eine intakte endokrine Grundregulation spricht. Sämtliche Belastungsmuster, die sich zeigen, sind funktioneller Natur ohne strukturelle Gewebeauflösung, was insgesamt eine gute Grundlage für Regulation und Erholung bildet.\"\n}\n```",
+    "stopReason": "end_turn",
+    "usage": {
+      "inputTokens": 8451,
+      "outputTokens": 1325
+    }
+  },
+  "ms": 13129,
+  "source": {
+    "run": "test-results/real-ai/premium_2990-de-2026-10-07T15-05-27-682Z.json",
+    "capturedAt": "2026-10-07T15:05:27Z",
+    "commit": "4c3bd5c"
+  }
+}

@@ -56,7 +56,7 @@ Open [http://localhost:3000](http://localhost:3000).
 ```bash
 npm run test          # Unit and integration tests (Vitest)
 npm run test:e2e      # End-to-end tests (Playwright)
-npm run test:real-ai  # Client pipeline with REAL Anthropic + OpenAI calls (paid, ~4 min, ~2 USD)
+npm run test:real-ai  # Client pipeline with REAL Anthropic + OpenAI calls (paid, ~4 min, ~2 USD; needs REAL_AI_CONFIRM_SPEND=yes)
 ```
 
 `npm run test:real-ai` runs stage 1 (`analyzeIrisDual`, the upload route's providers and
@@ -74,6 +74,45 @@ The offline counterpart, `src/lib/client/__tests__/token-budget-guard.test.ts`, 
 `npm test`: it fails when a call's `max_tokens` is below the real output size that suite
 measured (plus 25% headroom), or when the Planner / stage-1 output shape changes without being
 re-measured.
+
+### Testing AI without spending
+
+`npm test` never calls a paid model API, and still runs the AI pipeline on real replies:
+
+- **Network guard.** `src/test/setup.ts` installs `src/test/ai-replay/guard.ts`: any request to
+  Anthropic or OpenAI (by host, or by API path if a `*_BASE_URL` points elsewhere) is refused
+  and fails the test, even when production code swallows the error.
+- **Replay of real replies.** `startAiReplay({ lang })` (`src/test/ai-replay/replay.ts`) answers
+  those requests at the HTTP layer with full-size replies recorded from real runs
+  (`src/test/ai-replay/recordings/`, fictional intake, committed iris photo, names scrubbed).
+  The SDKs, `AnthropicProvider` / `OpenAIProvider`, the writing pipeline's own client, prompt
+  building, parsing, retries and the routes are all production code. Each call is matched by
+  role (Claude leg, GPT leg, synthesis, guards, Jyotish, Planner, Writer A/B/C) and language.
+- **Budget-faithful.** A request whose `max_tokens` is below what the real model wrote gets the
+  reply cut at `max_tokens` with `stop_reason: max_tokens`, like the API. Setting the Planner back
+  to 1200 makes `npm test` fail with the real `response_too_long`.
+- **Contract checks.** A request with another model, without `thinking: disabled` on Sonnet, or
+  with a different structured-output mode than the recording fails the test as drift.
+- **Failure shapes** (`src/test/ai-replay/failures.ts`): real restart replies ("Wait, let me
+  produce the full complete JSON..."), real Planner cut-offs, real invalid Writer JSON, JSON then
+  markdown (derived from a real reply), credit balance 400, 529 overloaded, OpenAI 500, a call
+  that never answers. `src/app/api/client/__tests__/paid-flow*.replay.test.ts` run upload route,
+  stage 1, stage 2 route and the report endpoint the client polls over them (fake timers for the
+  270s / 200s budgets and the staleness retries).
+
+Recording new replies (after a prompt or model change) costs one real-AI run. Use a separate,
+low-limit key pair so tests can never spend production credit:
+
+```bash
+REAL_AI_CONFIRM_SPEND=yes REAL_AI_ANTHROPIC_API_KEY=... REAL_AI_OPENAI_API_KEY=... \
+  AI_REPLAY_RECORD=master-2026-11-01 npm run test:real-ai
+```
+
+Then point `DEFAULT_SET` in `src/test/ai-replay/recordings.ts` at the new set, and review the
+diff for personal data. Earlier real-AI artifacts can be converted for free:
+`node scripts/ai-replay-import.mts set <set> test-results/real-ai/<run>.json` (see its header).
+`npm run test:real-ai` refuses to start without `REAL_AI_CONFIRM_SPEND=yes` and prints the
+estimated cost first.
 
 ## Deployment (Railway)
 

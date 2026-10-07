@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "role": "planner",
+  "lang": "en",
+  "provider": "anthropic",
+  "model": "claude-sonnet-5",
+  "request": {
+    "maxTokens": 1200,
+    "structuredOutput": false
+  },
+  "response": {
+    "text": "```json\n{\n  \"dominantPattern\": \"functional hepatobiliary sluggishness driving digestive and autonomic/sleep disruption\",\n  \"mainDriver\": \"hepatic and biliary filtering burden\",\n  \"symptomFindingMap\": [\n    \"insomnia -> irregular autonomic wreath unable to settle into parasympathetic recovery\",\n    \"chronic stress -> uneven autonomic wreath tone held in lower arc\",\n    \"bloating -> sluggish bile flow plus dark absorption ring and reduced colonic motility\",\n    \"fatigue -> pancreatic and adrenal reflex fibre irregularity under sustained functional demand\",\n    \"constipation -> wreath displacement in colon territory with reduced motility tone\"\n  ],\n  \"systemVerdicts\": {\n    \"section_2_emotional_field\": {\n      \"verdict\": \"needs-action\",\n      \"clue\": \"internalized tension held in the digestive/hepatic area rather than discharged - work the Solar Plexus Chakra and confident self-assertion\",\n      \"findings\": [\n        \"irregular autonomic wreath consistent with difficulty settling into parasympathetic baseline\",\n        \"tension held internally in lower hepatic-adjacent arcs rather than discharged\",\n        \"diminished capacity for self-assertion with inward absorption of frustration\",\n        \"this internal compounding plausibly worsens bloating and fatigue\"\n      ]\n    },\n    \"section_3_cognitive_nervous\": {\n      \"verdict\": \"needs-action\",\n      \"clue\": \"uneven autonomic wreath tone, tighter in the lower arc governing intestinal and pelvic innervation\",\n      \"findings\": [\n        \"uneven autonomic tone across wreath arcs rather than uniform dysregulation\",\n        \"lower arc compression restricting local blood/nerve supply to digestive organs, contributing to poor sleep\",\n        \"pattern consistent with reported insomnia and chronic stress\",\n        \"fibre architecture around wreath remains largely intact, favouring functional over degenerative reading\",\n        \"digestive bloating and lower-arc wreath compression mutually reinforce a gut-brain axis pattern\"\n      ]\n    },\n    \"section_4_immune_lymphatic\": {\n      \"verdict\": \"needs-action\",\n      \"clue\": \"immune/mucosal resilience downstream of autonomic wreath tension rather than an independent lymphatic problem\",\n      \"findings\": [\n        \"outer ciliary rim does not show a strongly reactive lymphatic rosary pattern\",\n        \"immune reading follows autonomic wreath tension rather than standing as independently sound\",\n        \"tendency toward reduced mucosal resilience without overt lymphatic congestion markers\",\n        \"no scurf rim or dense lymphatic rosary identified at the limbus in either eye\"\n      ]\n    },\n    \"section_5_endocrine_hormonal\": {\n      \"verdict\": \"needs-action\",\n      \"clue\": \"mild fibre irregularity at pancreatic reflex points (2 o'clock right iris, 10 o'clock left iris) and adrenal points near 6 o'clock bilaterally\",\n      \"findings\": [\n        \"mild fibre irregularity at pancreatic reflex points suggesting reduced metabolic regulatory efficiency\",\n        \"no frank lacuna, a soft signal rather than a strong one\",\n        \"adrenal collarette points show no sharply reactive white marking, arguing against acute adrenal crisis\",\n        \"mild adrenal fibre irregularity consistent with sustained functional demand contributing to fatigue and disrupted sleep\",\n        \"consistent f",
+    "stopReason": "max_tokens",
+    "usage": {
+      "inputTokens": 7967,
+      "outputTokens": 1200
+    }
+  },
+  "ms": 9879,
+  "source": {
+    "run": "test-results/real-ai/premium_2990-en-2026-10-07T14-41-44-468Z.json",
+    "capturedAt": "2026-10-07T14:41:44Z",
+    "commit": "bd6f515",
+    "note": "Planner at max_tokens 1200: real reply cut off"
+  }
+}

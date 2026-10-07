@@ -1,0 +1,5 @@
+{
+  "name": "master-2026-10-07",
+  "description": "Real replies, claude-sonnet-5 + gpt-5.6-sol (premium_2990), fictional intake, iris e2e/fixtures/face-eye-left.jpg, 2026-10-07. Prompts of master 4c3bd5c (Planner max_tokens 8000, Writers 3000). de and es: one hotfix run each on 4c3bd5c; en: one run on bd6f515 with the same stage-1, Planner and Writer prompts (only max_tokens differ), Writers asked for 6000. Stage 1 sends no output_config.format.",
+  "commit": "4c3bd5c"
+}

@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "role": "guard-fixation",
+  "lang": "es",
+  "provider": "anthropic",
+  "model": "claude-sonnet-5",
+  "request": {
+    "maxTokens": 4096,
+    "structuredOutput": false
+  },
+  "response": {
+    "text": "```json\n{\"section_4_immune_lymphatic\":\"La periferia del iris, zona de expresión linfática y eliminativa, no muestra un rosario linfático prominente ni acúmulos blanquecinos densos en ninguno de los dos ojos, lo que no sugiere un proceso linfático reactivo agudo en curso. Sin embargo, la lectura de la reserva inmunitaria no puede basarse únicamente en este borde externo silencioso, dado que la textura fibrilar algo más laxa observada en el sector hepático derecho hacia las 7:30 a 8:30 señala una tendencia hepatobiliar funcionalmente comprometida que incide de forma directa sobre la capacidad depurativa general. Por lo tanto, la reserva inmunitaria debe leerse como acompañando esa carga hepatobiliar, no como una fortaleza aislada. El tono pigmentario oliva que se extiende desde la zona pupilar sugiere una carga metabólica de origen hepático sutil, probablemente ligada a un flujo biliar más lento, que mantiene al sistema inmunitario en un estado de vigilancia leve más que de reactividad franca. No se identifican signos de congestión ganglionar aguda ni marcas de infección activa en los sectores observables.\",\"section_7_hepatic\":\"El tono de fondo oliva amarillento identificado en la zona pupilar y extendido hacia el anillo intestinal, junto con una textura fibrilar algo más laxa en el sector hepático derecho hacia las 7:30 a 8:30, sustenta con firmeza una tendencia hepatobiliar funcionalmente comprometida, en línea con la familia constitucional mixta o biliar señalada en el terreno general. Esto se interpreta como un flujo biliar más lento que una filtración deficiente en sí, es decir, una bilis que fluye con menor eficiencia hacia el intestino. Esta misma laxitud fibrilar localizada en el sector hepático es el hallazgo primario que sostiene la lectura de estasis, más que una simple extrapolación del tono pupilar, y refuerza la idea de un hígado que trabaja con menor eficiencia tisular en esa zona concreta. No se observan signos de pigmentación oscura densa ni de heterocromía central marcada que sugieran una sobrecarga hepática aguda, por lo que el hallazgo se mantiene en el rango de carga funcional moderada y compensada, no de compromiso estructural. Esta carga hepática, sostenida por su propia textura fibrilar característica, coloca presión secundaria sobre el sistema digestivo, que ya muestra signos de motilidad y absorción comprometidas, como se detalla a continuación.\",\"section_8_digestive_intestinal\":\"La corona autónoma muestra, en el tramo del arco inferior correspondiente al territorio intestinal, una ligera tendencia a la contracción hacia el centro más que a la expansión, lo que sugiere un segmento de motilidad intestinal reducida compatible con la tendencia a la constipación referida por la paciente. El anillo de absorción inmediato alrededor de la pupila presenta un tono algo oscurecido en ambos ojos, lo que indica una eficiencia de absorción de nutrientes reducida, coherente con el cansancio constante que puede derivar en parte de una incorporación incompleta de nutrientes pese a una ingesta adecuada. Esta misma contracción del arco autónomo inferior, al reducir el tránsito, favorece condiciones locales de fermentación de bajo grado que explican de forma directa la hinchazón después de comer reportada por la paciente. No se identifican lagunas profundas ni signos de bolsillo intestinal o diverticular franco en el territorio del colon, lo que mantiene esta alteración dentro de un marco funcional y no estructural. La demanda digestiva descrita aquí compone, junto con la tensión de la corona autónoma, un eje de refuerzo mutuo entre el sistema nervioso y el digestivo que sostiene tanto el cansancio como la dificultad para dormir.\"}\n```",
+    "stopReason": "end_turn",
+    "usage": {
+      "inputTokens": 1788,
+      "outputTokens": 1399
+    }
+  },
+  "ms": 11401,
+  "source": {
+    "run": "test-results/real-ai/premium_2990-es-2026-10-07T15-18-57-905Z.json",
+    "capturedAt": "2026-10-07T15:18:57Z",
+    "commit": "4c3bd5c"
+  }
+}

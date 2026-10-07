@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "role": "gpt-leg",
+  "lang": "en",
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "request": {
+    "maxTokens": 8192,
+    "structuredOutput": false
+  },
+  "response": {
+    "text": "{\n  \"section_1_general_terrain\": \"The two uploaded files appear identical and do not provide separate right and left iris views. The visible iris has a blue grey base with a central amber overlay and generally preserved fibre architecture, but these photographic features cannot validly establish constitutional strength, organ weakness, metabolic burden, or recovery capacity. Iridology is not a clinically reliable method for diagnosing systemic function.\",\n  \"section_2_emotional_field\": \"Chronic stress and difficulty sleeping are clinically relevant reported symptoms, but emotional regulation and autonomic state cannot be determined from iris structure. Their pattern, triggers, duration, and effects on daily function require assessment through clinical history rather than iris mapping.\",\n  \"section_3_cognitive_nervous\": \"The iris image cannot establish sympathetic activation, reduced parasympathetic recovery, cerebral circulation, or nervous system reserve. The reported insomnia and chronic stress may interact physiologically, but the photograph provides no validated evidence from which to classify that interaction as active, compensatory, or chronic.\",\n  \"section_4_immune_lymphatic\": \"Immune activity, intestinal immune burden, and lymphatic drainage cannot be assessed reliably from the peripheral iris. No clinical conclusion about immune reserve or lymphatic congestion should be drawn from this image.\",\n  \"section_5_endocrine_hormonal\": \"The image cannot determine thyroid, adrenal, pituitary, pancreatic, or reproductive hormonal function. The reported constant tiredness is nonspecific and cannot be attributed to endocrine dysregulation from iris appearance alone.\",\n  \"section_6_circulatory_cardiorespiratory\": \"Circulatory efficiency, cardiac regulation, tissue oxygenation, and respiratory capacity cannot be inferred from iris colour, fibres, or peripheral rings. The supplied image therefore does not support a cardio respiratory functional finding.\",\n  \"section_7_hepatic\": \"The central amber pigmentation does not provide reliable evidence of impaired liver filtering, sluggish bile flow, toxic accumulation, or altered hormonal metabolism. Hepatic and gallbladder function cannot be assessed from this iris photograph.\",\n  \"section_8_digestive_intestinal\": \"Bloating after meals and constipation are confirmed as reported symptoms, but the iris cannot identify their mechanism or establish gastric acid output, pancreatic activity, intestinal fermentation, permeability, or motility. These symptoms require evaluation through dietary history, bowel pattern, examination, and other clinically appropriate methods.\",\n  \"section_9_renal_urinary\": \"Kidney filtration, urinary elimination, adrenal compensation, and reproductive function cannot be established from the visible lower iris. No renal or reproductive functional conclusion is supported by this photograph.\",\n  \"section_10_structural_integumentary\": \"The iris image cannot determine connective tissue integrity, musculoskeletal burden, skin elimination, or systemic structural reserve. No clinically valid structural or integumentary finding can be assigned.\",\n  \"section_11_detected_axes\": \"No clinically valid functional axis can be derived from the supplied iris image.\",\n  \"section_12_conclusion\": \"The reported combination of persistent tiredness, post meal bloating, constipation, insomnia, and chronic stress is clinically meaningful, but iris photography cannot identify its cause or establish a hierarchy of organ burdens. No conclusion about functional versus structural disease or recovery potential can be made from these images. Assessment should instead use symptom chronology, sleep pattern, diet, bowel function, medication history, physical examination, and clinically appropriate testing.\",\n  \"section_13_strengths_of_the_body\": \"The visible iris appears grossly organised in the supplied photograph, but this does not demonstrate systemic organ reserve or recovery capacity. No evidence based strengths of digestive, endocrine, nervous, hepatic, immune, renal, or circulatory function can be assigned from iris appearance.\",\n  \"section_14_recommendations\": \"No catalogue backed vitamin, mineral, or herbal recommendation applies because an iris photograph cannot validly determine systemic nutritional or herbal requirements.\"\n}",
+    "stopReason": "end_turn",
+    "usage": {
+      "inputTokens": 19069,
+      "outputTokens": 1678
+    }
+  },
+  "ms": 22043,
+  "source": {
+    "run": "test-results/real-ai/premium_2990-en-2026-10-07T16-21-43-646Z.json",
+    "capturedAt": "2026-10-07T16:21:43Z",
+    "commit": "e01c27a"
+  }
+}

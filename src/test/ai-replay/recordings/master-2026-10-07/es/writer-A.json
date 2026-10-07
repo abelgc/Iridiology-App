@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "role": "writer-A",
+  "lang": "es",
+  "provider": "anthropic",
+  "model": "claude-sonnet-5",
+  "request": {
+    "maxTokens": 3000,
+    "structuredOutput": false
+  },
+  "response": {
+    "text": "```json\n{\n  \"section_1_general_terrain\": \"Ana, el conjunto de tu lectura muestra un cuerpo que lleva tiempo sosteniendo una sobrecarga funcional moderada y crónica, no un daño agudo. El principal motor de esto es un flujo hepatobiliar lento, que mantiene ocupado a tu hígado y a tu vesícula y desde ahí presiona tu digestión y tu tránsito intestinal. Este patrón converge con tu regulación autonómica, es decir, con la forma en que tu sistema nervioso maneja el descanso y la alerta, y ambos se refuerzan entre sí. La buena noticia es que no hay compromiso estructural en ningún punto de esta lectura, lo que indica una capacidad de respuesta razonable una vez que se trabaja el punto de origen.\",\n  \"section_2_emotional_field\": \"Este territorio necesita atención: tu cuerpo retiene tensión internamente en lugar de descargarla, y esa tensión se somatiza en tu territorio digestivo y pélvico. Hay una contracción en la zona autónoma inferior y nasal en ambos lados, coherente con una dificultad para liberar tensión acumulada. Esto favorece un estado de alerta digestiva sostenido, como si tu sistema digestivo estuviera permanentemente en guardia. El tono de fondo que acompaña esta zona se asocia más a tensión retenida que expresada, es decir, a emociones que se guardan en lugar de soltarse. La recomendación concreta que te corresponde es trabajar el Plexo Solar, el centro energético ligado a la autoafirmación personal y la confianza en ti misma, como punto de trabajo específico para esta tensión retenida.\",\n  \"section_3_cognitive_nervous\": \"Este sistema también necesita atención, con una carga funcional moderada sobre la regulación del sueño y el eje hipotálamo-hipófisis, sin ningún compromiso estructural en la zona craneal. Se observa una curvatura irregular en la regulación autonómica superior, pero sin compresión marcada. Esta disregulación autonómica funcional es coherente con el insomnio y el estrés crónico que describes. No aparecen anillos de tensión nerviosa concéntricos marcados, lo cual es una ausencia que juega a tu favor. Tampoco hay fibras densamente comprimidas en el sector cerebral, otra ausencia favorable. Sin embargo, el eje que conecta tu intestino y tu cerebro aparece comprometido por irritabilidad en la zona intestinal inferior, y esto se vincula con la dificultad para dormir y con el eje intestino-cerebro alterado.\",\n  \"section_4_immune_lymphatic\": \"Este territorio está en buen estado: no se observa ningún proceso linfático reactivo agudo en este momento. No aparece un rosario linfático prominente ni acúmulos blanquecinos densos, dos ausencias que son una buena señal. Tu reserva inmunitaria está ligada a la carga hepatobiliar que ya se describió, más que ser una debilidad propia de este sistema. El tono de fondo asociado a la carga metabólica de tu hígado mantiene una vigilancia inmunitaria leve, pero no activa. No hay signos de congestión ganglionar aguda ni de infección activa en esta lectura.\",\n  \"section_5_endocrine_hormonal\": \"Este sistema necesita atención, con tu capacidad secretora pancreática funcionalmente reducida y una demanda adaptativa sostenida sobre tus glándulas adrenales. Se observa una textura laxa con una pequeña zona de debilidad en el territorio pancreático. Esta capacidad pancreática reducida se vincula con la fatiga que sientes después de comer y con una digestión que no se completa del todo. No hay signos estructurales claros en tu zona tiroidea. El tono de fondo en esa misma región se relaciona con la conversión hepática de la hormona tiroidea, un punto que conviene seguir de cerca junto con el trabajo hepático ya descrito. Tu zona adrenal muestra una contracción compatible con una demanda sostenida de respuesta al estrés, es decir, tus glándulas adrenales llevan tiempo trabajando en modo de alerta. Se trata de una sobrecarga funcional adaptativa, no de un agotamiento estructural.\"\n}\n```",
+    "stopReason": "end_turn",
+    "usage": {
+      "inputTokens": 7937,
+      "outputTokens": 1512
+    }
+  },
+  "ms": 15209,
+  "source": {
+    "run": "test-results/real-ai/premium_2990-es-2026-10-07T15-18-57-905Z.json",
+    "capturedAt": "2026-10-07T15:18:57Z",
+    "commit": "4c3bd5c"
+  }
+}
