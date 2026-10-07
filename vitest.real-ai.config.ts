@@ -5,7 +5,8 @@ import path from 'path'
 // iris photo. No model response is mocked; the only test double is a Supabase guard that lets
 // the read-only `settings` lookup through and swallows every write.
 //
-//   npm run test:real-ai                      es, en, de on premium_2990 (about 5-8 min, a few USD)
+//   npm run test:real-ai                      es, en, de on premium_2990 (about 4 min, about 2 USD:
+//                                             per language ~78k in / 22k out Sonnet, 19k / 1.5k GPT)
 //   REAL_AI_LANGS=de npm run test:real-ai     one language
 //   REAL_AI_TIERS=premium_2990,basic_1990     also the Essential tier models
 //   REAL_AI_SEQUENTIAL=1                      one language at a time instead of in parallel
