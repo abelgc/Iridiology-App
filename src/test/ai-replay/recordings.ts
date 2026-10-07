@@ -11,7 +11,7 @@ import type { Lang, Recording, Role } from './types'
 export const RECORDINGS_DIR = path.join(__dirname, 'recordings')
 
 /** The set whose prompts match this branch. Change it in the same commit that changes the prompts. */
-export const DEFAULT_SET = 'master-2026-10-07'
+export const DEFAULT_SET = 'stage1-structured-2026-10-07'
 
 export interface SetManifest {
   name: string

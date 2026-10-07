@@ -160,6 +160,24 @@ function resolveStep(role: Role, lang: Lang, set: string): { step: Step; source:
     return { step, source: `script[${role}][${Math.min(index, list.length - 1)}] ${source}` }
   }
   const found = findRecording(set, lang, role)
+  if (!found && role.startsWith('guard-')) {
+    // These guards only fire when a report trips their detector. Some languages never did, so
+    // there is no recording; an empty object makes the guard fall back to the untouched report.
+    return {
+      step: {
+        format: 1,
+        role,
+        lang,
+        provider: 'anthropic',
+        model: 'claude-sonnet-5',
+        request: { maxTokens: 4096, structuredOutput: false },
+        response: { text: '{}', stopReason: 'end_turn', usage: { inputTokens: 0, outputTokens: 1 } },
+        ms: 1,
+        source: { run: 'synthetic-empty-guard', capturedAt: '', note: `no ${role}/${lang} recording; guard keeps the report` },
+      },
+      source: `synthetic empty ${role}/${lang}`,
+    }
+  }
   if (!found) {
     return {
       error:
@@ -203,7 +221,11 @@ async function handle(provider: Provider, url: string, init: RequestInit | undef
   const factor = latency === 'none' ? 0 : latency === 'recorded' ? 1 : latency
 
   if (isRecording(step)) {
-    const violations = contractViolations(req, step)
+    // Scripted failure shapes are historical (a restart reply, a cut-off, invalid JSON). They
+    // must still play against today's request, which may send a json_schema the original call
+    // did not. Contract checks apply to the DEFAULT_SET path, where a prompt change is a miss.
+    const scripted = source.startsWith('script[')
+    const violations = scripted ? [] : contractViolations(req, step)
     if (violations.length) refuse(violations.join('; '))
     const served = budgetFaithful(step, req.maxTokens)
     if ('error' in served) return refuse(served.error)
